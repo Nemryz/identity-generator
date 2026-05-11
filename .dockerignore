@@ -1,0 +1,10 @@
+.git
+.gitignore
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+history.json
+*_identity.json
+.vscode/
+.idea/

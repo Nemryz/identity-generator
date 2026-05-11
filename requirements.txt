@@ -1,0 +1,4 @@
+faker
+requests
+pyperclip
+colorama

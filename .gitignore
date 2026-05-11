@@ -1,0 +1,26 @@
+# Generated data — never commit real history or exported profiles
+history.json
+*_identity.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.eggs/
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
