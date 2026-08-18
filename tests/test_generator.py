@@ -9,7 +9,11 @@ from datetime import date
 
 import pytest
 
-from generator import _calculate_age, generate_identity
+from generator import (
+    _calculate_age,
+    generate_identity,
+    is_supported_locale,
+)
 
 TODAY = date(2026, 8, 18)
 
@@ -38,6 +42,23 @@ def test_age_accepts_datetime():
     from datetime import datetime
 
     assert _calculate_age(datetime(2000, 12, 31, 23, 59), today=TODAY) == 25
+
+
+@pytest.mark.parametrize(
+    "locale", ["es_ES", "es_MX", "en_US", "fr_FR", "ja_JP"]
+)
+def test_is_supported_locale_accepts_mapped_locales(locale):
+    assert is_supported_locale(locale)
+
+
+def test_is_supported_locale_accepts_faker_only_locale():
+    assert is_supported_locale("en_CA")
+    assert is_supported_locale("en_IE")
+
+
+@pytest.mark.parametrize("locale", ["xx_XX", "en_USS", "", "es_PE", "spanish"])
+def test_is_supported_locale_rejects_invalid(locale):
+    assert not is_supported_locale(locale)
 
 
 @pytest.mark.parametrize("locale", ["es_ES", "en_US", "fr_FR", "ja_JP"])

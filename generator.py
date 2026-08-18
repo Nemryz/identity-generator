@@ -21,6 +21,7 @@ import uuid
 from datetime import date, datetime, timezone
 
 from faker import Faker
+from faker.config import AVAILABLE_LOCALES
 
 from email_api import get_temp_email
 
@@ -63,6 +64,16 @@ _VOWELS = set("aeiou")
 def get_supported_locales() -> list[str]:
     """Return the list of locales that have an explicit country name mapping."""
     return sorted(LOCALE_COUNTRY_MAP.keys())
+
+
+def is_supported_locale(locale: str) -> bool:
+    """
+    Return True when Faker accepts the given locale code.
+
+    Any locale Faker supports is valid, not only the ones with an explicit
+    country name in LOCALE_COUNTRY_MAP (e.g. en_CA, es_PE).
+    """
+    return locale in AVAILABLE_LOCALES
 
 
 def _calculate_age(dob, today: date | None = None) -> int:

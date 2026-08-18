@@ -17,7 +17,7 @@ from colorama import Fore, Style, init
 
 import exporter
 import history as hist
-from generator import generate_identity, get_supported_locales
+from generator import generate_identity, get_supported_locales, is_supported_locale
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -141,6 +141,12 @@ def main() -> None:
     """Parse arguments and execute the requested action."""
     parser = _build_parser()
     args = parser.parse_args()
+
+    if args.locale and not is_supported_locale(args.locale):
+        parser.error(
+            f"unknown locale: {args.locale!r}. "
+            "Run --list-locales to see the supported codes."
+        )
 
     if args.list_locales:
         print(Fore.GREEN + Style.BRIGHT + "\n  Supported locales:\n")
