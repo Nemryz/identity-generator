@@ -147,6 +147,21 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Export the identity to a JSON file in the project directory.",
     )
     parser.add_argument(
+        "--csv",
+        action="store_true",
+        help="Export the generated identities to identities.csv.",
+    )
+    parser.add_argument(
+        "--count",
+        type=int,
+        metavar="N",
+        default=1,
+        help=(
+            "Generate N identities in one run. Batch mode prints one "
+            "compact line per identity instead of the full profile."
+        ),
+    )
+    parser.add_argument(
         "--clipboard",
         action="store_true",
         help="Copy the formatted profile to the system clipboard.",
@@ -246,27 +261,47 @@ def main() -> None:
         sys.exit(0)
 
     print(_DIM + "\n  Generating identity...\n")
-    identity = generate_identity(
-        locale=args.locale,
-        email_usable=not args.email_offline,
-        reuse=args.reuse,
-    )
+    count = max(1, args.count)
+    identities = []
+    for i in range(count):
+        identity = generate_identity(
+            locale=args.locale,
+            email_usable=not args.email_offline,
+            reuse=args.reuse,
+        )
+        identities.append(identity)
+        if count == 1:
+            print_identity(identity)
+        else:
+            print(
+                f"  [{i + 1}/{count}] {identity['full_name']}"
+                f" — {identity['country']} — {identity['email']}"
+            )
+        if i < count - 1 and args.delay:
+            print(_DIM + f"  [throttle] waiting {args.delay}s...")
+            time.sleep(args.delay)
 
-    print_identity(identity)
-    hist.append(identity)
+    hist.append_many(identities)
+    if count > 1:
+        print(Fore.GREEN + f"\n  Batch complete: {count} identities")
 
     if args.export_json:
-        path = exporter.to_json_file(identity)
-        print(Fore.GREEN + f"\n  Exported to: {path}")
+        for identity in identities:
+            path = exporter.to_json_file(identity)
+            print(Fore.GREEN + f"\n  Exported to: {path}")
+
+    if args.csv:
+        path = exporter.to_csv_file(identities)
+        print(Fore.GREEN + f"\n  CSV written to: {path}")
 
     if args.clipboard:
         try:
-            exporter.to_clipboard(identity)
+            exporter.to_clipboard(identities[-1])
             print(Fore.GREEN + "\n  Profile copied to clipboard.")
         except Exception as exc:  # pyperclip raises various types depending on OS
             print(Fore.RED + f"\n  Clipboard unavailable: {exc}")
 
-    if args.delay:
+    if count == 1 and args.delay:
         print(_DIM + f"\n  [throttle] waiting {args.delay}s...")
         time.sleep(args.delay)
 

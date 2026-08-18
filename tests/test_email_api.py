@@ -9,6 +9,8 @@ import pytest
 import email_api
 from email_api import (
     _can_use,
+    _custom_domains,
+    _custom_email,
     _local_part,
     _offline_email,
     _record_usage,
@@ -97,6 +99,106 @@ def test_local_part_is_ascii_and_non_empty(first, last):
 def test_offline_email_uses_local_and_disposable_domain(monkeypatch):
     monkeypatch.setattr(email_api.random, "choice", lambda seq: seq[0])
     assert _offline_email("carlos.garcia") == "carlos.garcia@mailinator.com"
+
+
+def _with_custom_domains(tmp_path, monkeypatch, content):
+    domains_file = tmp_path / "domains.json"
+    domains_file.write_text(content, encoding="utf-8")
+    monkeypatch.setattr(email_api, "CUSTOM_DOMAINS_FILE", domains_file)
+    return domains_file
+
+
+def test_custom_domains_used_first_without_network(usage_file, tmp_path, monkeypatch):
+    _with_custom_domains(
+        tmp_path, monkeypatch, '{"domains": ["mail.midominio.com"]}'
+    )
+    _no_network(monkeypatch)
+    result = get_temp_email("Carlos", "García")
+    assert result["provider"] == "custom"
+    assert result["token"] is None
+    assert result["email"].startswith("carlos.garcia.")
+    assert result["email"].endswith("@mail.midominio.com")
+    assert _usage_count("custom") == 1
+
+
+def test_custom_domains_used_in_offline_mode(usage_file, tmp_path, monkeypatch):
+    _with_custom_domains(
+        tmp_path, monkeypatch, '{"domains": ["mail.midominio.com"]}'
+    )
+    _no_network(monkeypatch)
+    result = get_temp_email("Carlos", "García", usable=False)
+    assert result["provider"] == "custom"
+    assert result["email"].endswith("@mail.midominio.com")
+
+
+def test_custom_domains_missing_file_falls_back_to_chain(
+    usage_file, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(
+        email_api, "CUSTOM_DOMAINS_FILE", tmp_path / "no_such_file.json"
+    )
+    _no_network(monkeypatch)
+    result = get_temp_email("Carlos", "García")
+    assert result["provider"] == "offline"
+    assert result["email"].startswith("carlos.garcia@")
+
+
+def test_custom_domains_invalid_file_falls_back_to_chain(
+    usage_file, tmp_path, monkeypatch
+):
+    _with_custom_domains(tmp_path, monkeypatch, "{broken json")
+    _no_network(monkeypatch)
+    result = get_temp_email("Carlos", "García")
+    assert result["provider"] == "offline"
+
+
+def test_custom_domains_empty_entries_ignored(tmp_path, monkeypatch):
+    domains_file = _with_custom_domains(
+        tmp_path, monkeypatch, '{"domains": []}'
+    )
+    assert _custom_domains() == []
+    domains_file.write_text('{"domains": [42, ""]}', encoding="utf-8")
+    assert _custom_domains() == []
+
+
+def test_custom_domains_accepts_utf8_bom(tmp_path, monkeypatch):
+    _with_custom_domains(tmp_path, monkeypatch, "\ufeff" '{"domains": ["mail.x.com"]}')
+    assert _custom_domains() == ["mail.x.com"]
+
+
+def test_custom_email_has_numeric_suffix(monkeypatch):
+    monkeypatch.setattr(email_api.random, "choices", lambda *a, **k: ["1234"])
+    monkeypatch.setattr(email_api.random, "choice", lambda seq: seq[0])
+    assert _custom_email("carlos.garcia", ["mail.x.com"]) == (
+        "carlos.garcia.1234@mail.x.com"
+    )
+
+
+def test_check_inbox_custom_raises_forwarding_message(usage_file):
+    with pytest.raises(ValueError, match="tu bandeja"):
+        check_inbox(
+            {
+                "email": "x@mail.midominio.com",
+                "email_token": None,
+                "email_provider": "custom",
+            }
+        )
+
+
+def test_usage_summary_hides_custom_when_not_configured(usage_file):
+    summary = usage_summary()
+    assert "custom" not in summary
+
+
+def test_usage_summary_shows_custom_when_configured(
+    usage_file, tmp_path, monkeypatch
+):
+    _with_custom_domains(
+        tmp_path, monkeypatch, '{"domains": ["mail.midominio.com"]}'
+    )
+    summary = usage_summary()
+    assert "custom" in summary
+    assert "offline" in summary
 
 
 def test_offline_mode_skips_network(usage_file, monkeypatch):

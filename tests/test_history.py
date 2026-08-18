@@ -28,6 +28,23 @@ def test_append_and_get_all_roundtrip(history_file):
     assert [e["id"] for e in history.get_all()] == ["one", "two"]
 
 
+def test_append_many_writes_all_in_one_call(history_file):
+    history.append_many([_identity("one"), _identity("two"), _identity("three")])
+    assert [e["id"] for e in history.get_all()] == ["one", "two", "three"]
+    assert not history._lock_file().exists()
+
+
+def test_append_many_empty_is_noop(history_file):
+    history.append_many([])
+    assert history.count() == 0
+
+
+def test_append_many_extends_existing_entries(history_file):
+    history.append(_identity("first"))
+    history.append_many([_identity("a"), _identity("b")])
+    assert history.count() == 3
+
+
 def test_get_all_limit_returns_most_recent(history_file):
     for i in range(5):
         history.append(_identity(str(i)))

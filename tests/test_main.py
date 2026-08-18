@@ -8,6 +8,7 @@ Every subprocess points IDENTITY_HISTORY_FILE at a temporary path so the
 generated identities never pollute the real history.json of the project.
 """
 
+import csv
 import json
 import os
 import subprocess
@@ -23,6 +24,7 @@ def _run(history_file: Path, *args: str) -> subprocess.CompletedProcess:
         **os.environ,
         "IDENTITY_HISTORY_FILE": str(history_file),
         "EMAIL_USAGE_FILE": str(history_file.parent / "email_usage.json"),
+        "CUSTOM_DOMAINS_FILE": str(history_file.parent / "domains.json"),
     }
     return subprocess.run(
         [PYTHON, "-X", "utf8", str(REPO_ROOT / "main.py"), *args],
@@ -155,3 +157,42 @@ def test_delay_flag_prints_throttle_message(tmp_path):
     result = _run(history_file, "--delay", "0.01", "--locale", "en_US")
     assert result.returncode == 0
     assert "[throttle]" in result.stdout
+
+
+def test_batch_count_writes_history_and_csv(tmp_path):
+    history_file = tmp_path / "history.json"
+    result = _run(
+        history_file,
+        "--count",
+        "3",
+        "--email-offline",
+        "--csv",
+        "--delay",
+        "0.01",
+        "--locale",
+        "en_US",
+    )
+    assert result.returncode == 0
+    entries = json.loads(history_file.read_text(encoding="utf-8"))
+    assert len(entries) == 3
+    assert "[3/3]" in result.stdout
+    assert "Batch complete: 3 identities" in result.stdout
+    assert "[throttle]" in result.stdout
+
+    csv_path = REPO_ROOT / "identities.csv"
+    assert csv_path.exists()
+    with csv_path.open(encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    assert len(rows) == 3
+    assert "email_token" not in rows[0]
+    csv_path.unlink()
+
+
+def test_batch_count_one_prints_full_profile(tmp_path):
+    history_file = tmp_path / "history.json"
+    result = _run(
+        history_file, "--count", "1", "--email-offline", "--locale", "en_US"
+    )
+    assert result.returncode == 0
+    assert "IDENTITY" in result.stdout
+    assert "[1/1]" not in result.stdout

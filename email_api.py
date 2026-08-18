@@ -6,6 +6,9 @@ Handles temporary email address generation for a synthetic identity.
 The preferred path creates a REAL usable inbox whose address is built from
 the identity's first and last names (e.g. carlos.garcia@<provider>):
 
+0. Custom    - own catch-all domain (domains.json, e.g. Cloudflare Email
+               Routing). Addresses are deliverable to the user's real
+               inbox, never rate-limited and never blocked as disposable.
 1. tempmail.lol - REST API, no key on the free tier. Custom prefix. The
    creation response includes the inbox token in the same request.
 2. mail.tm      - REST API, no key. Custom address + best-effort session
@@ -50,7 +53,12 @@ USAGE_FILE = Path(
     os.environ.get("EMAIL_USAGE_FILE", Path(__file__).parent / "email_usage.json")
 )
 
+CUSTOM_DOMAINS_FILE = Path(
+    os.environ.get("CUSTOM_DOMAINS_FILE", Path(__file__).parent / "domains.json")
+)
+
 PROVIDER_LIMITS = {
+    "custom": {"window": 0, "max": 0},
     "tempmail": {"window": 300, "max": 25},
     "mailtm": {"window": 1, "max": 8},
     "offline": {"window": 0, "max": 0},
@@ -68,13 +76,25 @@ def get_temp_email(
     Create an email address for the identity, returned as
     {"email": str, "token": str | None, "provider": str}.
 
-    With usable=True the real-inbox providers are tried in order
-    (tempmail.lol then mail.tm), falling back to a plausible address
-    without an inbox when both are unreachable or rate-limited.
-    With usable=False only the plausible offline address is produced.
-    The token, when present, can later be used to read the inbox.
+    When a custom catch-all domain is configured in domains.json it is
+    used first: addresses are deliverable to the user's real inbox with
+    no API, no rate limit and no blocking risk. Otherwise, with
+    usable=True the real-inbox providers are tried in order (tempmail.lol
+    then mail.tm), falling back to a plausible address without an inbox
+    when both are unreachable or rate-limited. With usable=False only the
+    plausible offline address is produced. The token, when present, can
+    later be used to read the inbox.
     """
     local = _local_part(first_name, last_name)
+
+    custom = _custom_domains()
+    if custom:
+        _record_usage("custom")
+        return {
+            "email": _custom_email(local, custom),
+            "token": None,
+            "provider": "custom",
+        }
 
     if not usable:
         _record_usage("offline")
@@ -128,6 +148,11 @@ def check_inbox(identity: dict, limit: int = 10) -> list[dict]:
     """
     provider = identity.get("email_provider")
     token = identity.get("email_token")
+    if provider == "custom":
+        raise ValueError(
+            "Esta dirección se reenvía a tu bandeja de correo real "
+            "(dominio catch-all) - revisa tu correo."
+        )
     if not token:
         raise ValueError("Esta identidad no tiene un inbox usable (correo offline).")
     if provider == "tempmail":
@@ -144,7 +169,10 @@ def usage_summary() -> str:
     """Render the per-provider usage counters for --email-usage."""
     lines = []
     usage = _load_usage()
-    for provider in ("tempmail", "mailtm", "offline"):
+    providers = ["tempmail", "mailtm", "offline"]
+    if _custom_domains():
+        providers.insert(0, "custom")
+    for provider in providers:
         limit = PROVIDER_LIMITS[provider]
         count = _usage_count(provider)
         window = f"ventana {limit['window']}s" if limit["window"] else "sin límite"
@@ -183,6 +211,36 @@ def _offline_email(local: str) -> str:
     """Plausible address on a known disposable domain, no inbox."""
     domain = random.choice(FALLBACK_DOMAINS)
     return f"{local}@{domain}"
+
+
+def _custom_domains() -> list[str]:
+    """
+    Read the user's catch-all domains from domains.json.
+
+    Expected format: {"domains": ["mail.example.com"]}. Returns an empty
+    list when the file is missing, invalid or has no usable entries.
+    """
+    if not CUSTOM_DOMAINS_FILE.exists():
+        return []
+    try:
+        data = json.loads(
+            CUSTOM_DOMAINS_FILE.read_text(encoding="utf-8-sig")
+        )
+        domains = data.get("domains", []) if isinstance(data, dict) else []
+        return [d for d in domains if isinstance(d, str) and d]
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
+def _custom_email(local: str, domains: list[str]) -> str:
+    """
+    Build an address on a custom catch-all domain.
+
+    A random 4-digit suffix avoids collisions with earlier addresses in
+    the user's own inbox while staying readable.
+    """
+    suffix = "".join(random.choices(string.digits, k=4))
+    return f"{local}.{suffix}@{random.choice(domains)}"
 
 
 def _mailtm_email(local: str) -> tuple[str, str] | None:

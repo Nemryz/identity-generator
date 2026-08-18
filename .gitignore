@@ -3,6 +3,10 @@ history.json
 email_usage.json
 email_usage.json.lock
 *_identity.json
+identities.csv
+
+# User configuration — commit domains.example.json instead
+domains.json
 
 # Python
 __pycache__/

@@ -1,7 +1,9 @@
 """
-Tests for exporter.py, focusing on JSON export collision handling.
+Tests for exporter.py, focusing on JSON export collision handling
+and CSV batch export.
 """
 
+import csv
 import json
 
 import pytest
@@ -48,3 +50,28 @@ def test_export_roundtrip_content(out_dir):
     identity = _identity("maria77521", "cccccccccccccccc")
     path = exporter.to_json_file(identity)
     assert json.loads(path.read_text(encoding="utf-8")) == identity
+
+
+def test_csv_export_rows_and_columns(out_dir):
+    identities = [
+        _identity("carlos85042", "aaaaaaaa"),
+        _identity("maria77521", "bbbbbbbb"),
+    ]
+    path = exporter.to_csv_file(identities)
+    assert path.name == "identities.csv"
+    with path.open(encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    assert len(rows) == 2
+    assert rows[0]["username"] == "carlos85042"
+    assert rows[0]["full_name"] == "Test User"
+    assert rows[0]["email"] == "test@example.com"
+    assert "email_token" not in rows[0]
+
+
+def test_csv_export_overwrites_previous_file(out_dir):
+    exporter.to_csv_file([_identity("first", "1")])
+    path = exporter.to_csv_file([_identity("second", "2")])
+    with path.open(encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    assert len(rows) == 1
+    assert rows[0]["username"] == "second"

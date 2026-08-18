@@ -45,6 +45,24 @@ def append(identity: dict) -> None:
         _release_lock()
 
 
+def append_many(identities: list[dict]) -> None:
+    """
+    Add several identities to the history in a single locked write.
+
+    Used by batch generation (--count N) so N appends do not acquire and
+    release the lock N times.
+    """
+    if not identities:
+        return
+    _acquire_lock()
+    try:
+        entries = _load()
+        entries.extend(identities)
+        _save(entries)
+    finally:
+        _release_lock()
+
+
 def get_all(limit: int | None = None) -> list[dict]:
     """
     Return stored identities, optionally capped at the last N entries.

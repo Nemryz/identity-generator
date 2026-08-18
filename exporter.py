@@ -1,23 +1,49 @@
 """
 exporter.py
 
-Handles output of a generated identity in two formats.
+Handles output of a generated identity in three formats.
 
 JSON export writes the full identity dict to a file named after the username
-in the project directory. Clipboard export formats the identity as a plain-text
-block and copies it to the system clipboard using pyperclip.
+in the project directory. CSV export writes one row per identity to
+identities.csv (used by --count --csv for database seeding). Clipboard
+export formats the identity as a plain-text block and copies it to the
+system clipboard using pyperclip.
 
 The clipboard feature relies on the host system having a clipboard mechanism
 available (xclip or xsel on Linux, pbcopy on macOS, clip.exe on Windows).
 It will not work inside a Docker container unless a display is forwarded.
 """
 
+import csv
 import json
 from pathlib import Path
 
 import pyperclip
 
 _OUTPUT_DIR = Path(__file__).parent
+
+_CSV_FIELDS = [
+    "full_name",
+    "first_name",
+    "last_name",
+    "gender",
+    "date_of_birth",
+    "age",
+    "address",
+    "city",
+    "postcode",
+    "country",
+    "phone",
+    "occupation",
+    "email",
+    "email_provider",
+    "username",
+    "nickname",
+    "password",
+    "id",
+    "locale",
+    "created_at",
+]
 
 
 def to_json_file(identity: dict) -> Path:
@@ -45,6 +71,26 @@ def to_json_file(identity: dict) -> Path:
 def to_clipboard(identity: dict) -> None:
     """Copy the identity formatted as plain text to the system clipboard."""
     pyperclip.copy(_format_profile(identity))
+
+
+def to_csv_file(identities: list[dict]) -> Path:
+    """
+    Write the identities as rows to identities.csv in the project directory.
+
+    The file is overwritten on every run so pipelines always know the
+    name. email_token is intentionally excluded: the CSV targets database
+    seeding, where inbox tokens are meaningless.
+    Returns the resolved file path.
+    """
+    path = _OUTPUT_DIR / "identities.csv"
+    with path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=_CSV_FIELDS)
+        writer.writeheader()
+        for identity in identities:
+            writer.writerow(
+                {field: identity.get(field, "") for field in _CSV_FIELDS}
+            )
+    return path
 
 
 def _format_profile(identity: dict) -> str:

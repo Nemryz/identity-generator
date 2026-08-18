@@ -75,6 +75,15 @@ Wait N seconds after generating (throttle for script loops):
 
     python -X utf8 main.py --delay 2
 
+Generate 50 identities as CSV rows for database seeding:
+
+    python -X utf8 main.py --count 50 --csv
+
+Batch mode prints one compact line per identity, writes all of them to
+history and writes identities.csv (overwritten every run, no email_token
+column). Combine with --delay to stay inside email provider limits, or
+--email-offline for a fully offline batch.
+
 The -X utf8 flag is required on Windows to ensure special characters render
 correctly in the terminal. On Linux and macOS it is optional.
 
@@ -127,6 +136,7 @@ Run --list-locales to see the full list.
 Emails are created against two free public APIs (no account or API key
 required), in order:
 
+0. Custom catch-all domain (see below), when configured.
 1. tempmail.lol: the inbox token is returned in the same response as the
    address. Free tier: inbox expires after 1 hour, 25 inboxes per 5 minutes
    per IP.
@@ -146,6 +156,28 @@ Usage counters per provider are persisted in email_usage.json (ignored by
 git) so the chain skips a provider before it rejects the request. A warning
 is printed to stderr at 80% of a provider's limit. Reads are counted too
 (read_tempmail / read_mailtm, informational, no hard limit).
+
+## Custom catch-all domain
+
+Many services block disposable domains outright. If you own a domain you
+can make every generated address deliverable with a catch-all rule — no
+API, no rate limits, nothing to block. This is the recommended setup for
+regular use.
+
+1. In Cloudflare Email Routing (free) or ImprovMX, add your domain and a
+   catch-all rule that forwards to your real inbox.
+2. Copy `domains.example.json` to `domains.json` (ignored by git) and put
+   your domain in it:
+
+       {"domains": ["mail.midominio.com"]}
+
+3. Done. Generated addresses look like
+   `carlos.garcia.4821@mail.midominio.com` and arrive in your inbox.
+   --check-inbox reports that the address is forwarded, since there is no
+   API to read (the messages land in your real mail client).
+
+Without domains.json the tool behaves exactly as before (tempmail.lol
+then mail.tm, then offline fallback).
 
 ## History
 
@@ -196,32 +228,38 @@ email_api.py
 
     Creates a real temporary inbox whose address is built from the
     identity's names, using the tempmail.lol API first and the mail.tm API
-    as fallback. The returned token is stored with the identity so the
-    inbox can be read later with check_inbox(), which fetches received
-    emails for --check-inbox. When both providers are unreachable or
-    rate-limited, a plausible address is constructed locally using a
-    hardcoded list of known disposable mail domains. Per-provider usage
-    counters are persisted in email_usage.json to respect rate limits.
-    No API key or account is required.
+    as fallback. When a custom catch-all domain is configured in
+    domains.json it is used first: addresses are deliverable to the user's
+    real inbox with no API and no rate limits. The returned token is
+    stored with the identity so the inbox can be read later with
+    check_inbox(), which fetches received emails for --check-inbox. When
+    all real-inbox providers are unreachable or rate-limited, a plausible
+    address is constructed locally using a hardcoded list of known
+    disposable mail domains. Per-provider usage counters are persisted in
+    email_usage.json to respect rate limits. No API key or account is
+    required.
 
 history.py
 
     Reads and writes history.json. Every generated identity is appended to
-    the list on disk. The get_all function accepts an optional limit to
-    return only the most recent entries. get_by_uuid finds an identity by
-    its ID (used by --check-inbox), and find_usable_email returns the most
-    recent inbox that can be reused (used by --reuse). If the file is
-    missing or cannot be parsed, all read operations return an empty list.
-    A corrupted file is backed up to history.corrupt.<timestamp>.bak and
-    announced on stderr instead of being silently destroyed.
+    the list on disk (batches via append_many, one locked write). The
+    get_all function accepts an optional limit to return only the most
+    recent entries. get_by_uuid finds an identity by its ID (used by
+    --check-inbox), and find_usable_email returns the most recent inbox
+    that can be reused (used by --reuse). If the file is missing or cannot
+    be parsed, all read operations return an empty list. A corrupted file
+    is backed up to history.corrupt.<timestamp>.bak and announced on
+    stderr instead of being silently destroyed.
 
 exporter.py
 
-    Provides two output functions. to_json_file writes the identity dict to
-    a file named after the username. to_clipboard formats the profile as a
-    fixed-width plain-text block and copies it to the system clipboard using
-    pyperclip. The plain-text format is intentionally simple so it can be
-    pasted into any field without formatting artefacts.
+    Provides three output functions. to_json_file writes the identity dict
+    to a file named after the username. to_csv_file writes every identity
+    as a row in identities.csv (overwritten each run; email_token is
+    excluded) for database seeding. to_clipboard formats the profile as a
+    fixed-width plain-text block and copies it to the system clipboard
+    using pyperclip. The plain-text format is intentionally simple so it
+    can be pasted into any field without formatting artefacts.
 
 ## Possible extensions
 
