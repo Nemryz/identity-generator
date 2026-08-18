@@ -18,7 +18,7 @@ import secrets
 import string
 import unicodedata
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from faker import Faker
 
@@ -65,6 +65,26 @@ def get_supported_locales() -> list[str]:
     return sorted(LOCALE_COUNTRY_MAP.keys())
 
 
+def _calculate_age(dob, today: date | None = None) -> int:
+    """
+    Calculate the exact age in whole years for a birth date.
+
+    A year is only counted once the birthday has occurred in the current
+    year. Subtracting years alone overstates the age when the birthday is
+    still pending (e.g. born Dec 1965, seen in Aug 2026: 60, not 61).
+
+    Accepts a date or datetime; ``today`` is injectable for deterministic
+    tests and defaults to the current date.
+    """
+    dob_date = dob.date() if hasattr(dob, "date") else dob
+    if today is None:
+        today = datetime.now().date()
+    age = today.year - dob_date.year
+    if (today.month, today.day) < (dob_date.month, dob_date.day):
+        age -= 1
+    return age
+
+
 def generate_identity(locale: str | None = None) -> dict:
     """
     Generate a single synthetic identity.
@@ -91,7 +111,7 @@ def generate_identity(locale: str | None = None) -> dict:
         "last_name": last,
         "full_name": f"{first} {last}",
         "date_of_birth": dob.isoformat(),
-        "age": datetime.now().year - dob.year,
+        "age": _calculate_age(dob),
         "address": _safe(fake.street_address, fake.address),
         "city": _safe(fake.city),
         "postcode": _safe(fake.postcode),
