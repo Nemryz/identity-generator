@@ -63,6 +63,32 @@ def count() -> int:
     return len(_load())
 
 
+def get_by_uuid(identity_id: str) -> dict | None:
+    """Return the stored identity with the given UUID, or None."""
+    for entry in _load():
+        if entry.get("id") == identity_id:
+            return entry
+    return None
+
+
+def find_usable_email() -> dict | None:
+    """
+    Return the most recent identity email that has a real inbox.
+
+    Returns {"email", "token", "provider"} from the newest identity with a
+    stored token, or None when there is none. Used by --reuse.
+    """
+    for entry in reversed(_load()):
+        token = entry.get("email_token")
+        if token:
+            return {
+                "email": entry.get("email", ""),
+                "token": token,
+                "provider": entry.get("email_provider"),
+            }
+    return None
+
+
 def _load() -> list[dict]:
     """
     Read and deserialize the history file.

@@ -12,6 +12,7 @@ Run with: python -X utf8 main.py [options]
 
 import argparse
 import sys
+import time
 
 from colorama import Fore, Style, init
 
@@ -89,6 +90,39 @@ def print_history(entries: list[dict]) -> None:
     print(f"  Total stored: {hist.count()}")
 
 
+def _print_inbox(selector: str) -> None:
+    """Fetch and render the received emails of one identity's inbox."""
+    if selector == "_latest":
+        entries = hist.get_all(limit=1)
+        if not entries:
+            print(Fore.YELLOW + "  No identities in history yet.")
+            return
+        identity = entries[-1]
+    else:
+        identity = hist.get_by_uuid(selector)
+        if identity is None:
+            print(Fore.RED + f"  No identity found with UUID {selector}.")
+            return
+
+    print(_DIM + "\n  Checking inbox for " + Fore.YELLOW + identity.get("email", ""))
+    print(_DIM + "  (emails are consumed when read from tempmail.lol)\n")
+    try:
+        messages = email_api.check_inbox(identity)
+    except ValueError as exc:
+        print(Fore.YELLOW + f"  {exc}")
+        return
+    if not messages:
+        print(Fore.YELLOW + "  No messages received yet (or inbox unavailable).")
+        return
+    for i, msg in enumerate(messages, 1):
+        print(f"  {i}. {_LABEL}{msg['subject']}")
+        print(f"     from: {msg['from']}")
+        body = msg["text"].strip()[:200]
+        if body:
+            print(f"     {body}")
+        print()
+
+
 def _build_parser() -> argparse.ArgumentParser:
     """Define and return the CLI argument parser."""
     parser = argparse.ArgumentParser(
@@ -150,6 +184,32 @@ def _build_parser() -> argparse.ArgumentParser:
         dest="email_usage",
         help="Show email provider usage counters and exit.",
     )
+    parser.add_argument(
+        "--check-inbox",
+        nargs="?",
+        const="_latest",
+        metavar="UUID",
+        dest="check_inbox",
+        help=(
+            "Read the inbox of the latest identity (or of the UUID given) "
+            "and print received emails."
+        ),
+    )
+    parser.add_argument(
+        "--reuse",
+        action="store_true",
+        help=(
+            "Reuse the most recent usable inbox from history instead of "
+            "creating a new email (no network calls, no provider usage)."
+        ),
+    )
+    parser.add_argument(
+        "--delay",
+        type=float,
+        metavar="SECONDS",
+        default=None,
+        help="Wait SECONDS after generating (throttle for script loops).",
+    )
     return parser
 
 
@@ -181,9 +241,15 @@ def main() -> None:
         print()
         sys.exit(0)
 
+    if args.check_inbox:
+        _print_inbox(args.check_inbox)
+        sys.exit(0)
+
     print(_DIM + "\n  Generating identity...\n")
     identity = generate_identity(
-        locale=args.locale, email_usable=not args.email_offline
+        locale=args.locale,
+        email_usable=not args.email_offline,
+        reuse=args.reuse,
     )
 
     print_identity(identity)
@@ -199,6 +265,10 @@ def main() -> None:
             print(Fore.GREEN + "\n  Profile copied to clipboard.")
         except Exception as exc:  # pyperclip raises various types depending on OS
             print(Fore.RED + f"\n  Clipboard unavailable: {exc}")
+
+    if args.delay:
+        print(_DIM + f"\n  [throttle] waiting {args.delay}s...")
+        time.sleep(args.delay)
 
     print()
 

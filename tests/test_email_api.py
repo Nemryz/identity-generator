@@ -13,6 +13,7 @@ from email_api import (
     _offline_email,
     _record_usage,
     _usage_count,
+    check_inbox,
     get_temp_email,
     usage_summary,
 )
@@ -102,6 +103,7 @@ def test_offline_mode_skips_network(usage_file, monkeypatch):
     _no_network(monkeypatch)
     result = get_temp_email("Carlos", "García", usable=False)
     assert result["token"] is None
+    assert result["provider"] == "offline"
     assert result["email"].startswith("carlos.garcia@")
     assert _usage_count("offline") == 1
 
@@ -111,6 +113,7 @@ def test_chain_prefers_tempmail(usage_file, monkeypatch):
     result = get_temp_email("Carlos", "García")
     assert result["email"] == "carlos_garcia@tmp.com"
     assert result["token"] == "tok2"
+    assert result["provider"] == "tempmail"
     assert _usage_count("tempmail") == 1
 
 
@@ -131,6 +134,7 @@ def test_chain_falls_back_to_mailtm(usage_file, monkeypatch):
     result = get_temp_email("Carlos", "García")
     assert result["email"] == "carlos.garcia@mail.tm"
     assert result["token"] == "tok1"
+    assert result["provider"] == "mailtm"
     assert _usage_count("mailtm") == 1
 
 
@@ -138,6 +142,7 @@ def test_chain_offline_when_all_providers_down(usage_file, monkeypatch):
     _no_network(monkeypatch)
     result = get_temp_email("Carlos", "García")
     assert result["token"] is None
+    assert result["provider"] == "offline"
     assert result["email"].startswith("carlos.garcia@")
     assert _usage_count("offline") == 1
 
@@ -211,3 +216,96 @@ def test_usage_summary_lists_providers(usage_file):
     summary = usage_summary()
     for provider in ("mailtm", "tempmail", "offline"):
         assert provider in summary
+
+
+def test_check_inbox_tempmail_parses_messages(usage_file, monkeypatch):
+    def fake_get(url, **kwargs):
+        assert "/v3/inboxes/tok2/emails" in url
+        return _Resp(
+            200,
+            [
+                {"from": "no-reply@shop.com", "subject": "Verify", "text": "code 123"},
+                {"from": "a@b.com", "subject": "Hi", "text": ""},
+            ],
+        )
+
+    monkeypatch.setattr(email_api.requests, "get", fake_get)
+
+    messages = check_inbox(
+        {"email": "x@tmp.com", "email_token": "tok2", "email_provider": "tempmail"}
+    )
+    assert len(messages) == 2
+    assert messages[0]["from"] == "no-reply@shop.com"
+    assert messages[0]["subject"] == "Verify"
+    assert messages[0]["text"] == "code 123"
+    assert _usage_count("read_tempmail") == 1
+
+
+def test_check_inbox_tempmail_uses_body_fallback(usage_file, monkeypatch):
+    def fake_get(url, **kwargs):
+        return _Resp(200, [{"from": "x@y.com", "subject": "S", "body": "html body"}])
+
+    monkeypatch.setattr(email_api.requests, "get", fake_get)
+
+    messages = check_inbox(
+        {"email": "x@tmp.com", "email_token": "t", "email_provider": "tempmail"}
+    )
+    assert messages[0]["text"] == "html body"
+
+
+def test_check_inbox_mailtm_uses_bearer_and_fetches_bodies(usage_file, monkeypatch):
+    seen_headers = {}
+
+    def fake_get(url, **kwargs):
+        seen_headers.setdefault(url, kwargs.get("headers", {}))
+        if url.endswith("/messages/msg1"):
+            return _Resp(200, {"id": "msg1", "text": "full body"})
+        return _Resp(
+            200,
+            {
+                "hydra:member": [
+                    {
+                        "id": "msg1",
+                        "from": [{"address": "boss@corp.com"}],
+                        "subject": "Welcome",
+                    }
+                ]
+            },
+        )
+
+    monkeypatch.setattr(email_api.requests, "get", fake_get)
+
+    messages = check_inbox(
+        {"email": "x@mail.tm", "email_token": "mtok", "email_provider": "mailtm"}
+    )
+    assert len(messages) == 1
+    assert messages[0]["from"] == "boss@corp.com"
+    assert messages[0]["subject"] == "Welcome"
+    assert messages[0]["text"] == "full body"
+    assert seen_headers["https://api.mail.tm/messages"]["Authorization"] == "Bearer mtok"
+    assert _usage_count("read_mailtm") == 1
+
+
+def test_check_inbox_offline_identity_raises(usage_file):
+    with pytest.raises(ValueError):
+        check_inbox(
+            {"email": "x@yopmail.com", "email_token": None, "email_provider": "offline"}
+        )
+
+
+def test_check_inbox_unknown_provider_raises(usage_file):
+    with pytest.raises(ValueError):
+        check_inbox({"email": "x@y.com", "email_token": "t", "email_provider": "old"})
+
+
+def test_check_inbox_fetch_failure_returns_empty(usage_file, monkeypatch, capsys):
+    def boom(*_args, **_kwargs):
+        raise RuntimeError("api down")
+
+    monkeypatch.setattr(email_api.requests, "get", boom)
+
+    messages = check_inbox(
+        {"email": "x@tmp.com", "email_token": "t", "email_provider": "tempmail"}
+    )
+    assert messages == []
+    assert "no se pudo consultar" in capsys.readouterr().err

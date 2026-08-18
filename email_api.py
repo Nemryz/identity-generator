@@ -15,8 +15,9 @@ the identity's first and last names (e.g. carlos.garcia@<provider>):
 Rate limits are tracked per provider in email_usage.json (tempmail.lol: 25
 inboxes per 5 minutes per IP, mail.tm: 8 requests/second) so the chain
 skips a provider before it rejects us, and the user is warned when a limit
-is approaching. The returned token lets a future --check-inbox command
-read the mailbox for verification codes.
+is approaching. The returned token lets the --check-inbox command read the
+mailbox for verification codes; read operations are also counted so their
+usage stays visible.
 
 API references:
 - https://docs.mail.tm/
@@ -65,7 +66,7 @@ def get_temp_email(
 ) -> dict:
     """
     Create an email address for the identity, returned as
-    {"email": str, "token": str | None}.
+    {"email": str, "token": str | None, "provider": str}.
 
     With usable=True the real-inbox providers are tried in order
     (tempmail.lol then mail.tm), falling back to a plausible address
@@ -77,14 +78,22 @@ def get_temp_email(
 
     if not usable:
         _record_usage("offline")
-        return {"email": _offline_email(local), "token": None}
+        return {
+            "email": _offline_email(local),
+            "token": None,
+            "provider": "offline",
+        }
 
     if _can_use("tempmail"):
         result = _tempmail_email(local.replace(".", "_"))
         if result is not None:
             _record_usage("tempmail")
             address, token = result
-            return {"email": address, "token": token or None}
+            return {
+                "email": address,
+                "token": token or None,
+                "provider": "tempmail",
+            }
     _warn_provider("tempmail", "mail.tm")
 
     if _can_use("mailtm"):
@@ -92,21 +101,57 @@ def get_temp_email(
         if result is not None:
             _record_usage("mailtm")
             address, token = result
-            return {"email": address, "token": token or None}
+            return {
+                "email": address,
+                "token": token or None,
+                "provider": "mailtm",
+            }
     _warn_provider("mailtm", "offline")
 
     _record_usage("offline")
-    return {"email": _offline_email(local), "token": None}
+    return {
+        "email": _offline_email(local),
+        "token": None,
+        "provider": "offline",
+    }
+
+
+def check_inbox(identity: dict, limit: int = 10) -> list[dict]:
+    """
+    Fetch received emails for an identity's inbox.
+
+    Uses the provider and token stored on the identity. Returns a list of
+    message dicts with keys "from", "subject" and "text". Raises ValueError
+    when the identity has no inbox to read (offline email or unknown
+    provider). An unreachable or rejecting API returns an empty list after
+    warning on stderr.
+    """
+    provider = identity.get("email_provider")
+    token = identity.get("email_token")
+    if not token:
+        raise ValueError("Esta identidad no tiene un inbox usable (correo offline).")
+    if provider == "tempmail":
+        return _tempmail_read(token, limit)
+    if provider == "mailtm":
+        return _mailtm_read(token, limit)
+    raise ValueError(
+        "Proveedor de email desconocido o identidad antigua sin email_provider; "
+        "regenera la identidad."
+    )
 
 
 def usage_summary() -> str:
     """Render the per-provider usage counters for --email-usage."""
     lines = []
+    usage = _load_usage()
     for provider in ("tempmail", "mailtm", "offline"):
         limit = PROVIDER_LIMITS[provider]
         count = _usage_count(provider)
         window = f"ventana {limit['window']}s" if limit["window"] else "sin límite"
         lines.append(f"    {provider:<10} {count} creaciones  ({window})")
+        read_key = f"read_{provider}"
+        if usage.get(read_key):
+            lines.append(f"    {read_key:<9} {len(usage[read_key])} lecturas")
     return "\n".join(lines)
 
 
@@ -214,6 +259,87 @@ def _tempmail_email(prefix: str) -> tuple[str, str] | None:
         return None
     except Exception:
         return None
+
+
+def _tempmail_read(token: str, limit: int) -> list[dict]:
+    """
+    Read received emails from a tempmail.lol inbox.
+
+    v3 consumes only the emails it returns, so the limit keeps later
+    messages intact. Returns an empty list when the API is unreachable
+    or rejects the token.
+    """
+    try:
+        response = requests.get(
+            f"{TEMPMAIL_BASE}/v3/inboxes/{token}/emails",
+            params={"limit": limit},
+            timeout=REQUEST_TIMEOUT,
+        )
+        response.raise_for_status()
+        data = response.json()
+        messages = data if isinstance(data, list) else []
+        _record_usage("read_tempmail")
+        return [
+            {
+                "from": msg.get("from", ""),
+                "subject": msg.get("subject", ""),
+                "text": msg.get("text") or msg.get("body", ""),
+            }
+            for msg in messages
+        ]
+    except Exception:
+        print(
+            "[email] no se pudo consultar el inbox de tempmail.lol",
+            file=sys.stderr,
+        )
+        return []
+
+
+def _mailtm_read(token: str, limit: int) -> list[dict]:
+    """
+    Read received emails from a mail.tm inbox.
+
+    The message list is fetched with the bearer token; each message body
+    is fetched individually. Returns an empty list when the API is
+    unreachable or rejects the token.
+    """
+    try:
+        headers = {"Authorization": f"Bearer {token}"}
+        response = requests.get(
+            f"{MAILTM_BASE}/messages",
+            headers=headers,
+            timeout=REQUEST_TIMEOUT,
+        )
+        response.raise_for_status()
+        data = response.json()
+        messages = data.get("hydra:member", []) if isinstance(data, dict) else []
+        result = []
+        for msg in messages[:limit]:
+            body = ""
+            msg_id = msg.get("id")
+            if msg_id:
+                full = requests.get(
+                    f"{MAILTM_BASE}/messages/{msg_id}",
+                    headers=headers,
+                    timeout=REQUEST_TIMEOUT,
+                )
+                if full.status_code == 200:
+                    full_data = full.json()
+                    body = full_data.get("text") or full_data.get("html") or ""
+            sender = ""
+            if msg.get("from"):
+                sender = msg["from"][0].get("address", "")
+            result.append(
+                {"from": sender, "subject": msg.get("subject", ""), "text": body}
+            )
+        _record_usage("read_mailtm")
+        return result
+    except Exception:
+        print(
+            "[email] no se pudo consultar el inbox de mail.tm",
+            file=sys.stderr,
+        )
+        return []
 
 
 def _usage_count(provider: str) -> int:

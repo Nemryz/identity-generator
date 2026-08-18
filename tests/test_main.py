@@ -81,3 +81,77 @@ def test_email_usage_flag_shows_counters(tmp_path):
     assert "mailtm" in result.stdout
     assert "tempmail" in result.stdout
     assert "offline" in result.stdout
+
+
+def _write_history(history_file: Path, entries: list[dict]) -> None:
+    history_file.write_text(
+        json.dumps(entries, ensure_ascii=False), encoding="utf-8"
+    )
+
+
+def _usable_identity(identity_id="11111111-2222-3333-4444-555555555555"):
+    return {
+        "id": identity_id,
+        "full_name": "Ana López",
+        "locale": "es_ES",
+        "email": "ana.lopez@tmp.com",
+        "email_token": "deadbeef",
+        "email_provider": "tempmail",
+    }
+
+
+def test_check_inbox_latest_uses_stored_token(tmp_path):
+    history_file = tmp_path / "history.json"
+    _write_history(history_file, [_usable_identity()])
+    result = _run(history_file, "--check-inbox")
+    assert result.returncode == 0
+    assert "Checking inbox" in result.stdout
+    assert "ana.lopez@tmp.com" in result.stdout
+
+
+def test_check_inbox_by_uuid(tmp_path):
+    history_file = tmp_path / "history.json"
+    _write_history(
+        history_file,
+        [_usable_identity("aaaaaaaa-0000-0000-0000-000000000000")],
+    )
+    result = _run(
+        history_file, "--check-inbox", "aaaaaaaa-0000-0000-0000-000000000000"
+    )
+    assert result.returncode == 0
+    assert "Checking inbox" in result.stdout
+
+
+def test_check_inbox_unknown_uuid_reports_not_found(tmp_path):
+    history_file = tmp_path / "history.json"
+    _write_history(history_file, [_usable_identity()])
+    result = _run(history_file, "--check-inbox", "no-such-uuid")
+    assert result.returncode == 0
+    assert "No identity found" in result.stdout
+
+
+def test_check_inbox_empty_history_reports_none(tmp_path):
+    history_file = tmp_path / "history.json"
+    _write_history(history_file, [])
+    result = _run(history_file, "--check-inbox")
+    assert result.returncode == 0
+    assert "No identities in history" in result.stdout
+
+
+def test_reuse_flag_copies_previous_inbox(tmp_path):
+    history_file = tmp_path / "history.json"
+    _write_history(history_file, [_usable_identity()])
+    result = _run(history_file, "--reuse", "--locale", "en_US")
+    assert result.returncode == 0
+    entries = json.loads(history_file.read_text(encoding="utf-8"))
+    assert len(entries) == 2
+    assert entries[1]["email"] == "ana.lopez@tmp.com"
+    assert entries[1]["email_token"] == "deadbeef"
+    assert entries[1]["email_provider"] == "tempmail"
+
+
+def test_delay_flag_prints_throttle_message(tmp_path):
+    history_file = tmp_path / "history.json"
+    result = _run(history_file, "--delay", "0.01", "--locale", "en_US")
+    assert result.returncode == 0
+    assert "[throttle]" in result.stdout

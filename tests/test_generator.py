@@ -29,7 +29,7 @@ TODAY = date(2026, 8, 18)
 
 
 def _fake_email(*_args, **_kwargs):
-    return {"email": "test@example.com", "token": "fake-token"}
+    return {"email": "test@example.com", "token": "fake-token", "provider": "tempmail"}
 
 
 def test_age_when_birthday_already_passed():
@@ -137,16 +137,44 @@ def test_generated_identity_includes_email_token(monkeypatch):
     identity = generate_identity(locale="en_US")
     assert identity["email"] == "test@example.com"
     assert identity["email_token"] == "fake-token"
+    assert identity["email_provider"] == "tempmail"
 
 
 def test_generated_identity_email_offline_passes_flag(monkeypatch):
     def offline_email(*_args, **_kwargs):
-        return {"email": "x@yopmail.com", "token": None}
+        return {"email": "x@yopmail.com", "token": None, "provider": "offline"}
 
     monkeypatch.setattr("generator.get_temp_email", offline_email)
     identity = generate_identity(locale="en_US", email_usable=False)
     assert identity["email"] == "x@yopmail.com"
     assert identity["email_token"] is None
+    assert identity["email_provider"] == "offline"
+
+
+def test_reuse_copies_previous_inbox_without_network(monkeypatch):
+    monkeypatch.setattr(
+        "history.find_usable_email",
+        lambda: {"email": "reused@tmp.com", "token": "t1", "provider": "tempmail"},
+    )
+
+    def boom(*_args, **_kwargs):
+        raise AssertionError("get_temp_email must not be called with --reuse")
+
+    monkeypatch.setattr("generator.get_temp_email", boom)
+
+    identity = generate_identity(locale="en_US", reuse=True)
+    assert identity["email"] == "reused@tmp.com"
+    assert identity["email_token"] == "t1"
+    assert identity["email_provider"] == "tempmail"
+
+
+def test_reuse_falls_back_to_creation_without_previous(monkeypatch, capsys):
+    monkeypatch.setattr("history.find_usable_email", lambda: None)
+    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+
+    identity = generate_identity(locale="en_US", reuse=True)
+    assert identity["email"] == "test@example.com"
+    assert "no hay inbox previo" in capsys.readouterr().err
 
 
 def test_cjk_name_username_falls_back_to_user_prefix(monkeypatch):

@@ -58,9 +58,22 @@ Generate a plausible email without a real inbox (no network calls):
 
     python -X utf8 main.py --email-offline
 
+Reuse the most recent usable inbox instead of creating a new one:
+
+    python -X utf8 main.py --reuse
+
+Read the inbox of the latest identity (or of a specific UUID):
+
+    python -X utf8 main.py --check-inbox
+    python -X utf8 main.py --check-inbox <uuid>
+
 Show email provider usage counters:
 
     python -X utf8 main.py --email-usage
+
+Wait N seconds after generating (throttle for script loops):
+
+    python -X utf8 main.py --delay 2
 
 The -X utf8 flag is required on Windows to ensure special characters render
 correctly in the terminal. On Linux and macOS it is optional.
@@ -96,8 +109,10 @@ Run --list-locales to see the full list.
     email           Real temporary inbox with an address built from the
                     identity's names (tempmail.lol, then mail.tm), or a
                     plausible address on a disposable domain when offline.
-    email_token     Inbox token enabling the (future) --check-inbox command.
+    email_token     Inbox token enabling the --check-inbox command.
                     Null when the email has no real inbox.
+    email_provider  Provider that owns the inbox ("tempmail", "mailtm" or
+                    "offline"); tells --check-inbox which API to query.
     username        ASCII-safe string built from the first name and birth year.
     nickname        Short informal handle derived from the first syllable
                     of the first name plus a random suffix.
@@ -122,9 +137,15 @@ When both providers are unreachable or rate-limited, a plausible address
 on a known disposable domain is produced without an inbox (email_token is
 null). Use --email-offline to force this mode.
 
+Read operations (--check-inbox) query the inbox with the stored token:
+tempmail.lol consumes the emails it returns (limit 10 by default), mail.tm
+keeps them. Identities created before the email_provider field existed
+cannot be read; regenerate them.
+
 Usage counters per provider are persisted in email_usage.json (ignored by
 git) so the chain skips a provider before it rejects the request. A warning
-is printed to stderr at 80% of a provider's limit.
+is printed to stderr at 80% of a provider's limit. Reads are counted too
+(read_tempmail / read_mailtm, informational, no hard limit).
 
 ## History
 
@@ -176,7 +197,8 @@ email_api.py
     Creates a real temporary inbox whose address is built from the
     identity's names, using the tempmail.lol API first and the mail.tm API
     as fallback. The returned token is stored with the identity so the
-    inbox can be read later. When both providers are unreachable or
+    inbox can be read later with check_inbox(), which fetches received
+    emails for --check-inbox. When both providers are unreachable or
     rate-limited, a plausible address is constructed locally using a
     hardcoded list of known disposable mail domains. Per-provider usage
     counters are persisted in email_usage.json to respect rate limits.
@@ -186,9 +208,12 @@ history.py
 
     Reads and writes history.json. Every generated identity is appended to
     the list on disk. The get_all function accepts an optional limit to
-    return only the most recent entries. If the file is missing or cannot
-    be parsed, all read operations return an empty list and the next write
-    recreates the file cleanly.
+    return only the most recent entries. get_by_uuid finds an identity by
+    its ID (used by --check-inbox), and find_usable_email returns the most
+    recent inbox that can be reused (used by --reuse). If the file is
+    missing or cannot be parsed, all read operations return an empty list.
+    A corrupted file is backed up to history.corrupt.<timestamp>.bak and
+    announced on stderr instead of being silently destroyed.
 
 exporter.py
 
