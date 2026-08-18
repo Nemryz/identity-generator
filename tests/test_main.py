@@ -19,7 +19,11 @@ PYTHON = sys.executable
 
 
 def _run(history_file: Path, *args: str) -> subprocess.CompletedProcess:
-    env = {**os.environ, "IDENTITY_HISTORY_FILE": str(history_file)}
+    env = {
+        **os.environ,
+        "IDENTITY_HISTORY_FILE": str(history_file),
+        "EMAIL_USAGE_FILE": str(history_file.parent / "email_usage.json"),
+    }
     return subprocess.run(
         [PYTHON, "-X", "utf8", str(REPO_ROOT / "main.py"), *args],
         capture_output=True,
@@ -69,3 +73,11 @@ def test_generated_identity_goes_to_env_history_file(tmp_path):
         else None
     )
     assert after == before
+
+
+def test_email_usage_flag_shows_counters(tmp_path):
+    result = _run(tmp_path / "history.json", "--email-usage")
+    assert result.returncode == 0
+    assert "mailtm" in result.stdout
+    assert "tempmail" in result.stdout
+    assert "offline" in result.stdout

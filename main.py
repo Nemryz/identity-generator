@@ -17,6 +17,7 @@ from colorama import Fore, Style, init
 
 import exporter
 import history as hist
+import email_api
 from generator import generate_identity, get_supported_locales, is_supported_locale
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -134,6 +135,21 @@ def _build_parser() -> argparse.ArgumentParser:
         dest="list_locales",
         help="Print all supported locale codes and exit.",
     )
+    parser.add_argument(
+        "--email-offline",
+        action="store_true",
+        dest="email_offline",
+        help=(
+            "Generate a plausible email address without a real inbox "
+            "(no network calls, no token)."
+        ),
+    )
+    parser.add_argument(
+        "--email-usage",
+        action="store_true",
+        dest="email_usage",
+        help="Show email provider usage counters and exit.",
+    )
     return parser
 
 
@@ -159,8 +175,16 @@ def main() -> None:
         print_history(hist.get_all(limit=args.limit))
         sys.exit(0)
 
+    if args.email_usage:
+        print(_LABEL + "\n  Email provider usage:\n")
+        print(email_api.usage_summary())
+        print()
+        sys.exit(0)
+
     print(_DIM + "\n  Generating identity...\n")
-    identity = generate_identity(locale=args.locale)
+    identity = generate_identity(
+        locale=args.locale, email_usable=not args.email_offline
+    )
 
     print_identity(identity)
     hist.append(identity)

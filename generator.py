@@ -99,12 +99,16 @@ def _calculate_age(dob, today: date | None = None) -> int:
     if (today.month, today.day) < (dob_date.month, dob_date.day):
         age -= 1
     return age
-
-
-def generate_identity(locale: str | None = None) -> dict:
+def generate_identity(
+    locale: str | None = None, email_usable: bool = True
+) -> dict:
     """
-    Generate a single synthetic identity. 
-    If locale is None, a random entry from DEFAULT_LOCALES is used. The returned dict contains all profile fields plus metadata (id, created_at, locale).
+    Generate a single synthetic identity.
+
+    If locale is None, a random entry from DEFAULT_LOCALES is used.
+    The returned dict contains all profile fields plus metadata (id,
+    created_at, locale). email_usable=False requests a plausible email
+    without a real inbox (no network calls).
     """
     if locale is None:
         locale = random.choice(DEFAULT_LOCALES)
@@ -114,7 +118,7 @@ def generate_identity(locale: str | None = None) -> dict:
     first = _get_first_name(fake, gender)
     last = fake.last_name()
     dob = fake.date_of_birth(minimum_age=18, maximum_age=60)
-
+    email_info = get_temp_email(first, last, usable=email_usable)
     return {
         "id": str(uuid.uuid4()),
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -131,7 +135,8 @@ def generate_identity(locale: str | None = None) -> dict:
         "country": LOCALE_COUNTRY_MAP.get(locale, locale),
         "phone": _safe(fake.phone_number),
         "occupation": _safe(fake.job),
-        "email": get_temp_email(),
+        "email": email_info["email"],
+        "email_token": email_info["token"],
         "username": _build_username(first, dob.year),
         "nickname": _build_nickname(first, locale),
         "password": _build_password(),

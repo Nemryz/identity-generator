@@ -1,5 +1,7 @@
 # Generated data — never commit real history or exported profiles
 history.json
+email_usage.json
+email_usage.json.lock
 *_identity.json
 
 # Python

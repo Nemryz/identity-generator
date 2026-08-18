@@ -25,8 +25,11 @@ from generator import (
 )
 
 AMBIGUOUS_CHARS = set("Il1O0")
-
 TODAY = date(2026, 8, 18)
+
+
+def _fake_email(*_args, **_kwargs):
+    return {"email": "test@example.com", "token": "fake-token"}
 
 
 def test_age_when_birthday_already_passed():
@@ -124,9 +127,26 @@ def test_password_avoids_ambiguous_characters():
 
 
 def test_generated_identity_password_is_valid(monkeypatch):
-    monkeypatch.setattr("generator.get_temp_email", lambda: "test@example.com")
+    monkeypatch.setattr("generator.get_temp_email", _fake_email)
     for _ in range(20):
         _assert_password_valid(generate_identity(locale="en_US")["password"])
+
+
+def test_generated_identity_includes_email_token(monkeypatch):
+    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    identity = generate_identity(locale="en_US")
+    assert identity["email"] == "test@example.com"
+    assert identity["email_token"] == "fake-token"
+
+
+def test_generated_identity_email_offline_passes_flag(monkeypatch):
+    def offline_email(*_args, **_kwargs):
+        return {"email": "x@yopmail.com", "token": None}
+
+    monkeypatch.setattr("generator.get_temp_email", offline_email)
+    identity = generate_identity(locale="en_US", email_usable=False)
+    assert identity["email"] == "x@yopmail.com"
+    assert identity["email_token"] is None
 
 
 def test_cjk_name_username_falls_back_to_user_prefix(monkeypatch):
@@ -151,7 +171,7 @@ def test_cjk_name_nickname_keeps_original_first_char(monkeypatch):
 def test_generated_identity_cjk_username_and_nickname_non_empty(
     locale, monkeypatch
 ):
-    monkeypatch.setattr("generator.get_temp_email", lambda: "test@example.com")
+    monkeypatch.setattr("generator.get_temp_email", _fake_email)
     identity = generate_identity(locale=locale)
     assert identity["username"].isascii()
     assert len(identity["username"]) >= 4
@@ -160,7 +180,7 @@ def test_generated_identity_cjk_username_and_nickname_non_empty(
 
 @pytest.mark.parametrize("locale", ["es_ES", "en_US", "fr_FR", "ja_JP"])
 def test_generated_identity_age_matches_birth_date(locale, monkeypatch):
-    monkeypatch.setattr("generator.get_temp_email", lambda: "test@example.com")
+    monkeypatch.setattr("generator.get_temp_email", _fake_email)
     identity = generate_identity(locale=locale)
     expected = _calculate_age(date.fromisoformat(identity["date_of_birth"]))
     assert identity["age"] == expected
@@ -168,7 +188,7 @@ def test_generated_identity_age_matches_birth_date(locale, monkeypatch):
 
 @pytest.mark.parametrize("locale", ["es_ES", "en_US", "fr_FR", "de_DE", "pt_BR"])
 def test_generated_identity_age_within_bounds(locale, monkeypatch):
-    monkeypatch.setattr("generator.get_temp_email", lambda: "test@example.com")
+    monkeypatch.setattr("generator.get_temp_email", _fake_email)
     for _ in range(30):
         identity = generate_identity(locale=locale)
         assert 18 <= identity["age"] <= 60

@@ -54,6 +54,14 @@ List every supported locale:
 
     python -X utf8 main.py --list-locales
 
+Generate a plausible email without a real inbox (no network calls):
+
+    python -X utf8 main.py --email-offline
+
+Show email provider usage counters:
+
+    python -X utf8 main.py --email-usage
+
 The -X utf8 flag is required on Windows to ensure special characters render
 correctly in the terminal. On Linux and macOS it is optional.
 
@@ -85,14 +93,38 @@ Run --list-locales to see the full list.
     country         Derived from the locale code.
     phone           Phone number in the locale format.
     occupation      Random job title.
-    email           Temporary address from the 1secmail API, or a fallback
-                    address using a known disposable domain when offline.
+    email           Real temporary inbox with an address built from the
+                    identity's names (tempmail.lol, then mail.tm), or a
+                    plausible address on a disposable domain when offline.
+    email_token     Inbox token enabling the (future) --check-inbox command.
+                    Null when the email has no real inbox.
     username        ASCII-safe string built from the first name and birth year.
     nickname        Short informal handle derived from the first syllable
                     of the first name plus a random suffix.
-    password        Cryptographically random string via secrets.token_urlsafe.
+    password        Random 16-character password with guaranteed uppercase,
+                    lowercase, digit and symbol, avoiding ambiguous
+                    characters (I, l, 1, O, 0).
     id              UUID v4.
     created_at      ISO 8601 timestamp in UTC.
+
+## Temporary email providers
+
+Emails are created against two free public APIs (no account or API key
+required), in order:
+
+1. tempmail.lol — the inbox token is returned in the same response as the
+   address. Free tier: inbox expires after 1 hour, 25 inboxes per 5 minutes
+   per IP.
+2. mail.tm — custom address; its /token endpoint can lag behind account
+   creation, so the token is best-effort. 8 requests per second per IP.
+
+When both providers are unreachable or rate-limited, a plausible address
+on a known disposable domain is produced without an inbox (email_token is
+null). Use --email-offline to force this mode.
+
+Usage counters per provider are persisted in email_usage.json (ignored by
+git) so the chain skips a provider before it rejects the request. A warning
+is printed to stderr at 80% of a provider's limit.
 
 ## History
 
@@ -134,17 +166,21 @@ generator.py
     Contains the generate_identity function, which creates a Faker instance
     for the chosen locale and uses it to produce every regional field. Helper
     functions handle gendered first names, ASCII-safe username construction,
-    syllable-based nickname derivation, and safe calls to Faker providers that
-    may not exist for every locale. The password field is produced by
-    secrets.token_urlsafe, which uses the operating system cryptographically
-    secure random source.
+    syllable-based nickname derivation, safe calls to Faker providers that
+    may not exist for every locale, and NIST-aligned password generation
+    (16 characters, guaranteed character classes, no ambiguous glyphs)
+    via the operating system secure random source.
 
 email_api.py
 
-    Requests a real temporary inbox from the 1secmail public API. If the
-    request fails for any reason (no internet access, timeout, unexpected
-    response), it falls back to constructing a plausible address using a
-    hardcoded list of known disposable mail domains. No API key is required.
+    Creates a real temporary inbox whose address is built from the
+    identity's names, using the tempmail.lol API first and the mail.tm API
+    as fallback. The returned token is stored with the identity so the
+    inbox can be read later. When both providers are unreachable or
+    rate-limited, a plausible address is constructed locally using a
+    hardcoded list of known disposable mail domains. Per-provider usage
+    counters are persisted in email_usage.json to respect rate limits.
+    No API key or account is required.
 
 history.py
 
