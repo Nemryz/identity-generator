@@ -112,10 +112,10 @@ Run --list-locales to see the full list.
 Emails are created against two free public APIs (no account or API key
 required), in order:
 
-1. tempmail.lol — the inbox token is returned in the same response as the
+1. tempmail.lol: the inbox token is returned in the same response as the
    address. Free tier: inbox expires after 1 hour, 25 inboxes per 5 minutes
    per IP.
-2. mail.tm — custom address; its /token endpoint can lag behind account
+2. mail.tm: custom address, its /token endpoint can lag behind account
    creation, so the token is best-effort. 8 requests per second per IP.
 
 When both providers are unreachable or rate-limited, a plausible address
