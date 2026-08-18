@@ -59,6 +59,11 @@ LOCALE_COUNTRY_MAP = {
 
 DEFAULT_LOCALES = ["es_ES", "es_MX", "en_US"]
 _VOWELS = set("aeiou")
+_NICKNAME_SUFFIXES = {
+    "es": ["ito", "ita", "in", "ina", "z", "x", "99", "pro", "dark"],
+    "ja": ["chan", "kun", "tan", "z", "x", "99", "pro", "dark"],
+    "default": ["x", "z", "99", "pro", "dark", "neo", "star", "king", "queen"],
+}
 
 
 def get_supported_locales() -> list[str]:
@@ -131,7 +136,7 @@ def generate_identity(locale: str | None = None) -> dict:
         "occupation": _safe(fake.job),
         "email": get_temp_email(),
         "username": _build_username(first, dob.year),
-        "nickname": _build_nickname(first),
+        "nickname": _build_nickname(first, locale),
         "password": secrets.token_urlsafe(16),
     }
 
@@ -192,12 +197,24 @@ def _build_username(first_name: str, birth_year: int) -> str:
     return f"{clean}{birth_year % 100}{suffix}"
 
 
-def _build_nickname(first_name: str) -> str:
+def _nickname_suffixes(locale: str) -> list[str]:
+    """
+    Return the nickname suffixes appropriate for the locale's language.
+
+    Language-specific suffixes (Spanish diminutives, Japanese honorifics)
+    are only used for locales of that language; everything else falls back
+    to a universal set of informal handles.
+    """
+    return _NICKNAME_SUFFIXES.get(locale.split("_")[0], _NICKNAME_SUFFIXES["default"])
+
+
+def _build_nickname(first_name: str, locale: str) -> str:
     """
     Derive a short creative nickname from the first name.
 
     Takes the first syllable-like chunk of the name (up to and including the
-    first vowel after position 0) and appends a random informal suffix.
+    first vowel after position 0) and appends a random informal suffix from
+    the locale's language set.
     """
     clean = _to_ascii(first_name).lower()
     syllable = clean[:2]
@@ -205,5 +222,5 @@ def _build_nickname(first_name: str) -> str:
         if char in _VOWELS:
             syllable = clean[: i + 1]
             break
-    suffixes = ["x", "z", "ito", "ita", "99", "xd", "pro", "dark", "neo", "chan"]
+    suffixes = _nickname_suffixes(locale)
     return f"{syllable}{random.choice(suffixes)}"

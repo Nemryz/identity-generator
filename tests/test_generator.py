@@ -10,7 +10,9 @@ from datetime import date
 import pytest
 
 from generator import (
+    _build_nickname,
     _calculate_age,
+    _nickname_suffixes,
     generate_identity,
     is_supported_locale,
 )
@@ -59,6 +61,39 @@ def test_is_supported_locale_accepts_faker_only_locale():
 @pytest.mark.parametrize("locale", ["xx_XX", "en_USS", "", "es_PE", "spanish"])
 def test_is_supported_locale_rejects_invalid(locale):
     assert not is_supported_locale(locale)
+
+
+def test_nickname_suffixes_spanish_locales():
+    suffixes = _nickname_suffixes("es_ES")
+    assert "ito" in suffixes
+    assert "ita" in suffixes
+    assert _nickname_suffixes("es_MX") == suffixes
+
+
+def test_nickname_suffixes_english_locales_have_no_spanish_diminutives():
+    suffixes = _nickname_suffixes("en_US")
+    assert "ito" not in suffixes
+    assert "ita" not in suffixes
+    assert "chan" not in suffixes
+
+
+def test_nickname_suffixes_japanese_locale():
+    suffixes = _nickname_suffixes("ja_JP")
+    assert "chan" in suffixes
+    assert "kun" in suffixes
+
+
+def test_nickname_suffixes_unknown_language_falls_back_to_default():
+    assert _nickname_suffixes("xx_YY") == _nickname_suffixes("default")
+
+
+def test_nickname_uses_locale_suffixes(monkeypatch):
+    monkeypatch.setattr(
+        "generator.random.choice", lambda suffixes: suffixes[0]
+    )
+    assert _build_nickname("Cristian", "es_ES").endswith("ito")
+    assert _build_nickname("Joshua", "en_US").endswith("x")
+    assert _build_nickname("Yuki", "ja_JP").endswith("chan")
 
 
 @pytest.mark.parametrize("locale", ["es_ES", "en_US", "fr_FR", "ja_JP"])
