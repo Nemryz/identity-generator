@@ -25,9 +25,16 @@ def to_json_file(identity: dict) -> Path:
     Write the identity dict to a JSON file.
 
     The file is named <username>_identity.json and is placed in the same
-    directory as the project. Returns the resolved file path.
+    directory as the project. If that name is already taken, a short id
+    suffix is appended so existing exports are never silently overwritten.
+    Returns the resolved file path.
     """
     path = _OUTPUT_DIR / f"{identity['username']}_identity.json"
+    if path.exists():
+        path = (
+            _OUTPUT_DIR
+            / f"{identity['username']}_{identity['id'][:8]}_identity.json"
+        )
     path.write_text(
         json.dumps(identity, ensure_ascii=False, indent=2),
         encoding="utf-8",
