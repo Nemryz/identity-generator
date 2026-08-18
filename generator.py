@@ -1,16 +1,13 @@
 """
-generator.py
+generator.py (use alt+z to toggle word wrap in VS Code)
 
 Builds a complete synthetic identity using the Faker library.
 
-Each call to generate_identity produces a self-consistent profile: the locale
-controls the language and regional conventions for every field (names, addresses,
-phone formats), so all data points in a profile belong to the same cultural
-context.
+Each call to generate_identity produces a self-consistent profile: the locale controls the language and regional conventions for every field (names, addresses, phone formats), so all data points in a profile belong to the same cultural context.
 
-Supported locales are listed in LOCALE_COUNTRY_MAP. Any locale supported by
-Faker can also be used directly; only the locales in the map get a human-readable
-country name in the output.
+Supported locales are listed in LOCALE_COUNTRY_MAP. Any locale supported by Faker can also be used directly; only the locales in the map get a human-readable country name in the output.
+
+The returned identity dict contains all profile fields plus metadata (id, created_at, locale). The date_of_birth is a date object, and age is calculated from it. The email is generated using a temporary email service.
 """
 
 import random
@@ -24,6 +21,8 @@ from faker import Faker
 from faker.config import AVAILABLE_LOCALES
 
 from email_api import get_temp_email
+
+# Mapping of locale codes to human-readable country names. Only locales in this map get a country name in the output, other Faker-supported locales will return the locale code itself. LOCALE_COUNTRY_MAP is used to provide a more user-friendly country name in the generated identity profiles.
 
 LOCALE_COUNTRY_MAP = {
     "es_ES": "Espana",
@@ -59,11 +58,17 @@ LOCALE_COUNTRY_MAP = {
 
 DEFAULT_LOCALES = ["es_ES", "es_MX", "en_US"]
 _VOWELS = set("aeiou")
+_PASSWORD_LENGTH = 16
+_PASSWORD_LOWER = "abcdefghijkmnopqrstuvwxyz"
+_PASSWORD_UPPER = "ABCDEFGHJKMNPQRSTUVWXYZ"
+_PASSWORD_DIGITS = "23456789"
+_PASSWORD_SYMBOLS = "!@#$%^&*+=?"
 _NICKNAME_SUFFIXES = {
     "es": ["ito", "ita", "in", "ina", "z", "x", "99", "pro", "dark"],
     "ja": ["chan", "kun", "tan", "z", "x", "99", "pro", "dark"],
     "default": ["x", "z", "99", "pro", "dark", "neo", "star", "king", "queen"],
 }
+# DEFAULT_LOCALES is a list of locale codes that are used as defaults when generating synthetic identities. These locales are chosen to provide a diverse set of cultural contexts for the generated profiles. The list includes Spanish (Spain and Mexico) and English (United States) locales, which are commonly used and widely recognized.
 
 
 def get_supported_locales() -> list[str]:
@@ -74,9 +79,7 @@ def get_supported_locales() -> list[str]:
 def is_supported_locale(locale: str) -> bool:
     """
     Return True when Faker accepts the given locale code.
-
-    Any locale Faker supports is valid, not only the ones with an explicit
-    country name in LOCALE_COUNTRY_MAP (e.g. en_CA, es_PE).
+    Any locale Faker supports is valid, not only the ones with an explicit country name in LOCALE_COUNTRY_MAP (e.g. en_CA, es_PE).
     """
     return locale in AVAILABLE_LOCALES
 
@@ -85,12 +88,9 @@ def _calculate_age(dob, today: date | None = None) -> int:
     """
     Calculate the exact age in whole years for a birth date.
 
-    A year is only counted once the birthday has occurred in the current
-    year. Subtracting years alone overstates the age when the birthday is
-    still pending (e.g. born Dec 1965, seen in Aug 2026: 60, not 61).
+    A year is only counted once the birthday has occurred in the current year. Subtracting years alone overstates the age when the birthday is still pending (e.g. born Dec 1965, seen in Aug 2026: 60, not 61).
 
-    Accepts a date or datetime; ``today`` is injectable for deterministic
-    tests and defaults to the current date.
+    Accepts a date or datetime; ``today`` is injectable for deterministic tests and defaults to the current date.
     """
     dob_date = dob.date() if hasattr(dob, "date") else dob
     if today is None:
@@ -103,11 +103,8 @@ def _calculate_age(dob, today: date | None = None) -> int:
 
 def generate_identity(locale: str | None = None) -> dict:
     """
-    Generate a single synthetic identity.
-
-    If locale is None, a random entry from DEFAULT_LOCALES is used.
-    The returned dict contains all profile fields plus metadata (id,
-    created_at, locale).
+    Generate a single synthetic identity. 
+    If locale is None, a random entry from DEFAULT_LOCALES is used. The returned dict contains all profile fields plus metadata (id, created_at, locale).
     """
     if locale is None:
         locale = random.choice(DEFAULT_LOCALES)
@@ -137,7 +134,7 @@ def generate_identity(locale: str | None = None) -> dict:
         "email": get_temp_email(),
         "username": _build_username(first, dob.year),
         "nickname": _build_nickname(first, locale),
-        "password": secrets.token_urlsafe(16),
+        "password": _build_password(),
     }
 
 
@@ -145,8 +142,7 @@ def _get_first_name(fake: Faker, gender: str) -> str:
     """
     Retrieve a gendered first name from Faker.
 
-    Falls back to the generic first_name() method if the locale does not
-    provide gender-specific variants.
+    Falls back to the generic first_name() method if the locale does not provide gender-specific variants.
     """
     try:
         return fake.first_name_male() if gender == "male" else fake.first_name_female()
@@ -158,10 +154,7 @@ def _safe(primary_fn, fallback_fn=None) -> str:
     """
     Call primary_fn and return its result.
 
-    If primary_fn raises any exception, call fallback_fn instead.
-    If fallback_fn is also unavailable or raises, return "N/A".
-    The broad exception catch is intentional: Faker locale coverage varies
-    and some providers raise unexpected errors for unsupported locales.
+    If primary_fn raises any exception, call fallback_fn instead. If fallback_fn is also unavailable or raises, return "N/A". The broad exception catch is intentional: Faker locale coverage varies and some providers raise unexpected errors for unsupported locales.
     """
     try:
         return primary_fn()
@@ -199,13 +192,30 @@ def _build_username(first_name: str, birth_year: int) -> str:
     return f"{clean}{birth_year % 100}{suffix}"
 
 
+def _build_password() -> str:
+    """
+    Generate a 16-character password that passes common validators.
+
+    Guarantees at least one lowercase, one uppercase, one digit and one symbol, and avoids ambiguous characters (I, l, 1, O, 0). Every character comes from the operating system's secure random source.
+    """
+    pools = [_PASSWORD_LOWER, _PASSWORD_UPPER,
+             _PASSWORD_DIGITS, _PASSWORD_SYMBOLS]
+    chars = [secrets.choice(pool) for pool in pools]
+    charset = "".join(pools)
+    chars.extend(
+        secrets.choice(charset) for _ in range(_PASSWORD_LENGTH - len(chars))
+    )
+    for i in range(len(chars) - 1, 0, -1):
+        j = secrets.randbelow(i + 1)
+        chars[i], chars[j] = chars[j], chars[i]
+    return "".join(chars)
+
+
 def _nickname_suffixes(locale: str) -> list[str]:
     """
     Return the nickname suffixes appropriate for the locale's language.
 
-    Language-specific suffixes (Spanish diminutives, Japanese honorifics)
-    are only used for locales of that language; everything else falls back
-    to a universal set of informal handles.
+    Language-specific suffixes (Spanish diminutives, Japanese honorifics) are only used for locales of that language, everything else falls back to a universal set of informal handles.
     """
     return _NICKNAME_SUFFIXES.get(locale.split("_")[0], _NICKNAME_SUFFIXES["default"])
 
@@ -214,9 +224,7 @@ def _build_nickname(first_name: str, locale: str) -> str:
     """
     Derive a short creative nickname from the first name.
 
-    Takes the first syllable-like chunk of the name (up to and including the
-    first vowel after position 0) and appends a random informal suffix from
-    the locale's language set.
+    Takes the first syllable-like chunk of the name (up to and including the first vowel after position 0) and appends a random informal suffix from the locale's language set.
     """
     clean = _to_ascii(first_name).lower()
     syllable = clean[:2]

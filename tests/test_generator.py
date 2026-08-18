@@ -10,13 +10,21 @@ from datetime import date
 import pytest
 
 from generator import (
+    _PASSWORD_DIGITS,
+    _PASSWORD_LENGTH,
+    _PASSWORD_LOWER,
+    _PASSWORD_SYMBOLS,
+    _PASSWORD_UPPER,
     _build_nickname,
+    _build_password,
     _build_username,
     _calculate_age,
     _nickname_suffixes,
     generate_identity,
     is_supported_locale,
 )
+
+AMBIGUOUS_CHARS = set("Il1O0")
 
 TODAY = date(2026, 8, 18)
 
@@ -95,6 +103,30 @@ def test_nickname_uses_locale_suffixes(monkeypatch):
     assert _build_nickname("Cristian", "es_ES").endswith("ito")
     assert _build_nickname("Joshua", "en_US").endswith("x")
     assert _build_nickname("Yuki", "ja_JP").endswith("chan")
+
+
+def _assert_password_valid(password: str) -> None:
+    assert len(password) == _PASSWORD_LENGTH
+    assert any(c in _PASSWORD_LOWER for c in password)
+    assert any(c in _PASSWORD_UPPER for c in password)
+    assert any(c in _PASSWORD_DIGITS for c in password)
+    assert any(c in _PASSWORD_SYMBOLS for c in password)
+    assert not AMBIGUOUS_CHARS.intersection(password)
+
+
+def test_password_has_required_length_and_classes():
+    _assert_password_valid(_build_password())
+
+
+def test_password_avoids_ambiguous_characters():
+    for _ in range(100):
+        _assert_password_valid(_build_password())
+
+
+def test_generated_identity_password_is_valid(monkeypatch):
+    monkeypatch.setattr("generator.get_temp_email", lambda: "test@example.com")
+    for _ in range(20):
+        _assert_password_valid(generate_identity(locale="en_US")["password"])
 
 
 def test_cjk_name_username_falls_back_to_user_prefix(monkeypatch):
