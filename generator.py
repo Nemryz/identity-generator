@@ -194,6 +194,8 @@ def _build_username(first_name: str, birth_year: int) -> str:
     clean = _to_ascii(first_name).lower()
     clean = "".join(c for c in clean if c.isalnum())
     suffix = "".join(random.choices(string.digits, k=3))
+    if not clean:
+        clean = "user"
     return f"{clean}{birth_year % 100}{suffix}"
 
 
@@ -222,5 +224,7 @@ def _build_nickname(first_name: str, locale: str) -> str:
         if char in _VOWELS:
             syllable = clean[: i + 1]
             break
+    if not syllable:
+        syllable = first_name[:1]
     suffixes = _nickname_suffixes(locale)
     return f"{syllable}{random.choice(suffixes)}"

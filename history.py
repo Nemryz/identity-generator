@@ -23,7 +23,11 @@ import sys
 import time
 from pathlib import Path
 
-HISTORY_FILE = Path(__file__).parent / "history.json"
+HISTORY_FILE = Path(
+    os.environ.get(
+        "IDENTITY_HISTORY_FILE", Path(__file__).parent / "history.json"
+    )
+)
 
 _LOCK_RETRIES = 10
 _LOCK_WAIT_SECONDS = 0.05

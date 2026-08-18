@@ -11,6 +11,7 @@ import pytest
 
 from generator import (
     _build_nickname,
+    _build_username,
     _calculate_age,
     _nickname_suffixes,
     generate_identity,
@@ -94,6 +95,35 @@ def test_nickname_uses_locale_suffixes(monkeypatch):
     assert _build_nickname("Cristian", "es_ES").endswith("ito")
     assert _build_nickname("Joshua", "en_US").endswith("x")
     assert _build_nickname("Yuki", "ja_JP").endswith("chan")
+
+
+def test_cjk_name_username_falls_back_to_user_prefix(monkeypatch):
+    monkeypatch.setattr(
+        "generator.random.choices", lambda *a, **k: ["123"]
+    )
+    username = _build_username("太郎", 1988)
+    assert username == "user88123"
+    assert username.isascii()
+
+
+def test_cjk_name_nickname_keeps_original_first_char(monkeypatch):
+    monkeypatch.setattr(
+        "generator.random.choice", lambda suffixes: suffixes[0]
+    )
+    nickname = _build_nickname("太郎", "ja_JP")
+    assert nickname.startswith("太")
+    assert nickname.endswith("chan")
+
+
+@pytest.mark.parametrize("locale", ["ja_JP", "zh_CN", "ko_KR"])
+def test_generated_identity_cjk_username_and_nickname_non_empty(
+    locale, monkeypatch
+):
+    monkeypatch.setattr("generator.get_temp_email", lambda: "test@example.com")
+    identity = generate_identity(locale=locale)
+    assert identity["username"].isascii()
+    assert len(identity["username"]) >= 4
+    assert len(identity["nickname"]) >= 2
 
 
 @pytest.mark.parametrize("locale", ["es_ES", "en_US", "fr_FR", "ja_JP"])
