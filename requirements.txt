@@ -1,4 +1,4 @@
-faker
+faker==40.15.0
 requests
 pyperclip
 colorama

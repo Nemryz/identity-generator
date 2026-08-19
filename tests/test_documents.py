@@ -103,11 +103,29 @@ def test_curp_es_MX(monkeypatch):
 
 
 def test_rut_es_CL(monkeypatch):
+    # Faker's es_CL range spans person RUTs from 10 to 99,999,999, so the
+    # thousands separator may produce 2..8 digits ("79.899-1", "85.076.113-2").
     for _ in range(3):
         rut = _identity("es_CL", monkeypatch)["national_id"]
-        assert re.fullmatch(r"\d{1,2}\.\d{3}\.\d{3}-[\dK]", rut)
+        assert re.fullmatch(r"^\d{1,3}(\.\d{3})*-[\dK]$", rut)
         body, check = rut[:-2].replace(".", ""), rut[-1]
         assert _rut_check_digit(body) == check
+
+
+def test_rut_es_CL_short_form(monkeypatch):
+    # Regression: a draw below 100,000 produces one dot group only
+    # ("79.899-1"), which the old two-group regex rejected (CI caught it).
+    from faker import Faker
+    from faker.providers.ssn.es_CL import Provider as CLSsnProvider
+
+    fake = Faker("es_CL")
+    provider = next(p for p in fake.get_providers() if isinstance(p, CLSsnProvider))
+    monkeypatch.setattr(provider, "random_int", lambda min, max: 79899)
+    rut = fake.rut()
+    assert rut == "79.899-1"
+    assert re.fullmatch(r"^\d{1,3}(\.\d{3})*-[\dK]$", rut)
+    body, check = rut[:-2].replace(".", ""), rut[-1]
+    assert _rut_check_digit(body) == check
 
 
 def test_nuip_es_CO(monkeypatch):
