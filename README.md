@@ -80,6 +80,10 @@ Wait N seconds after generating (throttle for script loops):
 
     python -X utf8 main.py --delay 2
 
+Write debug details to identity-generator.log and stderr:
+
+    python -X utf8 main.py --verbose
+
 Generate 50 identities as CSV rows for database seeding:
 
     python -X utf8 main.py --count 50 --csv
@@ -257,6 +261,10 @@ identity has non-empty ASCII-safe usernames and emails, valid passport
 shapes, and dataset addresses that always stay inside their locale's
 data. A real two-process concurrency test verifies that parallel CLI
 runs never lose history entries (see History).
+
+Every push and pull request runs the full suite on GitHub Actions
+(ubuntu-latest and windows-latest, Python 3.10 and 3.12), so a broken
+commit cannot land unnoticed.
 
 ## Docker
 
