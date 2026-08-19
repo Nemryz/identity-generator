@@ -5,11 +5,16 @@ corruption handling.
 
 import json
 import os
+import subprocess
+import sys
 import time
+from pathlib import Path
 
 import pytest
 
 import history
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture
@@ -87,14 +92,14 @@ def test_stale_lock_is_ignored(history_file):
 
 
 def test_corrupt_file_returns_empty_and_is_backed_up(
-    history_file, capsys
+    history_file, caplog
 ):
     history_file.write_text("{not valid json", encoding="utf-8")
     assert history.get_all() == []
     backups = list(history_file.parent.glob("history.corrupt.*.bak"))
     assert len(backups) == 1
     assert not history_file.exists()
-    assert "backed up" in capsys.readouterr().err
+    assert "backed up" in caplog.text
 
 
 def test_non_list_json_is_treated_as_corrupt(history_file):
@@ -112,3 +117,29 @@ def test_append_after_corruption_starts_fresh(history_file):
 def test_missing_file_returns_empty(history_file):
     assert history.get_all() == []
     assert history.count() == 0
+
+
+def test_concurrent_processes_do_not_lose_entries(history_file):
+    """
+    Two independent CLI processes appending at the same time must both
+    succeed, because the lock is exclusive at the filesystem level
+    (O_EXCL), not an in-process flag.
+    """
+    env = {**os.environ, "IDENTITY_HISTORY_FILE": str(history_file)}
+    code = (
+        "import history\n"
+        "history.append_many([{'id': 'x', 'n': i} for i in range(20)])\n"
+    )
+    processes = [
+        subprocess.Popen(
+            [sys.executable, "-c", code],
+            cwd=REPO_ROOT,
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        for _ in range(2)
+    ]
+    for process in processes:
+        assert process.wait(timeout=60) == 0
+    assert len(history.get_all()) == 40

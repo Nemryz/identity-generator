@@ -19,6 +19,7 @@ from colorama import Fore, Style, init
 import exporter
 import history as hist
 import email_api
+from applog import setup_logging
 from generator import generate_identity, get_supported_locales, is_supported_locale
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -227,6 +228,11 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Wait SECONDS after generating (throttle for script loops).",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Write debug details to the log file and stderr.",
+    )
     return parser
 
 
@@ -234,6 +240,8 @@ def main() -> None:
     """Parse arguments and execute the requested action."""
     parser = _build_parser()
     args = parser.parse_args()
+
+    setup_logging(verbose=args.verbose)
 
     if args.locale and not is_supported_locale(args.locale):
         parser.error(

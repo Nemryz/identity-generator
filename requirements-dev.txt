@@ -1,3 +1,4 @@
 # Development-only dependencies (testing). Install with:
 #   pip install -r requirements-dev.txt
 pytest
+hypothesis

@@ -149,7 +149,10 @@ Run --list-locales to see the full list.
                     of the first name plus a random suffix.
     password        Random 16-character password with guaranteed uppercase,
                     lowercase, digit and symbol, avoiding ambiguous
-                    characters (I, l, 1, O, 0).
+                    characters (I, l, 1, O, 0). The four guaranteed class
+                    characters plus twelve drawn from the full 64-character
+                    pool give roughly 90 bits of entropy worst case, well
+                    above the NIST 800-63B recommendation.
     id              UUID v4.
     created_at      ISO 8601 timestamp in UTC.
 
@@ -179,6 +182,13 @@ git) so the chain skips a provider before it rejects the request. A warning
 is printed to stderr at 80% of a provider's limit. Reads are counted too
 (read_tempmail / read_mailtm, informational, no hard limit).
 
+All API calls use a 5-second timeout, so a provider that stops responding
+(connection hangs rather than failing) still falls through to the next
+step of the chain instead of blocking the CLI indefinitely. If
+email_usage.json is ever corrupted it is backed up to
+email_usage.corrupt.<timestamp>.bak and the counters restart from zero
+with a logged warning, mirroring the history.json protection.
+
 ## Custom catch-all domain
 
 Many services block disposable domains outright. If you own a domain you
@@ -207,19 +217,28 @@ Each generated identity is automatically appended to history.json in the
 project directory. The file is created on first use and ignored by git so
 it stays local. There is no automatic limit on the number of entries.
 
+Writes take an exclusive lock file created with O_EXCL, which the
+operating system guarantees atomically across processes, so two parallel
+CLI runs cannot lose entries (verified by a two-process test). Saves are
+atomic too (temporary file renamed into place), so an interrupted write
+never leaves a truncated history. If the file is corrupted it is backed
+up to history.corrupt.<timestamp>.bak and the error is logged instead of
+being silently destroyed.
+
 ## Testing
 
 The project ships a fully automated test suite written with pytest,
-covering 223 test cases across 8 modules:
+covering 243 test cases across 9 modules:
 
     tests/test_generator.py   43 tests   identity fields, names, passwords
     tests/test_datasets.py    66 tests   address dataset schema and quality
     tests/test_addresses.py   25 tests   real addresses and postcodes
     tests/test_documents.py   25 tests   official national IDs and passports
-    tests/test_email_api.py   32 tests   email provider chain and fallbacks
-    tests/test_history.py     14 tests   history persistence and locking
-    tests/test_main.py        13 tests   command-line flags and output
+    tests/test_email_api.py   35 tests   email provider chain and fallbacks
+    tests/test_history.py     15 tests   persistence, locking, concurrency
+    tests/test_main.py        14 tests   command-line flags and output
     tests/test_exporter.py     5 tests   JSON, CSV and clipboard exports
+    tests/test_properties.py  15 tests   property-based invariants (Hypothesis)
 
 Run the whole suite with:
 
@@ -230,6 +249,14 @@ real Faker providers and the real address datasets in data/addresses/.
 The only external interaction that is stubbed is the temporary-email API,
 so the suite runs offline and never hits the network. Every feature is
 covered by at least one test that follows its happy path end to end.
+
+Property-based tests (test_properties.py, using Hypothesis) generate
+random unicode names and sample exotic Faker locales to verify the
+invariants that directed tests cannot enumerate by hand: every generated
+identity has non-empty ASCII-safe usernames and emails, valid passport
+shapes, and dataset addresses that always stay inside their locale's
+data. A real two-process concurrency test verifies that parallel CLI
+runs never lose history entries (see History).
 
 ## Docker
 
@@ -258,7 +285,17 @@ main.py
     modules. Handles terminal colour output via colorama so that escape codes
     work on Windows as well as Unix systems. The stdout encoding is set to
     UTF-8 at startup so that accented characters print correctly regardless
-    of the system default.
+    of the system default. Calls setup_logging() at startup; --verbose
+    enables DEBUG detail in the log file and on stderr.
+
+applog.py
+
+    Minimal structured logging shared by every module. setup_logging()
+    attaches a file handler (identity-generator.log, ignored by git,
+    overridable via IDENTITY_LOG_FILE) and a stderr handler; modules log
+    through get_logger() instead of printing to stderr directly. Outside
+    main.py the loggers are safe to use with no configuration, so tests
+    capture records via pytest's caplog.
 
 generator.py
 

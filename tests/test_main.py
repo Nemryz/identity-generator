@@ -196,3 +196,24 @@ def test_batch_count_one_prints_full_profile(tmp_path):
     assert result.returncode == 0
     assert "IDENTITY" in result.stdout
     assert "[1/1]" not in result.stdout
+
+
+def test_log_file_created_on_generation(tmp_path):
+    log_file = tmp_path / "app.log"
+    env = {
+        **os.environ,
+        "IDENTITY_HISTORY_FILE": str(tmp_path / "history.json"),
+        "EMAIL_USAGE_FILE": str(tmp_path / "email_usage.json"),
+        "CUSTOM_DOMAINS_FILE": str(tmp_path / "domains.json"),
+        "IDENTITY_LOG_FILE": str(log_file),
+    }
+    result = subprocess.run(
+        [PYTHON, "-X", "utf8", str(REPO_ROOT / "main.py"),
+         "--email-offline", "--locale", "en_US"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env=env,
+    )
+    assert result.returncode == 0
+    assert log_file.exists()

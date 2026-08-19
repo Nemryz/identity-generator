@@ -14,7 +14,6 @@ import json
 import random
 import secrets
 import string
-import sys
 import unicodedata
 import uuid
 from datetime import date, datetime, timezone
@@ -25,7 +24,10 @@ from faker import Faker
 from faker.config import AVAILABLE_LOCALES
 
 from email_api import get_temp_email
+from applog import get_logger
 import history as hist
+
+logger = get_logger("generator")
 
 # Mapping of locale codes to human-readable country names. Only locales in this map get a country name in the output, other Faker-supported locales will return the locale code itself. LOCALE_COUNTRY_MAP is used to provide a more user-friendly country name in the generated identity profiles.
 
@@ -271,10 +273,7 @@ def generate_identity(
     if reuse:
         email_info = hist.find_usable_email()
         if email_info is None:
-            print(
-                "[email] no hay inbox previo reutilizable - creando uno nuevo",
-                file=sys.stderr,
-            )
+            logger.info("no hay inbox previo reutilizable - creando uno nuevo")
     if email_info is None:
         email_info = get_temp_email(first, last, usable=email_usable)
     return {

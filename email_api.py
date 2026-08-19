@@ -32,12 +32,15 @@ import os
 import random
 import secrets
 import string
-import sys
 import time
 import unicodedata
 from pathlib import Path
 
 import requests
+
+from applog import get_logger
+
+logger = get_logger("email")
 
 MAILTM_BASE = "https://api.mail.tm"
 TEMPMAIL_BASE = "https://api.tempmail.lol"
@@ -346,10 +349,7 @@ def _tempmail_read(token: str, limit: int) -> list[dict]:
             for msg in messages
         ]
     except Exception:
-        print(
-            "[email] no se pudo consultar el inbox de tempmail.lol",
-            file=sys.stderr,
-        )
+        logger.warning("no se pudo consultar el inbox de tempmail.lol")
         return []
 
 
@@ -393,10 +393,7 @@ def _mailtm_read(token: str, limit: int) -> list[dict]:
         _record_usage("read_mailtm")
         return result
     except Exception:
-        print(
-            "[email] no se pudo consultar el inbox de mail.tm",
-            file=sys.stderr,
-        )
+        logger.warning("no se pudo consultar el inbox de mail.tm")
         return []
 
 
@@ -426,15 +423,9 @@ def _warn_provider(provider: str, next_name: str) -> None:
     count = _usage_count(provider)
     status = f"{count}/{limit['max']}"
     if count >= limit["max"]:
-        print(
-            f"[email] {provider} en el límite ({status}) - usando {next_name}",
-            file=sys.stderr,
-        )
+        logger.warning(f"{provider} en el límite ({status}) - usando {next_name}")
     elif count >= limit["max"] * _WARNING_THRESHOLD:
-        print(
-            f"[email] {provider} cerca del límite ({status})",
-            file=sys.stderr,
-        )
+        logger.warning(f"{provider} cerca del límite ({status})")
 
 
 def _record_usage(provider: str) -> None:
@@ -481,14 +472,35 @@ def _record_usage(provider: str) -> None:
 
 
 def _load_usage() -> dict:
-    """Read the persisted usage counters, or an empty dict on any error."""
+    """
+    Read the persisted usage counters, or an empty dict on any error.
+
+    A corrupted file is backed up and reported so the counters are not
+    reset silently, mirroring the history.json protection.
+    """
     if not USAGE_FILE.exists():
         return {}
     try:
         data = json.loads(USAGE_FILE.read_text(encoding="utf-8"))
-        return data if isinstance(data, dict) else {}
     except (json.JSONDecodeError, OSError):
+        _backup_corrupt_usage()
         return {}
+    if not isinstance(data, dict):
+        _backup_corrupt_usage()
+        return {}
+    return data
+
+
+def _backup_corrupt_usage() -> None:
+    """Move a corrupted usage file aside so it is not silently reset."""
+    backup = USAGE_FILE.with_name(
+        f"email_usage.corrupt.{int(time.time())}.bak"
+    )
+    try:
+        os.replace(USAGE_FILE, backup)
+        logger.warning(f"corrupt usage file backed up to {backup.name}")
+    except OSError:
+        pass
 
 
 def _is_stale_lock(lock: Path) -> bool:

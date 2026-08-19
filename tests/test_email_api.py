@@ -276,7 +276,7 @@ def test_counters_within_window(usage_file, fake_clock):
     assert _can_use("tempmail")
 
 
-def test_tempmail_skipped_at_limit(usage_file, fake_clock, monkeypatch, capsys):
+def test_tempmail_skipped_at_limit(usage_file, fake_clock, monkeypatch, caplog):
     for _ in range(25):
         _record_usage("tempmail")
     assert not _can_use("tempmail")
@@ -293,9 +293,8 @@ def test_tempmail_skipped_at_limit(usage_file, fake_clock, monkeypatch, capsys):
     result = get_temp_email("Carlos", "García")
     assert result["token"] is None
     assert result["email"].startswith("carlos.garcia@")
-    err = capsys.readouterr().err
-    assert "en el límite" in err
-    assert "mail.tm" in err
+    assert "en el límite" in caplog.text
+    assert "mail.tm" in caplog.text
 
 
 def test_usage_prunes_expired_entries(usage_file, fake_clock):
@@ -400,7 +399,7 @@ def test_check_inbox_unknown_provider_raises(usage_file):
         check_inbox({"email": "x@y.com", "email_token": "t", "email_provider": "old"})
 
 
-def test_check_inbox_fetch_failure_returns_empty(usage_file, monkeypatch, capsys):
+def test_check_inbox_fetch_failure_returns_empty(usage_file, monkeypatch, caplog):
     def boom(*_args, **_kwargs):
         raise RuntimeError("api down")
 
@@ -410,4 +409,25 @@ def test_check_inbox_fetch_failure_returns_empty(usage_file, monkeypatch, capsys
         {"email": "x@tmp.com", "email_token": "t", "email_provider": "tempmail"}
     )
     assert messages == []
-    assert "no se pudo consultar" in capsys.readouterr().err
+    assert "no se pudo consultar" in caplog.text
+
+
+def test_corrupt_usage_file_is_backed_up_and_reset(usage_file, caplog):
+    usage_file.write_text("{broken", encoding="utf-8")
+    assert _usage_count("tempmail") == 0
+    backups = list(usage_file.parent.glob("email_usage.corrupt.*.bak"))
+    assert len(backups) == 1
+    assert not usage_file.exists()
+    assert "backed up" in caplog.text
+
+
+def test_non_dict_usage_file_is_backed_up_and_reset(usage_file):
+    usage_file.write_text("[1, 2, 3]", encoding="utf-8")
+    assert _usage_count("mailtm") == 0
+    assert len(list(usage_file.parent.glob("email_usage.corrupt.*.bak"))) == 1
+
+
+def test_valid_usage_file_is_untouched(usage_file):
+    _record_usage("tempmail")
+    assert _usage_count("tempmail") == 1
+    assert not list(usage_file.parent.glob("email_usage.corrupt.*.bak"))

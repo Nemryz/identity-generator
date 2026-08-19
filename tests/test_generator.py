@@ -168,13 +168,14 @@ def test_reuse_copies_previous_inbox_without_network(monkeypatch):
     assert identity["email_provider"] == "tempmail"
 
 
-def test_reuse_falls_back_to_creation_without_previous(monkeypatch, capsys):
+def test_reuse_falls_back_to_creation_without_previous(monkeypatch, caplog):
+    caplog.set_level("INFO")
     monkeypatch.setattr("history.find_usable_email", lambda: None)
     monkeypatch.setattr("generator.get_temp_email", _fake_email)
 
     identity = generate_identity(locale="en_US", reuse=True)
     assert identity["email"] == "test@example.com"
-    assert "no hay inbox previo" in capsys.readouterr().err
+    assert "no hay inbox previo" in caplog.text
 
 
 def test_cjk_name_username_falls_back_to_user_prefix(monkeypatch):

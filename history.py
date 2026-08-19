@@ -19,9 +19,12 @@ Concurrency and corruption safety:
 
 import json
 import os
-import sys
 import time
 from pathlib import Path
+
+from applog import get_logger
+
+logger = get_logger("history")
 
 HISTORY_FILE = Path(
     os.environ.get(
@@ -135,10 +138,7 @@ def _backup_corrupt() -> None:
     )
     try:
         os.replace(HISTORY_FILE, backup)
-        print(
-            f"[history] corrupt file backed up to {backup.name}",
-            file=sys.stderr,
-        )
+        logger.warning(f"corrupt file backed up to {backup.name}")
     except OSError:
         pass
 
