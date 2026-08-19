@@ -4,7 +4,7 @@ A command-line tool that produces complete, self-consistent synthetic identities
 Every field in a generated profile (name, address, phone, postcode) belongs to
 the same country and language, so the data reads as coherent rather than a random
 mix of regional formats. Profiles are saved to a local history file and can be
-exported as JSON or copied to the clipboard.
+exported as JSON or CSV, or copied to the clipboard.
 
 All data is entirely fictional. No real person is referenced or affected.
 
@@ -19,6 +19,11 @@ and generating realistic seed data for demos.
 Python 3.10 or newer. Install dependencies with:
 
     pip install -r requirements.txt
+
+To run the automated test suite (see Testing) also install the development
+dependencies:
+
+    pip install -r requirements-dev.txt
 
 ## Usage
 
@@ -114,9 +119,9 @@ Run --list-locales to see the full list.
                     it combines a real street name with a house number
                     following the local convention ("Calle X 123" in
                     Spain, "123 Main Street" in the US, "Rua X, 123" in
-                    Brazil); other locales use Faker.
+                    Brazil). Other locales use Faker.
     city            For the 11 dataset locales, a real city from the
-                    dataset picked weighted by population; other locales
+                    dataset picked weighted by population. Other locales
                     use Faker.
     postcode        Real postal code of the generated city (dataset
                     locales) or a Faker postcode in the locale format.
@@ -138,7 +143,7 @@ Run --list-locales to see the full list.
     email_token     Inbox token enabling the --check-inbox command.
                     Null when the email has no real inbox.
     email_provider  Provider that owns the inbox ("tempmail", "mailtm" or
-                    "offline"); tells --check-inbox which API to query.
+                    "offline"). Tells --check-inbox which API to query.
     username        ASCII-safe string built from the first name and birth year.
     nickname        Short informal handle derived from the first syllable
                     of the first name plus a random suffix.
@@ -167,7 +172,7 @@ null). Use --email-offline to force this mode.
 Read operations (--check-inbox) query the inbox with the stored token:
 tempmail.lol consumes the emails it returns (limit 10 by default), mail.tm
 keeps them. Identities created before the email_provider field existed
-cannot be read; regenerate them.
+cannot be read, so regenerate them.
 
 Usage counters per provider are persisted in email_usage.json (ignored by
 git) so the chain skips a provider before it rejects the request. A warning
@@ -201,6 +206,30 @@ then mail.tm, then offline fallback).
 Each generated identity is automatically appended to history.json in the
 project directory. The file is created on first use and ignored by git so
 it stays local. There is no automatic limit on the number of entries.
+
+## Testing
+
+The project ships a fully automated test suite written with pytest,
+covering 223 test cases across 8 modules:
+
+    tests/test_generator.py   43 tests   identity fields, names, passwords
+    tests/test_datasets.py    66 tests   address dataset schema and quality
+    tests/test_addresses.py   25 tests   real addresses and postcodes
+    tests/test_documents.py   25 tests   official national IDs and passports
+    tests/test_email_api.py   32 tests   email provider chain and fallbacks
+    tests/test_history.py     14 tests   history persistence and locking
+    tests/test_main.py        13 tests   command-line flags and output
+    tests/test_exporter.py     5 tests   JSON, CSV and clipboard exports
+
+Run the whole suite with:
+
+    python -X utf8 -m pytest tests/ -q
+
+The tests are integration-first: they exercise the real filesystem, the
+real Faker providers and the real address datasets in data/addresses/.
+The only external interaction that is stubbed is the temporary-email API,
+so the suite runs offline and never hits the network. Every feature is
+covered by at least one test that follows its happy path end to end.
 
 ## Docker
 
@@ -272,11 +301,42 @@ exporter.py
 
     Provides three output functions. to_json_file writes the identity dict
     to a file named after the username. to_csv_file writes every identity
-    as a row in identities.csv (overwritten each run; email_token is
-    excluded) for database seeding. to_clipboard formats the profile as a
-    fixed-width plain-text block and copies it to the system clipboard
+    as a row in identities.csv (overwritten each run, with the email_token
+    column excluded) for database seeding. to_clipboard formats the profile
+    as a fixed-width plain-text block and copies it to the system clipboard
     using pyperclip. The plain-text format is intentionally simple so it
     can be pasted into any field without formatting artefacts.
+
+tools/build_datasets.py
+
+    One-time offline script that builds the address datasets in
+    data/addresses/ from GeoNames and OpenStreetMap data (see Data
+    sources). Caches downloads in the system temp directory, retries
+    across Overpass mirrors, and learns the zip-admin to cities-admin1
+    mapping so postal codes match the right region. The datasets are
+    committed to the repository, so the script only needs to run when a
+    refresh is wanted.
+
+data/addresses/
+
+    One JSON file per dataset locale (es_ES, es_MX, es_AR, es_CL, es_CO,
+    en_US, en_GB, fr_FR, de_DE, it_IT, pt_BR), each holding up to 300
+    cities sorted by population with their postal codes, up to 250
+    language-filtered street names, and source attribution. Together
+    they weigh under 400 KB.
+
+tests/
+
+    The pytest suite described in Testing, one file per module under
+    test. It exercises the real filesystem, the real Faker providers
+    and the real datasets, and stubs only the temporary-email API so it
+    runs offline.
+
+requirements.txt
+
+    Runtime dependencies: faker, requests, pyperclip, colorama.
+    requirements-dev.txt adds the test tooling (pytest) and is only
+    needed when running the suite.
 
 ## Data sources
 
@@ -292,7 +352,7 @@ real city, a real postal code and real street names:
   Overpass API.
 
 Each locale file contains up to 300 cities sorted by population, their postal
-codes (when the country dataset has one; coverage is 70-98%) and up to 250
+codes (coverage is 70-98% depending on the country dataset) and up to 250
 street names. To regenerate them:
 
     py -3.13 -X utf8 tools/build_datasets.py
@@ -302,38 +362,52 @@ all downloads in the system temp directory and retries across several public
 mirrors. Use --skip-osm to refresh only the GeoNames part reusing the streets
 already on disk, and --sleep to tune the delay between queries.
 
-Known limitations: the GeoNames Colombia postal file has no entry for Bogota,
+Dataset gaps: the GeoNames Colombia postal file has no entry for Bogota,
 and the Mexico file has no standalone "Ciudad de Mexico" entry, so those
 cities keep a null postal code or a code from a matching region variant.
 Street names are filtered by language (non-Latin scripts and foreign
 first words are dropped), but the country grid cells overlap neighbouring
 countries, so a few cross-border names may remain in the France, Germany,
-Italy and Brazil datasets; the UK dataset may include some Irish names
-(the two are not distinguishable by word lists). The datasets can be
+Italy and Brazil datasets. The UK dataset may include some Irish names,
+since the two are not distinguishable by word lists. The datasets can be
 refreshed or replaced with a country-polygon (area) Overpass query by
 editing tools/build_datasets.py.
+
+## Known limitations
+
+The tool is intentionally simple, and two design trade-offs are worth
+being explicit about.
+
+Synchronous I/O in the main thread. The email creation and inbox-read
+steps call the provider APIs synchronously, so the terminal blocks while
+the request is in flight. The impact is bounded: the provider chain falls
+back on failure, per-provider usage counters skip a provider before it
+rejects the request, --delay throttles script loops, and --email-offline
+skips the network entirely. An asynchronous redesign would let the CLI
+stay responsive, but it would complicate the codebase for little practical
+gain at this scale.
+
+JSON-file persistence. History and usage data are stored as plain JSON
+files (history.json, email_usage.json) and exports are CSV or JSON. This
+is adequate for personal use and low-volume seeding. Projects that need
+to store or query tens of thousands of identities should migrate to a
+portable database such as SQLite.
 
 ## Possible extensions
 
 The following ideas are starting points for anyone who wants to adapt the
 tool to their own needs.
 
-Add an avatar URL by calling a service such as DiceBear or UI Avatars with
-the generated username as the seed. The URL can be stored in the identity
-dict alongside the other fields.
+Add a profile picture by calling a text-to-avatar or identicon service
+(DiceBear, UI Avatars) with the generated username as the seed, and save
+the image alongside the JSON export.
 
 Add a web API mode using Flask or FastAPI so that identities can be
 requested over HTTP. This is useful when integrating the generator into
 automated testing pipelines or browser automation scripts.
 
-Add CSV export so that multiple identities can be generated in a batch and
-opened directly in a spreadsheet.
-
 Add a search command that filters history.json by country, date range, or
 name substring, which becomes useful once the history grows large.
-
-Add a profile picture generation step that calls a text-to-avatar API and
-saves the image alongside the JSON export.
 
 Add a delete command to remove a specific identity from history by its UUID,
 for cases where a generated profile should no longer be stored locally.
@@ -344,6 +418,20 @@ are picked more often than others when no --locale flag is provided.
 Replace the plain-text clipboard format with a structured template that the
 user can edit, allowing fields to be reordered or excluded to match a
 particular registration form layout.
+
+Make email and inbox operations asynchronous so the CLI stays responsive
+while provider requests are in flight (see Known limitations).
+
+Replace the JSON history file with a portable database such as SQLite for
+high-volume use (see Known limitations).
+
+Refetch the street datasets with a country-polygon (area) Overpass query
+instead of grid cells, which would eliminate the residual cross-border
+street names documented in Data sources.
+
+Generate passport numbers with the official per-country serial algorithms
+instead of the current plausible formats, once authoritative references
+for each country's check digits are available.
 
 ## Responsible use
 

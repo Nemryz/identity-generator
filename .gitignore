@@ -1,5 +1,6 @@
 # Generated data — never commit real history or exported profiles
 history.json
+history.json.lock
 email_usage.json
 email_usage.json.lock
 *_identity.json
@@ -21,6 +22,9 @@ build/
 .venv/
 venv/
 env/
+
+# Test cache
+.pytest_cache/
 
 # IDE
 .vscode/
