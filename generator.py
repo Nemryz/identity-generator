@@ -85,6 +85,40 @@ DATASETS_DIR = Path(__file__).resolve().parent / "data" / "addresses"
 ADDRESS_NUMBER_FIRST = {"en_US", "en_GB", "fr_FR"}
 ADDRESS_COMMA = {"pt_BR"}
 
+# Official national ID providers per locale (Paso 5). Locales without
+# an entry (e.g. es_AR, ja_JP) have no official Faker provider and
+# omit the national_id field. de_DE rvnr embeds the birth date, so the
+# identity's own date of birth is passed to it.
+_NATIONAL_ID_PROVIDERS = {
+    "es_ES": "nif",
+    "es_MX": "curp",
+    "es_CL": "rut",
+    "es_CO": "nuip",
+    "en_US": "ssn",
+    "en_GB": "ssn",
+    "fr_FR": "ssn",
+    "de_DE": "rvnr",
+    "it_IT": "ssn",
+    "pt_BR": "cpf",
+}
+
+# Plausible passport serial formats: (letters, digits) per locale.
+# Faker has no passport provider, so these are locally generated shapes
+# that follow each country's official length conventions.
+_PASSPORT_FORMATS = {
+    "es_ES": (3, 6),
+    "es_MX": (3, 6),
+    "es_AR": (3, 6),
+    "es_CL": (2, 6),
+    "es_CO": (2, 7),
+    "en_US": (0, 9),
+    "en_GB": (0, 9),
+    "fr_FR": (2, 7),
+    "de_DE": (4, 5),
+    "it_IT": (2, 7),
+    "pt_BR": (2, 6),
+}
+
 
 def get_supported_locales() -> list[str]:
     """Return the list of locales that have an explicit country name mapping."""
@@ -165,6 +199,40 @@ def _format_address(locale: str, street: str, number: int) -> str:
     if locale in ADDRESS_COMMA:
         return f"{street}, {number}"
     return f"{street} {number}"
+def _national_id(locale: str, fake: Faker, dob: date) -> str | None:
+    """
+    Return the official national ID for a locale, or None.
+
+    Uses the locale's Faker provider (DNI/NIF for Spain, CURP for
+    Mexico, RUT for Chile, cédula NUIP for Colombia, SSN for the US,
+    National Insurance Number for the UK, NIR for France, German
+    pension number for Germany, codice fiscale for Italy, CPF for
+    Brazil). Locales without a provider omit the field entirely.
+    """
+    method = _NATIONAL_ID_PROVIDERS.get(locale)
+    if method is None:
+        return None
+    try:
+        if method == "rvnr":
+            return fake.rvnr(birthdate=dob)
+        return getattr(fake, method)()
+    except Exception:
+        return None
+
+
+def _passport_number(locale: str) -> str:
+    """
+    Return a plausible passport serial for the locale.
+
+    Faker has no passport provider, so the number is built locally with
+    the letter/digit shape used by each country's official passports.
+    """
+    letters, digits = _PASSPORT_FORMATS.get(locale, (0, 9))
+    part_letters = "".join(random.choices(string.ascii_uppercase, k=letters))
+    part_digits = "".join(random.choices(string.digits, k=digits))
+    return f"{part_letters}{part_digits}"
+
+
 def generate_identity(
     locale: str | None = None, email_usable: bool = True, reuse: bool = False
 ) -> dict:
@@ -223,6 +291,8 @@ def generate_identity(
         "city": city_name,
         "postcode": postcode,
         "country": LOCALE_COUNTRY_MAP.get(locale, locale),
+        "national_id": _national_id(locale, fake, dob),
+        "passport_number": _passport_number(locale),
         "phone": _safe(fake.phone_number),
         "occupation": _safe(fake.job),
         "email": email_info["email"],

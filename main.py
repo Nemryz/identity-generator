@@ -50,6 +50,8 @@ def print_identity(identity: dict) -> None:
     )
     _row("Gender", identity["gender"])
     _row("Occupation", identity["occupation"])
+    _row("National ID", identity.get("national_id") or "N/A")
+    _row("Passport", identity.get("passport_number") or "N/A")
     print(_DIM + _SEP_HALF)
     _row("Address", identity["address"])
     _row("City", identity["city"])

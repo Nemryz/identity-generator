@@ -121,6 +121,15 @@ Run --list-locales to see the full list.
     postcode        Real postal code of the generated city (dataset
                     locales) or a Faker postcode in the locale format.
     country         Derived from the locale code.
+    national_id     Official national ID for locales with a Faker
+                    provider: DNI/NIF (Spain), CURP (Mexico), RUT (Chile),
+                    cédula NUIP (Colombia), SSN (US), National Insurance
+                    Number (UK), NIR (France), German pension number
+                    (Germany), codice fiscale (Italy), CPF (Brazil).
+                    Null for locales without one (e.g. es_AR).
+    passport_number Plausible passport serial in the locale's official
+                    length/shape (e.g. 9 digits for the US, 3 letters +
+                    6 digits for Spain). Always present.
     phone           Phone number in the locale format.
     occupation      Random job title.
     email           Real temporary inbox with an address built from the
