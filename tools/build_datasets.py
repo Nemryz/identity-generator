@@ -82,6 +82,99 @@ MIRROR_RETRY_SLEEP = 2.0
 GRID_ROWS = 2
 GRID_COLS = 2
 
+# First-word blocklists per locale. The country grid cells overlap
+# neighbouring countries (e.g. the FR grid catches Spanish streets near
+# the border, the IT grid catches Tunisia, the DE grid catches France),
+# so any street whose leading word is not from the locale's language is
+# dropped. Locales whose neighbours share the language (es_AR, es_CL,
+# es_CO) only block English and other foreign indicators.
+FOREIGN_PREFIXES: dict[str, set[str]] = {
+    "es_ES": {
+        "rue", "impasse", "allee", "allée", "chemin", "route", "boulevard",
+        "place", "square", "avenue", "street", "road", "lane", "drive",
+        "way", "court", "close", "via", "viale", "piazza", "corso",
+        "strada", "praça", "travessa", "strasse", "platz", "gasse", "weg",
+        "hill", "grove", "mill", "farm", "green", "view", "terrace",
+        "park", "kirk", "wynd", "brae", "craig", "burn", "holm", "rigg",
+    },
+    "es_MX": {
+        "street", "road", "lane", "drive", "way", "avenue", "court",
+        "close", "place", "terrace", "park", "rue", "chemin", "impasse",
+        "boulevard", "square", "hill", "grove", "mill", "green", "view",
+    },
+    "es_AR": {
+        "street", "road", "lane", "drive", "way", "avenue", "court",
+        "close", "place", "rue", "via", "strada", "platz", "strasse",
+        "gasse", "praça", "travessa",
+    },
+    "es_CL": {
+        "street", "road", "lane", "drive", "way", "avenue", "court",
+        "close", "place", "rue", "via", "strada", "platz", "strasse",
+        "gasse", "praça", "travessa",
+    },
+    "es_CO": {
+        "street", "road", "lane", "drive", "way", "avenue", "court",
+        "close", "place", "rue", "via", "strada", "platz", "strasse",
+        "gasse", "praça", "travessa",
+    },
+    "en_US": {
+        "calle", "avenida", "camino", "ruta", "carretera", "pasaje",
+        "via", "plaza", "callejon", "callejón", "diagonal", "transversal",
+        "rue", "impasse", "chemin", "strada", "strasse", "platz", "gasse",
+        "viale", "piazza", "corso", "praça",
+    },
+    "en_GB": {
+        "rue", "calle", "camino", "ruta", "via", "strada", "strasse",
+        "platz", "gasse", "allee", "impasse", "chemin", "piazza", "corso",
+        "viale", "boulevard", "callejon", "callejón", "carretera",
+        "pasaje", "avenida",
+    },
+    "fr_FR": {
+        "calle", "carrer", "camino", "rua", "rúa", "praça", "travessa",
+        "via", "viale", "piazza", "corso", "strada", "contrada", "borgo",
+        "callejon", "callejón", "pasaje", "diagonal", "street", "road",
+        "lane", "drive", "way", "court", "close", "strasse", "platz",
+        "gasse", "weg", "allee", "kirk", "wynd", "brae", "craig", "burn",
+    },
+    "de_DE": {
+        "rue", "impasse", "avenue", "chemin", "route", "place", "square",
+        "street", "road", "lane", "drive", "way", "close", "court", "via",
+        "viale", "piazza", "corso", "strada", "calle", "camino", "ruta",
+        "carretera", "rua", "praça", "boulevard", "hill", "grove", "mill",
+        "farm", "green", "view", "terrace", "kirk", "wynd", "brae",
+        "craig", "burn", "holly", "willow", "elm", "oak", "ash", "birch",
+        "maple",
+    },
+    "it_IT": {
+        "rue", "route", "chemin", "allee", "allée", "impasse", "boulevard",
+        "place", "square", "avenue", "street", "road", "lane", "drive",
+        "way", "court", "close", "calle", "camino", "rua", "ruta",
+        "carretera", "strasse", "platz", "gasse", "weg", "praça",
+        "travessa", "callejon", "callejón", "hill", "grove", "mill",
+        "green",
+    },
+    "pt_BR": {
+        "calle", "camino", "ruta", "pasaje", "carretera", "callejon",
+        "callejón", "diagonal", "transversal", "av", "rue", "chemin",
+        "impasse", "avenue", "street", "road", "lane", "drive", "way",
+        "court", "close", "strasse", "platz", "gasse", "weg", "via",
+        "viale", "piazza", "corso", "strada", "boulevard",
+    },
+}
+
+
+def _keep_street(locale: str, name: str) -> bool:
+    """
+    Return True when a street name plausibly belongs to the locale.
+
+    Drops names written in non-Latin scripts (Arabic, CJK) and names
+    whose first word is a foreign-language prefix per FOREIGN_PREFIXES.
+    """
+    if any(unicodedata.category(char) == "Lo" for char in name):
+        return False
+    first = name.lower().split()[0].strip(".,'\"") if name.split() else ""
+    return first not in FOREIGN_PREFIXES.get(locale, set())
+
 
 def _normalize(text: str) -> str:
     """Casefold without diacritics for tolerant name matching."""
@@ -448,6 +541,7 @@ def build_locale(
         streets = existing.get("streets", [])
     else:
         streets = fetch_streets(session, cc, cells, max_streets, mirror, sleep)
+    streets = [street for street in streets if _keep_street(locale, street)]
     print(
         f"  {locale}: {len(cities)} ciudades "
         f"({matched} con postcode, {matched * 100 // max(len(cities), 1)}%)"

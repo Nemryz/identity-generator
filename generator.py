@@ -10,6 +10,7 @@ Supported locales are listed in LOCALE_COUNTRY_MAP. Any locale supported by Fake
 The returned identity dict contains all profile fields plus metadata (id, created_at, locale). The date_of_birth is a date object, and age is calculated from it. The email is generated using a temporary email service.
 """
 
+import json
 import random
 import secrets
 import string
@@ -17,6 +18,8 @@ import sys
 import unicodedata
 import uuid
 from datetime import date, datetime, timezone
+from functools import lru_cache
+from pathlib import Path
 
 from faker import Faker
 from faker.config import AVAILABLE_LOCALES
@@ -72,6 +75,16 @@ _NICKNAME_SUFFIXES = {
 }
 # DEFAULT_LOCALES is a list of locale codes that are used as defaults when generating synthetic identities. These locales are chosen to provide a diverse set of cultural contexts for the generated profiles. The list includes Spanish (Spain and Mexico) and English (United States) locales, which are commonly used and widely recognized.
 
+# Real-address datasets (Paso 3/4). Locales with a dataset in
+# data/addresses/ get a city weighted by population, its real postal
+# code and a real street name; all other locales fall back to Faker.
+DATASETS_DIR = Path(__file__).resolve().parent / "data" / "addresses"
+
+# Locales that put the house number before the street name, and the
+# single locale that separates them with a comma (Portuguese convention).
+ADDRESS_NUMBER_FIRST = {"en_US", "en_GB", "fr_FR"}
+ADDRESS_COMMA = {"pt_BR"}
+
 
 def get_supported_locales() -> list[str]:
     """Return the list of locales that have an explicit country name mapping."""
@@ -101,6 +114,57 @@ def _calculate_age(dob, today: date | None = None) -> int:
     if (today.month, today.day) < (dob_date.month, dob_date.day):
         age -= 1
     return age
+
+
+@lru_cache(maxsize=None)
+def _load_address_dataset(locale: str) -> dict | None:
+    """
+    Return the real-address dataset for a locale, or None.
+
+    Returns None when the locale has no dataset or the file is missing
+    or unreadable, so the caller falls back to Faker.
+    """
+    path = DATASETS_DIR / f"{locale}.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    cities = data.get("cities") or []
+    streets = data.get("streets") or []
+    if not cities or not streets:
+        return None
+    return {"cities": cities, "streets": streets}
+
+
+def _pick_dataset_city(dataset: dict) -> dict:
+    """
+    Pick a city from a dataset, weighted by population.
+
+    Only cities that have a real postal code participate, so the
+    returned city always carries a usable postcode.
+    """
+    pool = [city for city in dataset["cities"] if city.get("postcode")]
+    return random.choices(pool, weights=[c["population"] for c in pool])[0]
+
+
+def _street_number() -> int:
+    """Return a plausible house number."""
+    return random.randint(1, 9999)
+
+
+def _format_address(locale: str, street: str, number: int) -> str:
+    """
+    Format a street address following the locale's convention.
+
+    Number-first for US/GB/French ("123 Main Street", "12 rue de la
+    Paix"), comma-separated for Brazilian Portuguese ("Rua Augusta,
+    123"), street-first for the rest ("Calle X 123", "Hauptstraße 12").
+    """
+    if locale in ADDRESS_NUMBER_FIRST:
+        return f"{number} {street}"
+    if locale in ADDRESS_COMMA:
+        return f"{street}, {number}"
+    return f"{street} {number}"
 def generate_identity(
     locale: str | None = None, email_usable: bool = True, reuse: bool = False
 ) -> dict:
@@ -123,6 +187,18 @@ def generate_identity(
     last = fake.last_name()
     dob = fake.date_of_birth(minimum_age=18, maximum_age=60)
 
+    dataset = _load_address_dataset(locale)
+    if dataset is not None:
+        city = _pick_dataset_city(dataset)
+        street = random.choice(dataset["streets"])
+        address = _format_address(locale, street, _street_number())
+        city_name = city["name"]
+        postcode = city["postcode"]
+    else:
+        address = _safe(fake.street_address, fake.address)
+        city_name = _safe(fake.city)
+        postcode = _safe(fake.postcode)
+
     email_info = None
     if reuse:
         email_info = hist.find_usable_email()
@@ -143,9 +219,9 @@ def generate_identity(
         "full_name": f"{first} {last}",
         "date_of_birth": dob.isoformat(),
         "age": _calculate_age(dob),
-        "address": _safe(fake.street_address, fake.address),
-        "city": _safe(fake.city),
-        "postcode": _safe(fake.postcode),
+        "address": address,
+        "city": city_name,
+        "postcode": postcode,
         "country": LOCALE_COUNTRY_MAP.get(locale, locale),
         "phone": _safe(fake.phone_number),
         "occupation": _safe(fake.job),

@@ -109,9 +109,17 @@ Run --list-locales to see the full list.
     date_of_birth   Random date producing an age between 18 and 60.
     age             Calculated from date_of_birth.
     gender          Randomly male or female.
-    address         Street address in the locale format.
-    city            City consistent with the locale.
-    postcode        Postcode in the locale format.
+    address         Street address in the locale format. For the 11
+                    locales with an address dataset (see Data sources)
+                    it combines a real street name with a house number
+                    following the local convention ("Calle X 123" in
+                    Spain, "123 Main Street" in the US, "Rua X, 123" in
+                    Brazil); other locales use Faker.
+    city            For the 11 dataset locales, a real city from the
+                    dataset picked weighted by population; other locales
+                    use Faker.
+    postcode        Real postal code of the generated city (dataset
+                    locales) or a Faker postcode in the locale format.
     country         Derived from the locale code.
     phone           Phone number in the locale format.
     occupation      Random job title.
@@ -288,6 +296,13 @@ already on disk, and --sleep to tune the delay between queries.
 Known limitations: the GeoNames Colombia postal file has no entry for Bogota,
 and the Mexico file has no standalone "Ciudad de Mexico" entry, so those
 cities keep a null postal code or a code from a matching region variant.
+Street names are filtered by language (non-Latin scripts and foreign
+first words are dropped), but the country grid cells overlap neighbouring
+countries, so a few cross-border names may remain in the France, Germany,
+Italy and Brazil datasets; the UK dataset may include some Irish names
+(the two are not distinguishable by word lists). The datasets can be
+refreshed or replaced with a country-polygon (area) Overpass query by
+editing tools/build_datasets.py.
 
 ## Possible extensions
 
