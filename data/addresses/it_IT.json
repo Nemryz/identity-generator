@@ -1,0 +1,1762 @@
+{
+  "locale": "it_IT",
+  "country_code": "IT",
+  "cities": [
+    {
+      "name": "Rome",
+      "population": 2318895,
+      "postcode": "00118"
+    },
+    {
+      "name": "Milan",
+      "population": 1371498,
+      "postcode": "20121"
+    },
+    {
+      "name": "Naples",
+      "population": 909048,
+      "postcode": "80100"
+    },
+    {
+      "name": "Turin",
+      "population": 847287,
+      "postcode": "10100"
+    },
+    {
+      "name": "Palermo",
+      "population": 648260,
+      "postcode": "90100"
+    },
+    {
+      "name": "Genoa",
+      "population": 580097,
+      "postcode": "18026"
+    },
+    {
+      "name": "Bologna",
+      "population": 394843,
+      "postcode": "40100"
+    },
+    {
+      "name": "Florence",
+      "population": 367150,
+      "postcode": "50100"
+    },
+    {
+      "name": "Bari",
+      "population": 316491,
+      "postcode": "70100"
+    },
+    {
+      "name": "Catania",
+      "population": 311584,
+      "postcode": "95100"
+    },
+    {
+      "name": "Verona",
+      "population": 258031,
+      "postcode": "37100"
+    },
+    {
+      "name": "Messina",
+      "population": 219948,
+      "postcode": "98100"
+    },
+    {
+      "name": "Trieste",
+      "population": 204338,
+      "postcode": "34100"
+    },
+    {
+      "name": "Padua",
+      "population": 203725,
+      "postcode": "35100"
+    },
+    {
+      "name": "Brescia",
+      "population": 200423,
+      "postcode": "25100"
+    },
+    {
+      "name": "Taranto",
+      "population": 198585,
+      "postcode": "74100"
+    },
+    {
+      "name": "Parma",
+      "population": 198292,
+      "postcode": "43100"
+    },
+    {
+      "name": "Prato",
+      "population": 195089,
+      "postcode": "59100"
+    },
+    {
+      "name": "Modena",
+      "population": 184732,
+      "postcode": "41100"
+    },
+    {
+      "name": "Reggio Calabria",
+      "population": 182455,
+      "postcode": "89100"
+    },
+    {
+      "name": "Quarto Oggiaro",
+      "population": 182118,
+      "postcode": "20157"
+    },
+    {
+      "name": "Reggio nell'Emilia",
+      "population": 171944,
+      "postcode": "87030"
+    },
+    {
+      "name": "Livorno",
+      "population": 157017,
+      "postcode": "57100"
+    },
+    {
+      "name": "Cagliari",
+      "population": 149257,
+      "postcode": "09100"
+    },
+    {
+      "name": "Rimini",
+      "population": 148688,
+      "postcode": "47900"
+    },
+    {
+      "name": "Mestre",
+      "population": 147662,
+      "postcode": "30171"
+    },
+    {
+      "name": "Circoiscrizione II",
+      "population": 141344,
+      "postcode": null
+    },
+    {
+      "name": "Foggia",
+      "population": 137032,
+      "postcode": "71100"
+    },
+    {
+      "name": "Circoiscrizione VIII",
+      "population": 134028,
+      "postcode": null
+    },
+    {
+      "name": "Ferrara",
+      "population": 132009,
+      "postcode": "44121"
+    },
+    {
+      "name": "Circoiscrizione III",
+      "population": 130709,
+      "postcode": null
+    },
+    {
+      "name": "Acilia-Castel Fusano-Ostia Antica",
+      "population": 129362,
+      "postcode": null
+    },
+    {
+      "name": "Circoiscrizione V",
+      "population": 126666,
+      "postcode": null
+    },
+    {
+      "name": "Salerno",
+      "population": 125797,
+      "postcode": "84100"
+    },
+    {
+      "name": "Monza",
+      "population": 124398,
+      "postcode": "20900"
+    },
+    {
+      "name": "Siracusa",
+      "population": 121605,
+      "postcode": "96100"
+    },
+    {
+      "name": "Bergamo",
+      "population": 121200,
+      "postcode": "24100"
+    },
+    {
+      "name": "Trento",
+      "population": 120709,
+      "postcode": "38100"
+    },
+    {
+      "name": "Perugia",
+      "population": 120137,
+      "postcode": "06100"
+    },
+    {
+      "name": "Pescara",
+      "population": 119554,
+      "postcode": "65100"
+    },
+    {
+      "name": "Forlì",
+      "population": 116696,
+      "postcode": "47121"
+    },
+    {
+      "name": "Vicenza",
+      "population": 111980,
+      "postcode": "36100"
+    },
+    {
+      "name": "Terni",
+      "population": 111189,
+      "postcode": "05100"
+    },
+    {
+      "name": "Pisa",
+      "population": 109960,
+      "postcode": "56100"
+    },
+    {
+      "name": "Bolzano",
+      "population": 107436,
+      "postcode": "39100"
+    },
+    {
+      "name": "Circoiscrizione VI",
+      "population": 107369,
+      "postcode": null
+    },
+    {
+      "name": "Piacenza",
+      "population": 103607,
+      "postcode": "29100"
+    },
+    {
+      "name": "Novara",
+      "population": 101916,
+      "postcode": "28100"
+    },
+    {
+      "name": "Arezzo",
+      "population": 100734,
+      "postcode": "52100"
+    },
+    {
+      "name": "Udine",
+      "population": 100170,
+      "postcode": "33100"
+    },
+    {
+      "name": "Andria",
+      "population": 99784,
+      "postcode": "76123"
+    },
+    {
+      "name": "Circoiscrizione IV",
+      "population": 98787,
+      "postcode": null
+    },
+    {
+      "name": "Cesena",
+      "population": 97137,
+      "postcode": "47023"
+    },
+    {
+      "name": "La Spezia",
+      "population": 93288,
+      "postcode": "19100"
+    },
+    {
+      "name": "Barletta",
+      "population": 93279,
+      "postcode": "76121"
+    },
+    {
+      "name": "Alessandria",
+      "population": 92104,
+      "postcode": "15100"
+    },
+    {
+      "name": "Sassari",
+      "population": 91895,
+      "postcode": "07100"
+    },
+    {
+      "name": "Ancona",
+      "population": 89994,
+      "postcode": "60100"
+    },
+    {
+      "name": "Circoiscrizione VII",
+      "population": 89448,
+      "postcode": null
+    },
+    {
+      "name": "Guidonia Montecelio",
+      "population": 89165,
+      "postcode": "00012"
+    },
+    {
+      "name": "Campo di Marte",
+      "population": 88588,
+      "postcode": null
+    },
+    {
+      "name": "Brindisi",
+      "population": 87141,
+      "postcode": "72100"
+    },
+    {
+      "name": "Treviso",
+      "population": 85760,
+      "postcode": "31100"
+    },
+    {
+      "name": "Torre del Greco",
+      "population": 85332,
+      "postcode": "80059"
+    },
+    {
+      "name": "Lido di Ostia",
+      "population": 85301,
+      "postcode": "00121"
+    },
+    {
+      "name": "Como",
+      "population": 84808,
+      "postcode": "22100"
+    },
+    {
+      "name": "Busto Arsizio",
+      "population": 83405,
+      "postcode": "21052"
+    },
+    {
+      "name": "Sesto San Giovanni",
+      "population": 81822,
+      "postcode": "20099"
+    },
+    {
+      "name": "Lucca",
+      "population": 81748,
+      "postcode": "55100"
+    },
+    {
+      "name": "Pozzuoli",
+      "population": 81231,
+      "postcode": "80078"
+    },
+    {
+      "name": "Ravenna",
+      "population": 80868,
+      "postcode": "48100"
+    },
+    {
+      "name": "Lecce",
+      "population": 80695,
+      "postcode": "73100"
+    },
+    {
+      "name": "Varese",
+      "population": 80588,
+      "postcode": "21100"
+    },
+    {
+      "name": "Giugliano in Campania",
+      "population": 80269,
+      "postcode": "80014"
+    },
+    {
+      "name": "Catanzaro",
+      "population": 78970,
+      "postcode": "88100"
+    },
+    {
+      "name": "Circoiscrizione I",
+      "population": 78523,
+      "postcode": null
+    },
+    {
+      "name": "Marsala",
+      "population": 77915,
+      "postcode": "91025"
+    },
+    {
+      "name": "Pesaro",
+      "population": 77241,
+      "postcode": "61100"
+    },
+    {
+      "name": "Fuorigrotta",
+      "population": 76521,
+      "postcode": null
+    },
+    {
+      "name": "Latina",
+      "population": 76305,
+      "postcode": "04100"
+    },
+    {
+      "name": "Cinisello Balsamo",
+      "population": 75943,
+      "postcode": "20092"
+    },
+    {
+      "name": "Gela",
+      "population": 75001,
+      "postcode": "93012"
+    },
+    {
+      "name": "Aprilia",
+      "population": 74977,
+      "postcode": "04011"
+    },
+    {
+      "name": "Asti",
+      "population": 74348,
+      "postcode": "14100"
+    },
+    {
+      "name": "Ragusa",
+      "population": 74251,
+      "postcode": "97100"
+    },
+    {
+      "name": "Casoria",
+      "population": 73918,
+      "postcode": "80026"
+    },
+    {
+      "name": "Pistoia",
+      "population": 73832,
+      "postcode": "51100"
+    },
+    {
+      "name": "Caserta",
+      "population": 72844,
+      "postcode": "81100"
+    },
+    {
+      "name": "Cremona",
+      "population": 71223,
+      "postcode": "26100"
+    },
+    {
+      "name": "Carpi",
+      "population": 71148,
+      "postcode": "41012"
+    },
+    {
+      "name": "Altamura",
+      "population": 70539,
+      "postcode": "70022"
+    },
+    {
+      "name": "Lamezia Terme",
+      "population": 70501,
+      "postcode": "88046"
+    },
+    {
+      "name": "Imola",
+      "population": 69953,
+      "postcode": "40026"
+    },
+    {
+      "name": "San Carlo All'Arena",
+      "population": 69094,
+      "postcode": null
+    },
+    {
+      "name": "Arenella",
+      "population": 67634,
+      "postcode": "80131"
+    },
+    {
+      "name": "Trapani",
+      "population": 67531,
+      "postcode": "91100"
+    },
+    {
+      "name": "Quartu Sant'Elena",
+      "population": 66620,
+      "postcode": "09045"
+    },
+    {
+      "name": "Castellammare di Stabia",
+      "population": 66164,
+      "postcode": "80053"
+    },
+    {
+      "name": "Pavia",
+      "population": 65734,
+      "postcode": "27100"
+    },
+    {
+      "name": "Massa",
+      "population": 64783,
+      "postcode": "54100"
+    },
+    {
+      "name": "Crotone",
+      "population": 64603,
+      "postcode": "88900"
+    },
+    {
+      "name": "Afragola",
+      "population": 64470,
+      "postcode": "80021"
+    },
+    {
+      "name": "Cosenza",
+      "population": 63852,
+      "postcode": "87100"
+    },
+    {
+      "name": "Caltanissetta",
+      "population": 62797,
+      "postcode": "93100"
+    },
+    {
+      "name": "Viareggio",
+      "population": 62169,
+      "postcode": "55049"
+    },
+    {
+      "name": "Savona",
+      "population": 61345,
+      "postcode": "17100"
+    },
+    {
+      "name": "Fano",
+      "population": 60978,
+      "postcode": "61032"
+    },
+    {
+      "name": "Grosseto",
+      "population": 60922,
+      "postcode": "58100"
+    },
+    {
+      "name": "Matera",
+      "population": 60403,
+      "postcode": "75100"
+    },
+    {
+      "name": "Olbia",
+      "population": 60345,
+      "postcode": "07026"
+    },
+    {
+      "name": "Acerra",
+      "population": 59910,
+      "postcode": "80011"
+    },
+    {
+      "name": "Molfetta",
+      "population": 59557,
+      "postcode": "70056"
+    },
+    {
+      "name": "Carrara",
+      "population": 58666,
+      "postcode": "54033"
+    },
+    {
+      "name": "Benevento",
+      "population": 58418,
+      "postcode": "82100"
+    },
+    {
+      "name": "Vigevano",
+      "population": 57970,
+      "postcode": "27029"
+    },
+    {
+      "name": "Pianura",
+      "population": 57821,
+      "postcode": "80126"
+    },
+    {
+      "name": "Legnano",
+      "population": 57589,
+      "postcode": "20025"
+    },
+    {
+      "name": "Manfredonia",
+      "population": 56932,
+      "postcode": "71043"
+    },
+    {
+      "name": "Foligno",
+      "population": 56918,
+      "postcode": "06034"
+    },
+    {
+      "name": "Potenza",
+      "population": 56433,
+      "postcode": "85100"
+    },
+    {
+      "name": "Moncalieri",
+      "population": 56134,
+      "postcode": "10024"
+    },
+    {
+      "name": "Cuneo",
+      "population": 55980,
+      "postcode": "12100"
+    },
+    {
+      "name": "Bisceglie",
+      "population": 55385,
+      "postcode": "76011"
+    },
+    {
+      "name": "Pozzo Strada",
+      "population": 54766,
+      "postcode": null
+    },
+    {
+      "name": "Modica",
+      "population": 54456,
+      "postcode": "97015"
+    },
+    {
+      "name": "Teramo",
+      "population": 54338,
+      "postcode": "64100"
+    },
+    {
+      "name": "Cerignola",
+      "population": 54056,
+      "postcode": "71042"
+    },
+    {
+      "name": "Trani",
+      "population": 53981,
+      "postcode": "76125"
+    },
+    {
+      "name": "Siena",
+      "population": 53901,
+      "postcode": "53100"
+    },
+    {
+      "name": "Portici",
+      "population": 53801,
+      "postcode": "80055"
+    },
+    {
+      "name": "Ercolano",
+      "population": 53576,
+      "postcode": "80056"
+    },
+    {
+      "name": "Montesilvano",
+      "population": 53275,
+      "postcode": "65015"
+    },
+    {
+      "name": "Bagheria",
+      "population": 53149,
+      "postcode": "90011"
+    },
+    {
+      "name": "Cava Dè Tirreni",
+      "population": 53130,
+      "postcode": "47100"
+    },
+    {
+      "name": "Aversa",
+      "population": 52974,
+      "postcode": "81031"
+    },
+    {
+      "name": "Velletri",
+      "population": 52911,
+      "postcode": "00049"
+    },
+    {
+      "name": "Ponticelli",
+      "population": 52284,
+      "postcode": "80147"
+    },
+    {
+      "name": "San Severo",
+      "population": 51919,
+      "postcode": "71016"
+    },
+    {
+      "name": "Secondigliano",
+      "population": 51874,
+      "postcode": "80144"
+    },
+    {
+      "name": "Bitonto",
+      "population": 51661,
+      "postcode": "70032"
+    },
+    {
+      "name": "Mazara del Vallo",
+      "population": 51534,
+      "postcode": "91026"
+    },
+    {
+      "name": "Venice",
+      "population": 51298,
+      "postcode": "30100"
+    },
+    {
+      "name": "Vittoria",
+      "population": 50852,
+      "postcode": "97019"
+    },
+    {
+      "name": "Gallarate",
+      "population": 50439,
+      "postcode": "21013"
+    },
+    {
+      "name": "Barriera di Milano",
+      "population": 50354,
+      "postcode": null
+    },
+    {
+      "name": "Rovigo",
+      "population": 50279,
+      "postcode": "45100"
+    },
+    {
+      "name": "Barriera di Lanzo",
+      "population": 50000,
+      "postcode": null
+    },
+    {
+      "name": "Marano di Napoli",
+      "population": 49920,
+      "postcode": "80016"
+    },
+    {
+      "name": "Pordenone",
+      "population": 49878,
+      "postcode": "33170"
+    },
+    {
+      "name": "Nettuno",
+      "population": 49873,
+      "postcode": "00048"
+    },
+    {
+      "name": "Lingotto",
+      "population": 49705,
+      "postcode": null
+    },
+    {
+      "name": "Acireale",
+      "population": 49477,
+      "postcode": "95024"
+    },
+    {
+      "name": "Campobasso",
+      "population": 49230,
+      "postcode": "86100"
+    },
+    {
+      "name": "Scafati",
+      "population": 48702,
+      "postcode": "84018"
+    },
+    {
+      "name": "Rivoli",
+      "population": 48629,
+      "postcode": "10098"
+    },
+    {
+      "name": "Avellino",
+      "population": 48104,
+      "postcode": "83100"
+    },
+    {
+      "name": "San Lorenzo",
+      "population": 48078,
+      "postcode": "89069"
+    },
+    {
+      "name": "Nichelino",
+      "population": 47760,
+      "postcode": "10042"
+    },
+    {
+      "name": "Civitavecchia",
+      "population": 47543,
+      "postcode": "00053"
+    },
+    {
+      "name": "Settimo Torinese",
+      "population": 47485,
+      "postcode": "10036"
+    },
+    {
+      "name": "Viterbo",
+      "population": 47134,
+      "postcode": "01100"
+    },
+    {
+      "name": "Battipaglia",
+      "population": 47104,
+      "postcode": "84091"
+    },
+    {
+      "name": "Rho",
+      "population": 47086,
+      "postcode": "20017"
+    },
+    {
+      "name": "Sanremo",
+      "population": 47043,
+      "postcode": "18038"
+    },
+    {
+      "name": "Chioggia",
+      "population": 46951,
+      "postcode": "30015"
+    },
+    {
+      "name": "Parella",
+      "population": 46795,
+      "postcode": "10010"
+    },
+    {
+      "name": "Lecco",
+      "population": 46580,
+      "postcode": "23900"
+    },
+    {
+      "name": "Collegno",
+      "population": 46524,
+      "postcode": "10093"
+    },
+    {
+      "name": "Corato",
+      "population": 46505,
+      "postcode": "70033"
+    },
+    {
+      "name": "Paderno Dugnano",
+      "population": 46235,
+      "postcode": "20037"
+    },
+    {
+      "name": "Paternò",
+      "population": 46030,
+      "postcode": "67051"
+    },
+    {
+      "name": "Vercelli",
+      "population": 45875,
+      "postcode": "13100"
+    },
+    {
+      "name": "San Benedetto del Tronto",
+      "population": 45873,
+      "postcode": "63074"
+    },
+    {
+      "name": "Casalnuovo di Napoli",
+      "population": 45796,
+      "postcode": "80013"
+    },
+    {
+      "name": "Cologno Monzese",
+      "population": 45786,
+      "postcode": "20093"
+    },
+    {
+      "name": "Sesto Fiorentino",
+      "population": 45656,
+      "postcode": "50019"
+    },
+    {
+      "name": "Nocera Inferiore",
+      "population": 45608,
+      "postcode": "84014"
+    },
+    {
+      "name": "Misterbianco",
+      "population": 45542,
+      "postcode": "95045"
+    },
+    {
+      "name": "Filadelfia",
+      "population": 45531,
+      "postcode": "89814"
+    },
+    {
+      "name": "San Giorgio a Cremano",
+      "population": 45463,
+      "postcode": "80046"
+    },
+    {
+      "name": "Anzio",
+      "population": 45403,
+      "postcode": "00042"
+    },
+    {
+      "name": "Soccavo",
+      "population": 45314,
+      "postcode": "80126"
+    },
+    {
+      "name": "Monte Rosello",
+      "population": 45000,
+      "postcode": null
+    },
+    {
+      "name": "Scandicci",
+      "population": 44951,
+      "postcode": "50018"
+    },
+    {
+      "name": "Vomero",
+      "population": 44791,
+      "postcode": "80127"
+    },
+    {
+      "name": "Frosinone",
+      "population": 44505,
+      "postcode": "03100"
+    },
+    {
+      "name": "Chieti",
+      "population": 44444,
+      "postcode": "66100"
+    },
+    {
+      "name": "Alcamo",
+      "population": 44431,
+      "postcode": "91011"
+    },
+    {
+      "name": "Marino",
+      "population": 44142,
+      "postcode": "00047"
+    },
+    {
+      "name": "Arcella",
+      "population": 44000,
+      "postcode": "83030"
+    },
+    {
+      "name": "Torre Annunziata",
+      "population": 43521,
+      "postcode": "80058"
+    },
+    {
+      "name": "Biella",
+      "population": 43030,
+      "postcode": "13900"
+    },
+    {
+      "name": "Seregno",
+      "population": 42760,
+      "postcode": "20831"
+    },
+    {
+      "name": "Imperia",
+      "population": 42328,
+      "postcode": "18100"
+    },
+    {
+      "name": "Civitanova Marche",
+      "population": 42251,
+      "postcode": "62012"
+    },
+    {
+      "name": "Gravina in Puglia",
+      "population": 42210,
+      "postcode": "70024"
+    },
+    {
+      "name": "Desio",
+      "population": 41960,
+      "postcode": "20832"
+    },
+    {
+      "name": "San Donà di Piave",
+      "population": 41856,
+      "postcode": "30027"
+    },
+    {
+      "name": "Ascoli Piceno",
+      "population": 41741,
+      "postcode": "63100"
+    },
+    {
+      "name": "Faenza",
+      "population": 41714,
+      "postcode": "48018"
+    },
+    {
+      "name": "Vasto",
+      "population": 41409,
+      "postcode": "66054"
+    },
+    {
+      "name": "Mirafiori Nord",
+      "population": 41337,
+      "postcode": null
+    },
+    {
+      "name": "Capannori",
+      "population": 41116,
+      "postcode": "55012"
+    },
+    {
+      "name": "Merano",
+      "population": 41051,
+      "postcode": "39012"
+    },
+    {
+      "name": "Lodi",
+      "population": 40767,
+      "postcode": "26900"
+    },
+    {
+      "name": "Chiaia",
+      "population": 40730,
+      "postcode": "80122"
+    },
+    {
+      "name": "Sciacca",
+      "population": 40569,
+      "postcode": "92019"
+    },
+    {
+      "name": "Cascina",
+      "population": 40512,
+      "postcode": "56021"
+    },
+    {
+      "name": "Marcianise",
+      "population": 40239,
+      "postcode": "81025"
+    },
+    {
+      "name": "Nicastro",
+      "population": 40000,
+      "postcode": "88046"
+    },
+    {
+      "name": "Cantù",
+      "population": 39917,
+      "postcode": "22063"
+    },
+    {
+      "name": "Fondi",
+      "population": 39762,
+      "postcode": "04022"
+    },
+    {
+      "name": "Rozzano",
+      "population": 39731,
+      "postcode": "20089"
+    },
+    {
+      "name": "Mantua",
+      "population": 39260,
+      "postcode": "46100"
+    },
+    {
+      "name": "Rieti",
+      "population": 39068,
+      "postcode": "02100"
+    },
+    {
+      "name": "Pomigliano d'Arco",
+      "population": 38921,
+      "postcode": "80038"
+    },
+    {
+      "name": "Voghera",
+      "population": 38464,
+      "postcode": "27058"
+    },
+    {
+      "name": "Caltagirone",
+      "population": 38391,
+      "postcode": "95041"
+    },
+    {
+      "name": "Ciampino",
+      "population": 38277,
+      "postcode": "00043"
+    },
+    {
+      "name": "Bassano del Grappa",
+      "population": 38224,
+      "postcode": "36061"
+    },
+    {
+      "name": "Saronno",
+      "population": 38099,
+      "postcode": "21047"
+    },
+    {
+      "name": "Avezzano",
+      "population": 37808,
+      "postcode": "67051"
+    },
+    {
+      "name": "Monopoli",
+      "population": 37738,
+      "postcode": "70043"
+    },
+    {
+      "name": "Martina Franca",
+      "population": 37685,
+      "postcode": "74015"
+    },
+    {
+      "name": "Quarto",
+      "population": 37683,
+      "postcode": "80010"
+    },
+    {
+      "name": "Lissone",
+      "population": 37353,
+      "postcode": "20851"
+    },
+    {
+      "name": "Monterotondo",
+      "population": 37225,
+      "postcode": "00015"
+    },
+    {
+      "name": "Cesano Maderno",
+      "population": 36986,
+      "postcode": "20811"
+    },
+    {
+      "name": "Jesi",
+      "population": 36985,
+      "postcode": "60035"
+    },
+    {
+      "name": "Melito di Napoli",
+      "population": 36933,
+      "postcode": "80017"
+    },
+    {
+      "name": "Sassuolo",
+      "population": 36926,
+      "postcode": "41049"
+    },
+    {
+      "name": "Chieri",
+      "population": 36749,
+      "postcode": "10023"
+    },
+    {
+      "name": "Grugliasco",
+      "population": 36700,
+      "postcode": "10095"
+    },
+    {
+      "name": "Barra",
+      "population": 36642,
+      "postcode": "80147"
+    },
+    {
+      "name": "Licata",
+      "population": 36537,
+      "postcode": "92027"
+    },
+    {
+      "name": "Modugno",
+      "population": 36384,
+      "postcode": "70026"
+    },
+    {
+      "name": "Cenisia",
+      "population": 36044,
+      "postcode": null
+    },
+    {
+      "name": "Nuoro",
+      "population": 35948,
+      "postcode": "08100"
+    },
+    {
+      "name": "San Salvario",
+      "population": 35591,
+      "postcode": null
+    },
+    {
+      "name": "Aosta",
+      "population": 35261,
+      "postcode": "11100"
+    },
+    {
+      "name": "Bollate",
+      "population": 35235,
+      "postcode": "20021"
+    },
+    {
+      "name": "Carini",
+      "population": 35082,
+      "postcode": "90044"
+    },
+    {
+      "name": "Arzano",
+      "population": 34933,
+      "postcode": "80022"
+    },
+    {
+      "name": "Lanciano",
+      "population": 34791,
+      "postcode": "66034"
+    },
+    {
+      "name": "Caivano",
+      "population": 34604,
+      "postcode": "80023"
+    },
+    {
+      "name": "Barcellona Pozzo di Gotto",
+      "population": 34598,
+      "postcode": "98051"
+    },
+    {
+      "name": "Fiumicino",
+      "population": 34556,
+      "postcode": "00054"
+    },
+    {
+      "name": "Maddaloni",
+      "population": 34546,
+      "postcode": "81024"
+    },
+    {
+      "name": "Adrano",
+      "population": 34446,
+      "postcode": "95031"
+    },
+    {
+      "name": "Gorizia",
+      "population": 34428,
+      "postcode": "34170"
+    },
+    {
+      "name": "Empoli",
+      "population": 34394,
+      "postcode": "50053"
+    },
+    {
+      "name": "Formigine",
+      "population": 34328,
+      "postcode": "41043"
+    },
+    {
+      "name": "Alghero",
+      "population": 34261,
+      "postcode": "07041"
+    },
+    {
+      "name": "Mugnano di Napoli",
+      "population": 34231,
+      "postcode": "80018"
+    },
+    {
+      "name": "Ladispoli",
+      "population": 34204,
+      "postcode": "00055"
+    },
+    {
+      "name": "Pioltello",
+      "population": 34203,
+      "postcode": "20096"
+    },
+    {
+      "name": "Rovereto",
+      "population": 34152,
+      "postcode": "38068"
+    },
+    {
+      "name": "Piombino",
+      "population": 34041,
+      "postcode": "57025"
+    },
+    {
+      "name": "Casalecchio di Reno",
+      "population": 33789,
+      "postcode": "40033"
+    },
+    {
+      "name": "Schio",
+      "population": 33740,
+      "postcode": "36015"
+    },
+    {
+      "name": "L'Aquila",
+      "population": 33691,
+      "postcode": "67100"
+    },
+    {
+      "name": "Mirafiori Sud",
+      "population": 33677,
+      "postcode": null
+    },
+    {
+      "name": "Corsico",
+      "population": 33669,
+      "postcode": "20094"
+    },
+    {
+      "name": "Sant'Antimo",
+      "population": 33561,
+      "postcode": "80029"
+    },
+    {
+      "name": "Venaria Reale",
+      "population": 33531,
+      "postcode": "10078"
+    },
+    {
+      "name": "Francavilla Fontana",
+      "population": 33415,
+      "postcode": "72021"
+    },
+    {
+      "name": "Borgo San Paolo",
+      "population": 33366,
+      "postcode": "03035"
+    },
+    {
+      "name": "Casale Monferrato",
+      "population": 33213,
+      "postcode": "15033"
+    },
+    {
+      "name": "Brugherio",
+      "population": 33061,
+      "postcode": "20861"
+    },
+    {
+      "name": "Avvocata",
+      "population": 33001,
+      "postcode": null
+    },
+    {
+      "name": "Canicattì",
+      "population": 32918,
+      "postcode": "92024"
+    },
+    {
+      "name": "Mira Taglio",
+      "population": 32881,
+      "postcode": "30034"
+    },
+    {
+      "name": "Campi Bisenzio",
+      "population": 32871,
+      "postcode": "50013"
+    },
+    {
+      "name": "Pagani",
+      "population": 32835,
+      "postcode": "84016"
+    },
+    {
+      "name": "Abbiategrasso",
+      "population": 32784,
+      "postcode": "20081"
+    },
+    {
+      "name": "Riccione",
+      "population": 32744,
+      "postcode": "47838"
+    },
+    {
+      "name": "Casal Palocco",
+      "population": 32706,
+      "postcode": "00124"
+    },
+    {
+      "name": "San Donato",
+      "population": 32586,
+      "postcode": "12056"
+    },
+    {
+      "name": "Agrigento",
+      "population": 32514,
+      "postcode": "92100"
+    },
+    {
+      "name": "Somma Vesuviana",
+      "population": 32484,
+      "postcode": "80049"
+    },
+    {
+      "name": "Lucera",
+      "population": 32222,
+      "postcode": "71036"
+    },
+    {
+      "name": "Mascalucia",
+      "population": 32179,
+      "postcode": "95030"
+    },
+    {
+      "name": "Favara",
+      "population": 32110,
+      "postcode": "92026"
+    },
+    {
+      "name": "Limbiate",
+      "population": 32062,
+      "postcode": "20812"
+    },
+    {
+      "name": "Milazzo",
+      "population": 31771,
+      "postcode": "98057"
+    },
+    {
+      "name": "Santa Maria Capua Vetere",
+      "population": 31743,
+      "postcode": "81055"
+    },
+    {
+      "name": "Castelvetrano",
+      "population": 31680,
+      "postcode": "91022"
+    },
+    {
+      "name": "Oristano",
+      "population": 31671,
+      "postcode": "09170"
+    },
+    {
+      "name": "Angri",
+      "population": 31632,
+      "postcode": "84012"
+    },
+    {
+      "name": "Crema",
+      "population": 31481,
+      "postcode": "26013"
+    },
+    {
+      "name": "Grottaglie",
+      "population": 31320,
+      "postcode": "74023"
+    },
+    {
+      "name": "Verbania",
+      "population": 31070,
+      "postcode": "28922"
+    },
+    {
+      "name": "San Giuliano Milanese",
+      "population": 31050,
+      "postcode": "20098"
+    },
+    {
+      "name": "Termoli",
+      "population": 31044,
+      "postcode": "86039"
+    },
+    {
+      "name": "Terracina",
+      "population": 30980,
+      "postcode": "04019"
+    },
+    {
+      "name": "Senigallia",
+      "population": 30882,
+      "postcode": "60019"
+    },
+    {
+      "name": "Massafra",
+      "population": 30875,
+      "postcode": "74016"
+    },
+    {
+      "name": "Pinerolo",
+      "population": 30866,
+      "postcode": "10064"
+    },
+    {
+      "name": "Macerata",
+      "population": 30842,
+      "postcode": "62100"
+    },
+    {
+      "name": "Conegliano",
+      "population": 30765,
+      "postcode": "31015"
+    }
+  ],
+  "streets": [
+    "طريق سيدي عكاشة",
+    "Sable D'or",
+    "طريق جبل سيدي يحيى",
+    "Benidati",
+    "Ainani",
+    "Cité Sfsaf",
+    "La Cité",
+    "Rue Melais Ali",
+    "Rue Hafsaoui Ammar",
+    "Bagtous",
+    "Cité Belle Vue",
+    "Rue Daoudi Bachir",
+    "Rue Mezghiche Houcine",
+    "Rue Daoudi Brahim",
+    "Rue Nouacer Khemissi",
+    "Rue Bougerra Khemissi",
+    "Rue Khaldoun Said",
+    "Quartier Martin",
+    "شارع بابوري أحمد",
+    "نهج الشهيد العايب صالح",
+    "شارع مراح حمدة",
+    "شارع مراح يوسف",
+    "شارع الشهيد برحال صدوق",
+    "نهج الشهيد عريوة عبد المجيد",
+    "نهج الشهيد غواسي حسان",
+    "شارع مراح عمارة",
+    "ممر الشهيد الشابي أحمد",
+    "نهج الشهيد بن ابراهيم صالح",
+    "Route de Seraïdi",
+    "Boulevard Belaid Belkacem",
+    "شارع خالد خوجة عبان رمضان",
+    "Boulevard Pleine Ouest",
+    "Boulevard Plein Ouest",
+    "Route de la maison des personne âgées et de la basilique Saint-Augustin",
+    "Boulevard de l'Afrique",
+    "Boulevard Bouzerad Hocine",
+    "Rue Oued Eddahab",
+    "Rue Boumerah Saïd",
+    "Rue Khaled Noureddine",
+    "Rue Allali Ahmed",
+    "Rue Kichane Larbi",
+    "Rue Chakroun Mohamed Salah",
+    "Rue Alali Ahmed",
+    "Rue Halimi Mohamed",
+    "Rue Hamrouche Mohamed",
+    "Rue Saci Boumerah",
+    "Rue Abbas Tahar",
+    "Boulevard Souidani Boudjemaa",
+    "Avenue Bouali Said",
+    "Boulevard Boukhtouta Hocine",
+    "Rue Ibn Khaldoun",
+    "Rue Biskri Ali",
+    "Boulevard Riad El Solh",
+    "Rue Zenine Larbi",
+    "Boulevard Benzaïm Abdelaziz",
+    "Rue Drissi Ammar",
+    "Rue Bouajaha Moussa",
+    "Rue Khemisti Mohamed",
+    "Rue Benhouhiba Mohamed",
+    "Rue Mekous Hocine",
+    "Rue Bougandoura Miloud",
+    "Rue Lamara Abdelkader",
+    "Rue Ouaklia Ayachi",
+    "Rue Hannachi Mabrouk",
+    "Rue El Kods",
+    "Rue Himyali Lagal",
+    "Strada Provinciale 17-B",
+    "Strada Provinciale 75",
+    "Via delle Tartarughe",
+    "Via Lungomare",
+    "Strada Provinciale 56",
+    "Via Botticelli",
+    "Strada statale Sud Occidentale Sicula",
+    "Viadotto Canne",
+    "Viadotto Siculiana I",
+    "Viadotto Siculiana II",
+    "Via Circonvallazione",
+    "via Chiaramonte",
+    "Via Municipio",
+    "Via Roma",
+    "Via Pastori",
+    "Strada Provinciale 49",
+    "Via Selinunte",
+    "Via dei Greci",
+    "Strada Provinciale 25 Mazara - Castelvetrano",
+    "Strada Provinciale 76 di Roccolino",
+    "Strada Provinciale 50 Mazara-Salemi",
+    "Viale Nicolò Gentile",
+    "Via Tonnara Fontana",
+    "Strada Provinciale 81 di Bresciana diramazione",
+    "Strada 74 Trisicina",
+    "Viale Mediterraneo",
+    "Via Giovanni Verga",
+    "Via Federico De Roberto",
+    "Via Giuseppe Tomasi di Lampedusa",
+    "Via Elio Vittorini",
+    "Via Luigi Capuana",
+    "Via Leonardo Da Vinci",
+    "Via Gesualdo Bufalino",
+    "Via Trilussa",
+    "Via Leonardo Sciascia",
+    "Via Virgilio",
+    "Via Omero",
+    "Via Giuseppe Ungaretti",
+    "Via Cielo d'Alcamo",
+    "Strada 163 Triscina",
+    "Strada 157 Triscina",
+    "Strada 159 Triscina",
+    "Strada 155C Triscina",
+    "Via Angelo Musco",
+    "Strada 157A Triscina",
+    "Strada 161 Triscina",
+    "Via Federico II di Svevia",
+    "Via Albert Brce Sabin",
+    "Strada 149 Triscina",
+    "Strada 149A Triscina",
+    "Strada 155A Triscina",
+    "Strada 153 Triscina",
+    "Strada 155D Triscina",
+    "Strada 147 Triscina",
+    "Strada 151 Triscina",
+    "Strada 155B Triscina",
+    "Strada 127 Triscina",
+    "Strada141 Triscina",
+    "Strada145 Triscina",
+    "Strada 137 Triscina",
+    "Strada 139 Triscina",
+    "Strada145B Triscina",
+    "Strada 135 Triscina",
+    "Strada 129 Triscina",
+    "Strada143 Triscina",
+    "Strada145A Triscina",
+    "Strada 77 Triscina",
+    "Strada 111 Triscina",
+    "Strada125 Triscina",
+    "Strada 87 Triscina",
+    "Strada 105 Triscina",
+    "Strada 99 Triscina",
+    "Strada 73 Triscina",
+    "Strada 93 Triscina",
+    "Strada 85 Triscina",
+    "Strada 83 Triscina",
+    "Strada 71 Triscina",
+    "Strada 101 Triscina",
+    "Strada 97 Triscina",
+    "Route de la Tour",
+    "route d'Acqua Doria",
+    "Route d'Arba Mora",
+    "chemin d'Ariezza",
+    "Chemin d'Arba Mora",
+    "Route de Cardu",
+    "Route de la Colombara",
+    "Route de Pacciale",
+    "Impasse de Stagnola",
+    "Chemin de la Coletta",
+    "Route du Hameau de Castagna",
+    "Allée du Maquis",
+    "allée des Eucalyptus",
+    "allée des Terres Marines",
+    "allée des Lauriers Roses",
+    "route de Costa",
+    "avenue Achille Peretti",
+    "allée des Mimosas",
+    "rue George Prunetti",
+    "Chemin de Cappicciolo",
+    "rue Antoine Nivaggioni",
+    "chemin de Buggiardo",
+    "Allée de l'Orangeraie",
+    "rue du Major Murray",
+    "Vaccilli",
+    "route de Pozzaccio",
+    "route de San Sistru",
+    "rue de la Saint Laurent",
+    "rue Joseph Antona",
+    "route d'u Gradeddu",
+    "route de Piaccalella",
+    "route de Burbuzza",
+    "rue Antoine Nicolas Mariani",
+    "avenue Jean Murzi",
+    "rue Marien Antona",
+    "Chemin de l'église",
+    "rue Michel Bozzi",
+    "route du pénitencier",
+    "Route de Campestra",
+    "Chemin du cimetière",
+    "route d'Agnone",
+    "Impasse Sette Nave",
+    "Chemin de la Tour",
+    "chemin de Piobarello",
+    "impasse de la Vallée",
+    "rue d'i Sapari",
+    "allée des platanes",
+    "route de Mare e Sole",
+    "Chemin de la chapelle",
+    "impasse des hauts de Verghia",
+    "rue de la Fontaine",
+    "rue Pascal Roch",
+    "Strada di Pitrusedda",
+    "Strada Territuriale",
+    "route de Plein Soleil",
+    "Chemin du Hameau",
+    "Allée des Tourterelles",
+    "Allée des Grives",
+    "Allée des Mésanges",
+    "Allée des Rouges-Gorges",
+    "Route d'Accelasca",
+    "Allée des Merles",
+    "Lotissement Paese di Rupione",
+    "Allée des Cistes",
+    "Allée des Myrtes",
+    "Allée des Mimosas",
+    "Allée des Arbousiers",
+    "Route de Cruciata",
+    "Via Tuscolana",
+    "Via Anagnina-Rocca di Papa",
+    "Via della Mediana",
+    "Via di Rocca Priora",
+    "Via Oberdan",
+    "Via delle Faeta",
+    "Via dei Principi",
+    "Via Mediana di Valle Moretta",
+    "Via delle Carrozze",
+    "Via delle More",
+    "Via Olimpia",
+    "Via delle Orchidee",
+    "Via del Colle Verde",
+    "Via del Bosco",
+    "Via dei Romani",
+    "Via del Vergaro",
+    "Via del Pruneto",
+    "Via del Basolato",
+    "Via di Velletri",
+    "Via del Lago Regillo",
+    "Via del Grillo",
+    "Strada del Vivaro",
+    "Via dei Ciliegi",
+    "Via dei Pioppi",
+    "Via degli Abeti",
+    "Via dei Cipressi",
+    "Via Arenatura",
+    "Via dell'Incitore",
+    "Via delle Viti",
+    "Via degli Aceri",
+    "Via Carpinello",
+    "Via dei Pozzi della Doganella",
+    "Via Monte Fiore",
+    "Via Venere",
+    "Via Saturno",
+    "Viale Urano",
+    "Via del Castagno"
+  ],
+  "sources": {
+    "geonames": "GeoNames, CC-BY 4.0 (https://www.geonames.org/export/)",
+    "osm": "(c) OpenStreetMap contributors, ODbL (https://www.openstreetmap.org/copyright)"
+  }
+}

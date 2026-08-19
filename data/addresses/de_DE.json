@@ -1,0 +1,1698 @@
+{
+  "locale": "de_DE",
+  "country_code": "DE",
+  "cities": [
+    {
+      "name": "Berlin",
+      "population": 3426354,
+      "postcode": "10115"
+    },
+    {
+      "name": "Hamburg",
+      "population": 1973896,
+      "postcode": "20038"
+    },
+    {
+      "name": "Munich",
+      "population": 1505005,
+      "postcode": "80331"
+    },
+    {
+      "name": "Köln",
+      "population": 1024621,
+      "postcode": "50667"
+    },
+    {
+      "name": "Frankfurt am Main",
+      "population": 650000,
+      "postcode": "60306"
+    },
+    {
+      "name": "Düsseldorf",
+      "population": 618685,
+      "postcode": "40210"
+    },
+    {
+      "name": "Stuttgart",
+      "population": 612663,
+      "postcode": "70173"
+    },
+    {
+      "name": "Essen",
+      "population": 593085,
+      "postcode": "45127"
+    },
+    {
+      "name": "Dortmund",
+      "population": 588462,
+      "postcode": "44135"
+    },
+    {
+      "name": "Dresden",
+      "population": 564904,
+      "postcode": "01067"
+    },
+    {
+      "name": "Bremen",
+      "population": 546501,
+      "postcode": "28195"
+    },
+    {
+      "name": "Nuremberg",
+      "population": 515543,
+      "postcode": "90402"
+    },
+    {
+      "name": "Hannover",
+      "population": 515140,
+      "postcode": "30159"
+    },
+    {
+      "name": "Leipzig",
+      "population": 504971,
+      "postcode": "04103"
+    },
+    {
+      "name": "Duisburg",
+      "population": 504358,
+      "postcode": "47051"
+    },
+    {
+      "name": "Wandsbek",
+      "population": 411422,
+      "postcode": null
+    },
+    {
+      "name": "Bochum",
+      "population": 385729,
+      "postcode": "44787"
+    },
+    {
+      "name": "Wuppertal",
+      "population": 360797,
+      "postcode": "42103"
+    },
+    {
+      "name": "Bielefeld",
+      "population": 331906,
+      "postcode": "33519"
+    },
+    {
+      "name": "Bonn",
+      "population": 330579,
+      "postcode": "53111"
+    },
+    {
+      "name": "Hamburg-Nord",
+      "population": 315514,
+      "postcode": null
+    },
+    {
+      "name": "Münster",
+      "population": 308258,
+      "postcode": "48079"
+    },
+    {
+      "name": "Mannheim",
+      "population": 307960,
+      "postcode": "68159"
+    },
+    {
+      "name": "Hamburg-Mitte",
+      "population": 301231,
+      "postcode": null
+    },
+    {
+      "name": "Augsburg",
+      "population": 301105,
+      "postcode": "86150"
+    },
+    {
+      "name": "Wiesbaden",
+      "population": 288850,
+      "postcode": "65183"
+    },
+    {
+      "name": "Marienthal",
+      "population": 287101,
+      "postcode": "16775"
+    },
+    {
+      "name": "Karlsruhe",
+      "population": 283799,
+      "postcode": "76006"
+    },
+    {
+      "name": "Gelsenkirchen",
+      "population": 270028,
+      "postcode": "45879"
+    },
+    {
+      "name": "Eimsbüttel",
+      "population": 269118,
+      "postcode": null
+    },
+    {
+      "name": "Aachen",
+      "population": 265208,
+      "postcode": "52062"
+    },
+    {
+      "name": "Mönchengladbach",
+      "population": 261742,
+      "postcode": "41061"
+    },
+    {
+      "name": "Kiel",
+      "population": 252668,
+      "postcode": "24103"
+    },
+    {
+      "name": "Altona",
+      "population": 250192,
+      "postcode": null
+    },
+    {
+      "name": "Chemnitz",
+      "population": 247220,
+      "postcode": "09111"
+    },
+    {
+      "name": "Braunschweig",
+      "population": 244715,
+      "postcode": "38023"
+    },
+    {
+      "name": "Magdeburg",
+      "population": 244329,
+      "postcode": "39014"
+    },
+    {
+      "name": "Krefeld",
+      "population": 237984,
+      "postcode": "47798"
+    },
+    {
+      "name": "Halle (Saale)",
+      "population": 237865,
+      "postcode": "06108"
+    },
+    {
+      "name": "Freiburg",
+      "population": 237460,
+      "postcode": "79098"
+    },
+    {
+      "name": "Neue Neustadt",
+      "population": 226851,
+      "postcode": null
+    },
+    {
+      "name": "Mainz",
+      "population": 222889,
+      "postcode": "55116"
+    },
+    {
+      "name": "Oberhausen",
+      "population": 219176,
+      "postcode": "46045"
+    },
+    {
+      "name": "Erfurt",
+      "population": 218793,
+      "postcode": "99084"
+    },
+    {
+      "name": "Lübeck",
+      "population": 212207,
+      "postcode": "23539"
+    },
+    {
+      "name": "Hagen",
+      "population": 198972,
+      "postcode": "58089"
+    },
+    {
+      "name": "Rostock",
+      "population": 198293,
+      "postcode": "18055"
+    },
+    {
+      "name": "Kassel",
+      "population": 197230,
+      "postcode": "34117"
+    },
+    {
+      "name": "Potsdam",
+      "population": 184754,
+      "postcode": "14461"
+    },
+    {
+      "name": "Saarbrücken",
+      "population": 182971,
+      "postcode": "66111"
+    },
+    {
+      "name": "Hamm",
+      "population": 178967,
+      "postcode": "59063"
+    },
+    {
+      "name": "Mülheim",
+      "population": 173050,
+      "postcode": "54486"
+    },
+    {
+      "name": "Herne",
+      "population": 172108,
+      "postcode": "44623"
+    },
+    {
+      "name": "Harburg",
+      "population": 169221,
+      "postcode": "86655"
+    },
+    {
+      "name": "Darmstadt",
+      "population": 167029,
+      "postcode": "64283"
+    },
+    {
+      "name": "Osnabrück",
+      "population": 166462,
+      "postcode": "49074"
+    },
+    {
+      "name": "Neukölln",
+      "population": 164636,
+      "postcode": null
+    },
+    {
+      "name": "Solingen",
+      "population": 164359,
+      "postcode": "42651"
+    },
+    {
+      "name": "Ludwigshafen am Rhein",
+      "population": 163196,
+      "postcode": "67059"
+    },
+    {
+      "name": "Leverkusen",
+      "population": 162738,
+      "postcode": "51371"
+    },
+    {
+      "name": "Oldenburg",
+      "population": 159218,
+      "postcode": "26121"
+    },
+    {
+      "name": "Kreuzberg",
+      "population": 153135,
+      "postcode": null
+    },
+    {
+      "name": "Neuss",
+      "population": 152457,
+      "postcode": "41460"
+    },
+    {
+      "name": "Regensburg",
+      "population": 151389,
+      "postcode": "93047"
+    },
+    {
+      "name": "Prenzlauer Berg",
+      "population": 148878,
+      "postcode": null
+    },
+    {
+      "name": "Heidelberg",
+      "population": 143345,
+      "postcode": "69115"
+    },
+    {
+      "name": "Paderborn",
+      "population": 142161,
+      "postcode": "33098"
+    },
+    {
+      "name": "Würzburg",
+      "population": 133731,
+      "postcode": "97070"
+    },
+    {
+      "name": "Fürth",
+      "population": 132036,
+      "postcode": "84095"
+    },
+    {
+      "name": "Charlottenburg",
+      "population": 129359,
+      "postcode": null
+    },
+    {
+      "name": "Wolfsburg",
+      "population": 123064,
+      "postcode": "38440"
+    },
+    {
+      "name": "Schöneberg",
+      "population": 122658,
+      "postcode": "16278"
+    },
+    {
+      "name": "Recklinghausen",
+      "population": 122438,
+      "postcode": "45657"
+    },
+    {
+      "name": "Göttingen",
+      "population": 122149,
+      "postcode": "37073"
+    },
+    {
+      "name": "Heilbronn",
+      "population": 120733,
+      "postcode": "74072"
+    },
+    {
+      "name": "Ingolstadt",
+      "population": 120658,
+      "postcode": "85049"
+    },
+    {
+      "name": "Ulm",
+      "population": 120451,
+      "postcode": "89040"
+    },
+    {
+      "name": "Bottrop",
+      "population": 119909,
+      "postcode": "46236"
+    },
+    {
+      "name": "Bergedorf",
+      "population": 119665,
+      "postcode": "21027"
+    },
+    {
+      "name": "Pforzheim",
+      "population": 119313,
+      "postcode": "75172"
+    },
+    {
+      "name": "Offenbach",
+      "population": 119192,
+      "postcode": "63065"
+    },
+    {
+      "name": "Bremerhaven",
+      "population": 118610,
+      "postcode": "27568"
+    },
+    {
+      "name": "Friedrichshain",
+      "population": 117829,
+      "postcode": null
+    },
+    {
+      "name": "Remscheid",
+      "population": 117118,
+      "postcode": "42853"
+    },
+    {
+      "name": "Nippes",
+      "population": 113487,
+      "postcode": null
+    },
+    {
+      "name": "Porz am Rhein",
+      "population": 113415,
+      "postcode": null
+    },
+    {
+      "name": "Reutlingen",
+      "population": 112627,
+      "postcode": "72760"
+    },
+    {
+      "name": "Marzahn",
+      "population": 111508,
+      "postcode": null
+    },
+    {
+      "name": "Rodenkirchen",
+      "population": 110158,
+      "postcode": null
+    },
+    {
+      "name": "Koblenz",
+      "population": 107319,
+      "postcode": "56068"
+    },
+    {
+      "name": "Siegen",
+      "population": 107242,
+      "postcode": "57072"
+    },
+    {
+      "name": "Bergisch Gladbach",
+      "population": 106184,
+      "postcode": "51427"
+    },
+    {
+      "name": "Salzgitter",
+      "population": 104970,
+      "postcode": "38226"
+    },
+    {
+      "name": "Jena",
+      "population": 104712,
+      "postcode": "07743"
+    },
+    {
+      "name": "Gera",
+      "population": 104659,
+      "postcode": "07545"
+    },
+    {
+      "name": "Moers",
+      "population": 103487,
+      "postcode": "47441"
+    },
+    {
+      "name": "Hildesheim",
+      "population": 103052,
+      "postcode": "31134"
+    },
+    {
+      "name": "Erlangen",
+      "population": 102675,
+      "postcode": "91052"
+    },
+    {
+      "name": "Mitte",
+      "population": 102338,
+      "postcode": "93066"
+    },
+    {
+      "name": "Wilmersdorf",
+      "population": 101877,
+      "postcode": "16278"
+    },
+    {
+      "name": "Trier",
+      "population": 100129,
+      "postcode": "54290"
+    },
+    {
+      "name": "Zwickau",
+      "population": 98796,
+      "postcode": "08056"
+    },
+    {
+      "name": "Kaiserslautern",
+      "population": 98732,
+      "postcode": "67653"
+    },
+    {
+      "name": "Schwerin",
+      "population": 96641,
+      "postcode": "19053"
+    },
+    {
+      "name": "Gütersloh",
+      "population": 96180,
+      "postcode": "33311"
+    },
+    {
+      "name": "Gesundbrunnen",
+      "population": 93862,
+      "postcode": null
+    },
+    {
+      "name": "Düren",
+      "population": 93440,
+      "postcode": "52349"
+    },
+    {
+      "name": "Rahlstedt",
+      "population": 92511,
+      "postcode": null
+    },
+    {
+      "name": "Esslingen",
+      "population": 92390,
+      "postcode": "73728"
+    },
+    {
+      "name": "Tübingen",
+      "population": 92322,
+      "postcode": "72070"
+    },
+    {
+      "name": "Iserlohn",
+      "population": 91811,
+      "postcode": "58636"
+    },
+    {
+      "name": "Witten",
+      "population": 91808,
+      "postcode": "58452"
+    },
+    {
+      "name": "Ratingen",
+      "population": 91606,
+      "postcode": "40832"
+    },
+    {
+      "name": "Marl",
+      "population": 91398,
+      "postcode": "45768"
+    },
+    {
+      "name": "Lünen",
+      "population": 91009,
+      "postcode": "44532"
+    },
+    {
+      "name": "Gießen",
+      "population": 89179,
+      "postcode": "35390"
+    },
+    {
+      "name": "Hanau am Main",
+      "population": 88648,
+      "postcode": "63405"
+    },
+    {
+      "name": "Velbert",
+      "population": 87669,
+      "postcode": "42549"
+    },
+    {
+      "name": "Ludwigsburg",
+      "population": 87603,
+      "postcode": "71634"
+    },
+    {
+      "name": "Lichterfelde",
+      "population": 85885,
+      "postcode": "39615"
+    },
+    {
+      "name": "Flensburg",
+      "population": 85838,
+      "postcode": "24937"
+    },
+    {
+      "name": "Wedding",
+      "population": 85275,
+      "postcode": "25795"
+    },
+    {
+      "name": "Cottbus",
+      "population": 84754,
+      "postcode": "03042"
+    },
+    {
+      "name": "Wilhelmshaven",
+      "population": 84393,
+      "postcode": "26382"
+    },
+    {
+      "name": "Hellersdorf",
+      "population": 84103,
+      "postcode": null
+    },
+    {
+      "name": "Reinickendorf",
+      "population": 83972,
+      "postcode": "13047"
+    },
+    {
+      "name": "Minden",
+      "population": 82879,
+      "postcode": "32423"
+    },
+    {
+      "name": "Norderstedt",
+      "population": 82844,
+      "postcode": "22844"
+    },
+    {
+      "name": "Villingen-Schwenningen",
+      "population": 81770,
+      "postcode": "78048"
+    },
+    {
+      "name": "Konstanz",
+      "population": 81275,
+      "postcode": "78462"
+    },
+    {
+      "name": "Worms",
+      "population": 81099,
+      "postcode": "67547"
+    },
+    {
+      "name": "Moabit",
+      "population": 81021,
+      "postcode": null
+    },
+    {
+      "name": "Neumünster",
+      "population": 80196,
+      "postcode": "24534"
+    },
+    {
+      "name": "Dorsten",
+      "population": 79981,
+      "postcode": "46282"
+    },
+    {
+      "name": "Lüdenscheid",
+      "population": 79386,
+      "postcode": "58507"
+    },
+    {
+      "name": "Marburg an der Lahn",
+      "population": 78895,
+      "postcode": "35037"
+    },
+    {
+      "name": "Rheinhausen",
+      "population": 78203,
+      "postcode": "79365"
+    },
+    {
+      "name": "Castrop-Rauxel",
+      "population": 77924,
+      "postcode": "44575"
+    },
+    {
+      "name": "Bogenhausen",
+      "population": 77542,
+      "postcode": null
+    },
+    {
+      "name": "Rheine",
+      "population": 76491,
+      "postcode": "48429"
+    },
+    {
+      "name": "Viersen",
+      "population": 76153,
+      "postcode": "41747"
+    },
+    {
+      "name": "Delmenhorst",
+      "population": 75893,
+      "postcode": "27749"
+    },
+    {
+      "name": "Gladbeck",
+      "population": 75499,
+      "postcode": "45964"
+    },
+    {
+      "name": "Arnsberg",
+      "population": 74879,
+      "postcode": "59755"
+    },
+    {
+      "name": "Troisdorf",
+      "population": 74749,
+      "postcode": "53840"
+    },
+    {
+      "name": "Wattenscheid",
+      "population": 73965,
+      "postcode": null
+    },
+    {
+      "name": "Bocholt",
+      "population": 73943,
+      "postcode": "46395"
+    },
+    {
+      "name": "Detmold",
+      "population": 73680,
+      "postcode": "32756"
+    },
+    {
+      "name": "Bayreuth",
+      "population": 72940,
+      "postcode": "95444"
+    },
+    {
+      "name": "Steglitz",
+      "population": 72464,
+      "postcode": null
+    },
+    {
+      "name": "Landshut",
+      "population": 71863,
+      "postcode": "84028"
+    },
+    {
+      "name": "Lüneburg",
+      "population": 71260,
+      "postcode": "21335"
+    },
+    {
+      "name": "Billstedt",
+      "population": 71077,
+      "postcode": null
+    },
+    {
+      "name": "Celle",
+      "population": 71010,
+      "postcode": "29221"
+    },
+    {
+      "name": "Bamberg",
+      "population": 70047,
+      "postcode": "96047"
+    },
+    {
+      "name": "Aschaffenburg",
+      "population": 68551,
+      "postcode": "63739"
+    },
+    {
+      "name": "Neubrandenburg",
+      "population": 68082,
+      "postcode": "17033"
+    },
+    {
+      "name": "Dessau",
+      "population": 67747,
+      "postcode": "06842"
+    },
+    {
+      "name": "Lippstadt",
+      "population": 67219,
+      "postcode": "59555"
+    },
+    {
+      "name": "Köpenick",
+      "population": 67148,
+      "postcode": null
+    },
+    {
+      "name": "Aalen",
+      "population": 67085,
+      "postcode": "73430"
+    },
+    {
+      "name": "Dinslaken",
+      "population": 66993,
+      "postcode": "46535"
+    },
+    {
+      "name": "Neuwied",
+      "population": 66805,
+      "postcode": "56564"
+    },
+    {
+      "name": "Unna",
+      "population": 66734,
+      "postcode": "59423"
+    },
+    {
+      "name": "Plauen",
+      "population": 66412,
+      "postcode": "08523"
+    },
+    {
+      "name": "Pankow",
+      "population": 65375,
+      "postcode": null
+    },
+    {
+      "name": "Herten",
+      "population": 65306,
+      "postcode": "45699"
+    },
+    {
+      "name": "Herford",
+      "population": 64879,
+      "postcode": "32049"
+    },
+    {
+      "name": "Grevenbroich",
+      "population": 64779,
+      "postcode": "41515"
+    },
+    {
+      "name": "Weimar",
+      "population": 64727,
+      "postcode": "99423"
+    },
+    {
+      "name": "Kerpen",
+      "population": 64226,
+      "postcode": "50169"
+    },
+    {
+      "name": "Fulda",
+      "population": 63760,
+      "postcode": "36037"
+    },
+    {
+      "name": "Dormagen",
+      "population": 63582,
+      "postcode": "41539"
+    },
+    {
+      "name": "Bergheim",
+      "population": 63558,
+      "postcode": "50126"
+    },
+    {
+      "name": "Garbsen",
+      "population": 63355,
+      "postcode": "30823"
+    },
+    {
+      "name": "Tempelhof",
+      "population": 61769,
+      "postcode": null
+    },
+    {
+      "name": "Wesel",
+      "population": 61685,
+      "postcode": "46483"
+    },
+    {
+      "name": "Kempten (Allgäu)",
+      "population": 61399,
+      "postcode": "87435"
+    },
+    {
+      "name": "Sindelfingen",
+      "population": 61311,
+      "postcode": "71063"
+    },
+    {
+      "name": "Schwäbisch Gmünd",
+      "population": 61216,
+      "postcode": "73525"
+    },
+    {
+      "name": "Rosenheim",
+      "population": 60167,
+      "postcode": "83022"
+    },
+    {
+      "name": "Brandenburg an der Havel",
+      "population": 59826,
+      "postcode": "14770"
+    },
+    {
+      "name": "Rüsselsheim am Main",
+      "population": 59730,
+      "postcode": "65428"
+    },
+    {
+      "name": "Berlin Köpenick",
+      "population": 59561,
+      "postcode": null
+    },
+    {
+      "name": "Offenburg",
+      "population": 59238,
+      "postcode": "77652"
+    },
+    {
+      "name": "Langenfeld",
+      "population": 59112,
+      "postcode": "40764"
+    },
+    {
+      "name": "Stralsund",
+      "population": 58976,
+      "postcode": "18435"
+    },
+    {
+      "name": "Hameln",
+      "population": 58666,
+      "postcode": "31785"
+    },
+    {
+      "name": "Friedrichshafen",
+      "population": 58403,
+      "postcode": "88045"
+    },
+    {
+      "name": "Göppingen",
+      "population": 58040,
+      "postcode": "73033"
+    },
+    {
+      "name": "Görlitz",
+      "population": 57751,
+      "postcode": "02826"
+    },
+    {
+      "name": "Stolberg",
+      "population": 57684,
+      "postcode": "52222"
+    },
+    {
+      "name": "Frankfurt (Oder)",
+      "population": 57107,
+      "postcode": "15230"
+    },
+    {
+      "name": "Neu-Hohenschönhausen",
+      "population": 56921,
+      "postcode": null
+    },
+    {
+      "name": "Baden-Baden",
+      "population": 56881,
+      "postcode": "76530"
+    },
+    {
+      "name": "Hattingen",
+      "population": 56866,
+      "postcode": "45525"
+    },
+    {
+      "name": "Hilden",
+      "population": 56565,
+      "postcode": "40721"
+    },
+    {
+      "name": "Winterhude",
+      "population": 56382,
+      "postcode": null
+    },
+    {
+      "name": "Sankt Augustin",
+      "population": 56094,
+      "postcode": "53757"
+    },
+    {
+      "name": "Eschweiler",
+      "population": 55778,
+      "postcode": "52249"
+    },
+    {
+      "name": "Friedrichsfelde",
+      "population": 55423,
+      "postcode": null
+    },
+    {
+      "name": "Ahlen",
+      "population": 55280,
+      "postcode": "59227"
+    },
+    {
+      "name": "Bad Salzuflen",
+      "population": 54899,
+      "postcode": "32105"
+    },
+    {
+      "name": "Euskirchen",
+      "population": 54889,
+      "postcode": "53879"
+    },
+    {
+      "name": "Meerbusch",
+      "population": 54826,
+      "postcode": "40667"
+    },
+    {
+      "name": "Wolfenbüttel",
+      "population": 54740,
+      "postcode": "38281"
+    },
+    {
+      "name": "Hürth",
+      "population": 54678,
+      "postcode": "50354"
+    },
+    {
+      "name": "Zehlendorf",
+      "population": 54328,
+      "postcode": "16515"
+    },
+    {
+      "name": "Schweinfurt",
+      "population": 54012,
+      "postcode": "97412"
+    },
+    {
+      "name": "Neustadt an der Weinstraße",
+      "population": 53984,
+      "postcode": "67433"
+    },
+    {
+      "name": "Pulheim",
+      "population": 53762,
+      "postcode": "50259"
+    },
+    {
+      "name": "Gummersbach",
+      "population": 53131,
+      "postcode": "51643"
+    },
+    {
+      "name": "Wilhelmsburg",
+      "population": 53064,
+      "postcode": "17379"
+    },
+    {
+      "name": "Waiblingen",
+      "population": 52945,
+      "postcode": "71332"
+    },
+    {
+      "name": "Nordhorn",
+      "population": 52803,
+      "postcode": "48527"
+    },
+    {
+      "name": "Mariendorf",
+      "population": 52734,
+      "postcode": null
+    },
+    {
+      "name": "Universitäts- und Hansestadt Greifswald",
+      "population": 52731,
+      "postcode": "17489"
+    },
+    {
+      "name": "Cuxhaven",
+      "population": 52677,
+      "postcode": "27472"
+    },
+    {
+      "name": "Wetzlar",
+      "population": 52656,
+      "postcode": "35576"
+    },
+    {
+      "name": "Menden",
+      "population": 52452,
+      "postcode": "58706"
+    },
+    {
+      "name": "Bergkamen",
+      "population": 52329,
+      "postcode": "59192"
+    },
+    {
+      "name": "Frechen",
+      "population": 52309,
+      "postcode": "50226"
+    },
+    {
+      "name": "Lichtenrade",
+      "population": 52110,
+      "postcode": null
+    },
+    {
+      "name": "Bad Homburg vor der Höhe",
+      "population": 51859,
+      "postcode": "61348"
+    },
+    {
+      "name": "Willich",
+      "population": 51843,
+      "postcode": "47877"
+    },
+    {
+      "name": "Emden",
+      "population": 51526,
+      "postcode": "26721"
+    },
+    {
+      "name": "Neu-Ulm",
+      "population": 51389,
+      "postcode": "89231"
+    },
+    {
+      "name": "Lingen",
+      "population": 51310,
+      "postcode": "49808"
+    },
+    {
+      "name": "Erftstadt",
+      "population": 51207,
+      "postcode": "50374"
+    },
+    {
+      "name": "Neubrück",
+      "population": 51109,
+      "postcode": null
+    },
+    {
+      "name": "Lahr",
+      "population": 50775,
+      "postcode": "54675"
+    },
+    {
+      "name": "Ibbenbueren",
+      "population": 50577,
+      "postcode": "49477"
+    },
+    {
+      "name": "Passau",
+      "population": 50560,
+      "postcode": "94032"
+    },
+    {
+      "name": "Gronau",
+      "population": 50547,
+      "postcode": "31028"
+    },
+    {
+      "name": "Langenhagen",
+      "population": 50439,
+      "postcode": "30851"
+    },
+    {
+      "name": "Schwerte",
+      "population": 50399,
+      "postcode": "58239"
+    },
+    {
+      "name": "Speyer",
+      "population": 50343,
+      "postcode": "67346"
+    },
+    {
+      "name": "Alt-Hohenschönhausen",
+      "population": 50070,
+      "postcode": null
+    },
+    {
+      "name": "Heidenheim an der Brenz",
+      "population": 50067,
+      "postcode": "89518"
+    },
+    {
+      "name": "Treptow",
+      "population": 50000,
+      "postcode": null
+    },
+    {
+      "name": "Peine",
+      "population": 49953,
+      "postcode": "31224"
+    },
+    {
+      "name": "Neunkirchen",
+      "population": 49843,
+      "postcode": "74867"
+    },
+    {
+      "name": "Bad Oeynhausen",
+      "population": 49513,
+      "postcode": "32545"
+    },
+    {
+      "name": "Leonberg",
+      "population": 49480,
+      "postcode": "71229"
+    },
+    {
+      "name": "Hof",
+      "population": 49239,
+      "postcode": "95028"
+    },
+    {
+      "name": "Kleve",
+      "population": 49072,
+      "postcode": "47533"
+    },
+    {
+      "name": "Ravensburg",
+      "population": 48825,
+      "postcode": "88212"
+    },
+    {
+      "name": "Elmshorn",
+      "population": 48703,
+      "postcode": "25335"
+    },
+    {
+      "name": "Bornheim",
+      "population": 48523,
+      "postcode": "53332"
+    },
+    {
+      "name": "Soest",
+      "population": 48037,
+      "postcode": "59494"
+    },
+    {
+      "name": "Hennef (Sieg)",
+      "population": 48002,
+      "postcode": "53773"
+    },
+    {
+      "name": "Rastatt",
+      "population": 47906,
+      "postcode": "76437"
+    },
+    {
+      "name": "Erkrath",
+      "population": 47815,
+      "postcode": "40699"
+    },
+    {
+      "name": "Bruchsal",
+      "population": 47784,
+      "postcode": "76646"
+    },
+    {
+      "name": "Weißensee",
+      "population": 47693,
+      "postcode": "99631"
+    },
+    {
+      "name": "Singen",
+      "population": 47621,
+      "postcode": "78224"
+    },
+    {
+      "name": "Stuttgart-Ost",
+      "population": 47500,
+      "postcode": null
+    },
+    {
+      "name": "Dülmen",
+      "population": 47495,
+      "postcode": "48249"
+    },
+    {
+      "name": "Frankenthal",
+      "population": 47438,
+      "postcode": "01909"
+    },
+    {
+      "name": "Herzogenrath",
+      "population": 47381,
+      "postcode": "52134"
+    },
+    {
+      "name": "Lörrach",
+      "population": 47002,
+      "postcode": "79539"
+    },
+    {
+      "name": "Albstadt",
+      "population": 46950,
+      "postcode": "72458"
+    },
+    {
+      "name": "Oberursel",
+      "population": 46736,
+      "postcode": "61440"
+    },
+    {
+      "name": "Gotha",
+      "population": 46615,
+      "postcode": "99867"
+    },
+    {
+      "name": "Melle",
+      "population": 46436,
+      "postcode": "49324"
+    },
+    {
+      "name": "Staaken",
+      "population": 46369,
+      "postcode": null
+    },
+    {
+      "name": "Bünde",
+      "population": 46365,
+      "postcode": "32257"
+    },
+    {
+      "name": "Alsdorf",
+      "population": 46340,
+      "postcode": "52477"
+    },
+    {
+      "name": "Böblingen",
+      "population": 46282,
+      "postcode": "71032"
+    },
+    {
+      "name": "Langenhorn",
+      "population": 46272,
+      "postcode": "25842"
+    },
+    {
+      "name": "Rheda-Wiedenbrück",
+      "population": 46123,
+      "postcode": "33378"
+    },
+    {
+      "name": "Kamen",
+      "population": 45927,
+      "postcode": "59174"
+    },
+    {
+      "name": "Gohlis",
+      "population": 45924,
+      "postcode": null
+    },
+    {
+      "name": "Hansestadt Stade",
+      "population": 45634,
+      "postcode": "21680"
+    },
+    {
+      "name": "Meiderich",
+      "population": 45297,
+      "postcode": null
+    },
+    {
+      "name": "Wismar",
+      "population": 45255,
+      "postcode": "23966"
+    },
+    {
+      "name": "Amberg",
+      "population": 44737,
+      "postcode": "92224"
+    },
+    {
+      "name": "Neustadt am Rübenberge",
+      "population": 44668,
+      "postcode": "31535"
+    },
+    {
+      "name": "Erkelenz",
+      "population": 44650,
+      "postcode": "41812"
+    },
+    {
+      "name": "Homburg",
+      "population": 44607,
+      "postcode": "66424"
+    },
+    {
+      "name": "Straubing",
+      "population": 44580,
+      "postcode": "94315"
+    },
+    {
+      "name": "Halle-Neustadt",
+      "population": 44515,
+      "postcode": null
+    },
+    {
+      "name": "Memmingen",
+      "population": 44192,
+      "postcode": "87700"
+    },
+    {
+      "name": "Brühl",
+      "population": 44137,
+      "postcode": "50321"
+    },
+    {
+      "name": "Fellbach",
+      "population": 43935,
+      "postcode": "70734"
+    },
+    {
+      "name": "Lehrte",
+      "population": 43920,
+      "postcode": "31275"
+    },
+    {
+      "name": "Nordhausen",
+      "population": 43912,
+      "postcode": "99734"
+    },
+    {
+      "name": "Freiberg",
+      "population": 43670,
+      "postcode": "09599"
+    },
+    {
+      "name": "Pirmasens",
+      "population": 43582,
+      "postcode": "66953"
+    },
+    {
+      "name": "Goslar",
+      "population": 43560,
+      "postcode": "38640"
+    },
+    {
+      "name": "Lankwitz",
+      "population": 43558,
+      "postcode": null
+    },
+    {
+      "name": "Bietigheim-Bissingen",
+      "population": 43556,
+      "postcode": "74321"
+    },
+    {
+      "name": "Filderstadt",
+      "population": 43550,
+      "postcode": "70794"
+    },
+    {
+      "name": "Suhl",
+      "population": 43509,
+      "postcode": "98527"
+    },
+    {
+      "name": "Weinheim",
+      "population": 43325,
+      "postcode": "69469"
+    },
+    {
+      "name": "Rodgau",
+      "population": 43315,
+      "postcode": "63110"
+    },
+    {
+      "name": "Bad Kreuznach",
+      "population": 43213,
+      "postcode": "55543"
+    },
+    {
+      "name": "Ohligs",
+      "population": 43063,
+      "postcode": null
+    },
+    {
+      "name": "Monheim am Rhein",
+      "population": 43038,
+      "postcode": "40789"
+    },
+    {
+      "name": "Gifhorn",
+      "population": 43000,
+      "postcode": "38518"
+    }
+  ],
+  "streets": [
+    "Rue des Auches",
+    "Impasse du Cimetière",
+    "Grande Rue",
+    "Rue Sous Les Vignes",
+    "Rue de la Cure",
+    "Rue de l'Église",
+    "Impasse de Gradion",
+    "Impasse des Gerbaux",
+    "Impasse des Mulares",
+    "Rue d'Andelarre",
+    "Rue des Champs Flagy",
+    "Rue Gilbert Mouillet",
+    "Rue Léon Dérahon",
+    "Rue des Saules",
+    "Rue Victor Veffond",
+    "Rue du Stade",
+    "Rue des Bouvreuils",
+    "Rue des Sansonnets",
+    "Rue des Saussis",
+    "Rue Adrien Guidat",
+    "Rue des Roitelets",
+    "Rue des Noisetiers",
+    "Rue Albert Olivier",
+    "Avenue André Morisot",
+    "Rue Marcel Hacquard",
+    "Rue des Prés",
+    "Rue Lucien Charrière",
+    "Rue des Peupliers",
+    "Rue Pertuis Guillaumet",
+    "Rue Pierre Thevenin",
+    "Rue Simone Veil",
+    "Rue Joséphine Baker",
+    "Impasse des Tussilages",
+    "Avenue du Vernois",
+    "Avenue des Frères Doillon",
+    "Rue de la Rocade",
+    "Rue Robert Clave",
+    "Rue Stanislas Kekedi",
+    "Rue de la Perilleuse",
+    "Impasse de la Colombine",
+    "Rue André Maginot",
+    "Quai Yves Barbier",
+    "Rue des Faines",
+    "Rue Christian Ramage",
+    "Rue Noël Ory",
+    "Rue Corne Jacquot Bournot",
+    "Lieben",
+    "Bürgermeister-Anton-Lindner-Straße",
+    "Im Gschwend",
+    "An der Leiten",
+    "Schloßbergweg",
+    "Am Kreuzacker",
+    "Weizern",
+    "Am Schönebach",
+    "Im Ösch",
+    "Mühlbachweg",
+    "Unterdill",
+    "Oberdill",
+    "Schloßstraße",
+    "Heimen / Brandegg",
+    "Am Herrenbichl",
+    "Haagweg",
+    "Säulingstraße",
+    "Hintere Schöne",
+    "Faulenseestraße",
+    "August-Geier-Straße",
+    "Bergblickstraße",
+    "Am Sandbichl",
+    "Hopfener Weg",
+    "Maxweg",
+    "Tegelbergstraße",
+    "Dietringer Straße",
+    "Sankt-Urban-Straße",
+    "Sentenbergweg",
+    "Osterreiner Straße",
+    "Bergweg",
+    "Kirchenweg",
+    "Zwieselberger Straße",
+    "Brunnenstraße",
+    "Panoramaweg",
+    "Weberweg",
+    "Lautenmacherstraße",
+    "Tannenweg",
+    "Lindenweg",
+    "Wiesenweg",
+    "Bachtalstraße",
+    "Dürracker",
+    "Christophorusweg",
+    "Forggenweg",
+    "Tegelbergweg",
+    "Kulturenweg",
+    "Guggenbergweg",
+    "Bergstraße",
+    "Forggenseestraße",
+    "Füssener Straße",
+    "Kamerickshof",
+    "Roermonder Straße",
+    "Muiterdijk",
+    "Welkensvenweg",
+    "Klokweg",
+    "Bergerhofweg",
+    "Broeklaan",
+    "Greswarenstraat",
+    "Charles Ruysstraat",
+    "Keulseweg",
+    "Schijfweg-Noord",
+    "Kuukven",
+    "Heierhof",
+    "Raayerveldlaan",
+    "Soeterbeek",
+    "Bong",
+    "Zonneveld",
+    "Dubbroek",
+    "Rooth",
+    "Lange Heide",
+    "Swalmener Straße",
+    "Op dem Felde",
+    "Kiefernweg",
+    "Buschweg",
+    "Sandweg",
+    "Alte Zollstraße",
+    "Nollesweg",
+    "Waldstraße",
+    "Felderweg",
+    "Tackenbenden",
+    "Holzweg",
+    "In gen Rae",
+    "Dorfstraße",
+    "Kapellenbruch",
+    "Venekotenweg",
+    "An der Wae",
+    "Holunderweg",
+    "Schmielenweg",
+    "Industriestraße",
+    "Weyenhof",
+    "Hermannstraße",
+    "Alter Kirchweg",
+    "Hauptstraße",
+    "Amselweg",
+    "Lerchenweg",
+    "Sommer",
+    "Birkenweg",
+    "Buchenweg",
+    "Zum Hölzchen",
+    "Mühlgasse",
+    "Am Anger",
+    "Saalfelder Weg",
+    "Hintergasse",
+    "Dorfgraben",
+    "Unterdorf",
+    "Kirchgasse",
+    "Grüne Gasse",
+    "Zum Birntal",
+    "Schulplatz",
+    "Im Brückenhof",
+    "Stiegelstraße",
+    "August-Bebel-Straße",
+    "Dammstraße",
+    "Bahnhofstraße",
+    "Am Berg",
+    "Am Lindenweg",
+    "Rotes Tor",
+    "Feldstraße",
+    "Backsgasse",
+    "Karl-Marx-Straße",
+    "Sumbach",
+    "Berggasse",
+    "Schulstraße",
+    "Wilhelm-Külz-Straße",
+    "Thomas-Müntzer-Straße",
+    "Pfarrgasse",
+    "Sophienstraße",
+    "An der Ziegelei",
+    "Am Holzbach",
+    "Volkenrodaer Straße",
+    "Ernst-Thälmann-Straße",
+    "Burgwallstraße",
+    "Schlotheimer Straße",
+    "Siedlung",
+    "Am Weidengarten",
+    "Gutshof",
+    "Amtshof",
+    "An der Buchwiese",
+    "Hohenberger Chaussee",
+    "Freudenstraße",
+    "Kirchgraben"
+  ],
+  "sources": {
+    "geonames": "GeoNames, CC-BY 4.0 (https://www.geonames.org/export/)",
+    "osm": "(c) OpenStreetMap contributors, ODbL (https://www.openstreetmap.org/copyright)"
+  }
+}

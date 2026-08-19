@@ -1,0 +1,908 @@
+{
+  "locale": "es_CL",
+  "country_code": "CL",
+  "cities": [
+    {
+      "name": "Santiago",
+      "population": 4837295,
+      "postcode": "8320000"
+    },
+    {
+      "name": "Puente Alto",
+      "population": 568106,
+      "postcode": "8150000"
+    },
+    {
+      "name": "Maipú",
+      "population": 503635,
+      "postcode": "9250000"
+    },
+    {
+      "name": "Antofagasta",
+      "population": 401096,
+      "postcode": "1240000"
+    },
+    {
+      "name": "Viña del Mar",
+      "population": 334248,
+      "postcode": "2520000"
+    },
+    {
+      "name": "Valparaíso",
+      "population": 282448,
+      "postcode": "2340000"
+    },
+    {
+      "name": "Ñuñoa",
+      "population": 255823,
+      "postcode": "7750000"
+    },
+    {
+      "name": "San Bernardo",
+      "population": 249858,
+      "postcode": "8050000"
+    },
+    {
+      "name": "Puerto Montt",
+      "population": 245902,
+      "postcode": "5480000"
+    },
+    {
+      "name": "Arica",
+      "population": 241653,
+      "postcode": "1000000"
+    },
+    {
+      "name": "Peñalolén",
+      "population": 241599,
+      "postcode": "7910000"
+    },
+    {
+      "name": "Temuco",
+      "population": 238129,
+      "postcode": "4780000"
+    },
+    {
+      "name": "Concepción",
+      "population": 223574,
+      "postcode": "4030000"
+    },
+    {
+      "name": "Rancagua",
+      "population": 212695,
+      "postcode": "2820000"
+    },
+    {
+      "name": "Quilicura",
+      "population": 210410,
+      "postcode": "8700000"
+    },
+    {
+      "name": "La Pintana",
+      "population": 201178,
+      "postcode": "8820000"
+    },
+    {
+      "name": "Iquique",
+      "population": 199587,
+      "postcode": "1100000"
+    },
+    {
+      "name": "Talca",
+      "population": 197479,
+      "postcode": "3460000"
+    },
+    {
+      "name": "Calama",
+      "population": 166334,
+      "postcode": "1390000"
+    },
+    {
+      "name": "Coquimbo",
+      "population": 161317,
+      "postcode": "1780000"
+    },
+    {
+      "name": "La Serena",
+      "population": 154521,
+      "postcode": "1700000"
+    },
+    {
+      "name": "Talcahuano",
+      "population": 150499,
+      "postcode": "4260000"
+    },
+    {
+      "name": "Chillán",
+      "population": 150396,
+      "postcode": "3780000"
+    },
+    {
+      "name": "Renca",
+      "population": 147151,
+      "postcode": "8640000"
+    },
+    {
+      "name": "Colina",
+      "population": 146207,
+      "postcode": "9340000"
+    },
+    {
+      "name": "Alto Hospicio",
+      "population": 142086,
+      "postcode": "1130000"
+    },
+    {
+      "name": "Osorno",
+      "population": 135773,
+      "postcode": "5290000"
+    },
+    {
+      "name": "Valdivia",
+      "population": 133419,
+      "postcode": "5090000"
+    },
+    {
+      "name": "Villa Mercedes",
+      "population": 131936,
+      "postcode": null
+    },
+    {
+      "name": "Quilpué",
+      "population": 130263,
+      "postcode": "2430000"
+    },
+    {
+      "name": "Copiapó",
+      "population": 129280,
+      "postcode": "1530000"
+    },
+    {
+      "name": "Los Ángeles",
+      "population": 125430,
+      "postcode": "4440000"
+    },
+    {
+      "name": "San Pedro de la Paz",
+      "population": 121631,
+      "postcode": "4130000"
+    },
+    {
+      "name": "Punta Arenas",
+      "population": 117430,
+      "postcode": "6200000"
+    },
+    {
+      "name": "Coronel",
+      "population": 107759,
+      "postcode": "4190000"
+    },
+    {
+      "name": "Lo Prado",
+      "population": 104316,
+      "postcode": "8980000"
+    },
+    {
+      "name": "Curicó",
+      "population": 102438,
+      "postcode": "3340000"
+    },
+    {
+      "name": "Lampa",
+      "population": 102234,
+      "postcode": "9380000"
+    },
+    {
+      "name": "Villa Alemana",
+      "population": 97320,
+      "postcode": "6500000"
+    },
+    {
+      "name": "San Antonio",
+      "population": 87675,
+      "postcode": "2660000"
+    },
+    {
+      "name": "Hualpén",
+      "population": 86639,
+      "postcode": "4600000"
+    },
+    {
+      "name": "Peñaflor",
+      "population": 85671,
+      "postcode": "9750000"
+    },
+    {
+      "name": "Chiguayante",
+      "population": 84718,
+      "postcode": "4100000"
+    },
+    {
+      "name": "Ovalle",
+      "population": 77138,
+      "postcode": "1840000"
+    },
+    {
+      "name": "Padre Las Casas",
+      "population": 72892,
+      "postcode": "4850000"
+    },
+    {
+      "name": "Paine",
+      "population": 72759,
+      "postcode": "9540000"
+    },
+    {
+      "name": "Linares",
+      "population": 69535,
+      "postcode": "3580000"
+    },
+    {
+      "name": "Quillota",
+      "population": 67779,
+      "postcode": "2260000"
+    },
+    {
+      "name": "Buin",
+      "population": 63419,
+      "postcode": "9500000"
+    },
+    {
+      "name": "Padre Hurtado",
+      "population": 63250,
+      "postcode": "9710000"
+    },
+    {
+      "name": "Melipilla",
+      "population": 63100,
+      "postcode": "9580000"
+    },
+    {
+      "name": "Los Andes",
+      "population": 63009,
+      "postcode": "2100000"
+    },
+    {
+      "name": "San Felipe",
+      "population": 59294,
+      "postcode": "2170000"
+    },
+    {
+      "name": "Talagante",
+      "population": 57323,
+      "postcode": "9670000"
+    },
+    {
+      "name": "Tomé",
+      "population": 53219,
+      "postcode": "4160000"
+    },
+    {
+      "name": "La Calera",
+      "population": 50221,
+      "postcode": "2290000"
+    },
+    {
+      "name": "Villarrica",
+      "population": 49184,
+      "postcode": "4930000"
+    },
+    {
+      "name": "Hacienda La Calera",
+      "population": 49106,
+      "postcode": "2290000"
+    },
+    {
+      "name": "Lota",
+      "population": 47339,
+      "postcode": "4210000"
+    },
+    {
+      "name": "Limache",
+      "population": 46121,
+      "postcode": "2240000"
+    },
+    {
+      "name": "Penco",
+      "population": 46091,
+      "postcode": "4150000"
+    },
+    {
+      "name": "Coyhaique",
+      "population": 45787,
+      "postcode": "5950000"
+    },
+    {
+      "name": "Vallenar",
+      "population": 44895,
+      "postcode": "1610000"
+    },
+    {
+      "name": "Angol",
+      "population": 44856,
+      "postcode": "4650000"
+    },
+    {
+      "name": "San Vicente de Tagua Tagua",
+      "population": 44046,
+      "postcode": "2970000"
+    },
+    {
+      "name": "Machalí",
+      "population": 42572,
+      "postcode": "2910000"
+    },
+    {
+      "name": "Concón",
+      "population": 42152,
+      "postcode": "2510000"
+    },
+    {
+      "name": "Castro",
+      "population": 41667,
+      "postcode": "5700000"
+    },
+    {
+      "name": "Constitución",
+      "population": 41207,
+      "postcode": "3560000"
+    },
+    {
+      "name": "Ancud",
+      "population": 40819,
+      "postcode": "5710000"
+    },
+    {
+      "name": "Molina",
+      "population": 40329,
+      "postcode": "3380000"
+    },
+    {
+      "name": "San Javier",
+      "population": 40189,
+      "postcode": "3660000"
+    },
+    {
+      "name": "San Clemente",
+      "population": 39538,
+      "postcode": "3520000"
+    },
+    {
+      "name": "Placilla",
+      "population": 39344,
+      "postcode": "3100000"
+    },
+    {
+      "name": "Cauquenes",
+      "population": 38522,
+      "postcode": "3690000"
+    },
+    {
+      "name": "Rengo",
+      "population": 38100,
+      "postcode": "2940000"
+    },
+    {
+      "name": "Puerto Varas",
+      "population": 37561,
+      "postcode": "5550000"
+    },
+    {
+      "name": "Labranza",
+      "population": 35893,
+      "postcode": null
+    },
+    {
+      "name": "Santa Cruz",
+      "population": 34914,
+      "postcode": "3130000"
+    },
+    {
+      "name": "Lautaro",
+      "population": 34268,
+      "postcode": "4860000"
+    },
+    {
+      "name": "Chimbarongo",
+      "population": 33446,
+      "postcode": "3090000"
+    },
+    {
+      "name": "Calbuco",
+      "population": 32963,
+      "postcode": "5570000"
+    },
+    {
+      "name": "Panguipulli",
+      "population": 32525,
+      "postcode": "5210000"
+    },
+    {
+      "name": "Victoria",
+      "population": 32448,
+      "postcode": "4720000"
+    },
+    {
+      "name": "La Ligua",
+      "population": 32131,
+      "postcode": "2030000"
+    },
+    {
+      "name": "Curanilahue",
+      "population": 32000,
+      "postcode": "4370000"
+    },
+    {
+      "name": "Cañete",
+      "population": 31805,
+      "postcode": "4390000"
+    },
+    {
+      "name": "San Carlos",
+      "population": 31517,
+      "postcode": "3840000"
+    },
+    {
+      "name": "Río Bueno",
+      "population": 31366,
+      "postcode": "5240000"
+    },
+    {
+      "name": "Las Animas",
+      "population": 30000,
+      "postcode": null
+    },
+    {
+      "name": "Nueva Imperial",
+      "population": 29366,
+      "postcode": "5020000"
+    },
+    {
+      "name": "Chillán Viejo",
+      "population": 28735,
+      "postcode": "3820000"
+    },
+    {
+      "name": "Longaví",
+      "population": 28499,
+      "postcode": "3620000"
+    },
+    {
+      "name": "Vicuña",
+      "population": 27771,
+      "postcode": "1760000"
+    },
+    {
+      "name": "Cabrero",
+      "population": 27595,
+      "postcode": "4470000"
+    },
+    {
+      "name": "Mulchén",
+      "population": 27557,
+      "postcode": "4530000"
+    },
+    {
+      "name": "Pucón",
+      "population": 26953,
+      "postcode": "4920000"
+    },
+    {
+      "name": "Parral",
+      "population": 26904,
+      "postcode": "3630000"
+    },
+    {
+      "name": "Nacimiento",
+      "population": 26523,
+      "postcode": "4550000"
+    },
+    {
+      "name": "El Monte",
+      "population": 26459,
+      "postcode": "9810000"
+    },
+    {
+      "name": "La Unión",
+      "population": 26298,
+      "postcode": "5220000"
+    },
+    {
+      "name": "Tocopilla",
+      "population": 25400,
+      "postcode": "1340000"
+    },
+    {
+      "name": "Coihueco",
+      "population": 25159,
+      "postcode": "3870000"
+    },
+    {
+      "name": "Arauco",
+      "population": 24659,
+      "postcode": "4360000"
+    },
+    {
+      "name": "Casablanca",
+      "population": 24537,
+      "postcode": "2480000"
+    },
+    {
+      "name": "Carahue",
+      "population": 24377,
+      "postcode": "5010000"
+    },
+    {
+      "name": "Hualqui",
+      "population": 24333,
+      "postcode": "4180000"
+    },
+    {
+      "name": "Collipulli",
+      "population": 23321,
+      "postcode": "4680000"
+    },
+    {
+      "name": "Graneros",
+      "population": 23301,
+      "postcode": "2880000"
+    },
+    {
+      "name": "Illapel",
+      "population": 22816,
+      "postcode": "1930000"
+    },
+    {
+      "name": "Llaillay",
+      "population": 22659,
+      "postcode": "2220000"
+    },
+    {
+      "name": "San Vicente",
+      "population": 22572,
+      "postcode": "2970000"
+    },
+    {
+      "name": "Vilcún",
+      "population": 22499,
+      "postcode": "4880000"
+    },
+    {
+      "name": "Freire",
+      "population": 22390,
+      "postcode": "4940000"
+    },
+    {
+      "name": "Lebu",
+      "population": 22345,
+      "postcode": "4350000"
+    },
+    {
+      "name": "Quintero",
+      "population": 22174,
+      "postcode": "2490000"
+    },
+    {
+      "name": "Pitrufquén",
+      "population": 21981,
+      "postcode": "4950000"
+    },
+    {
+      "name": "Quellón",
+      "population": 21823,
+      "postcode": "5790000"
+    },
+    {
+      "name": "Loncoche",
+      "population": 21458,
+      "postcode": "4970000"
+    },
+    {
+      "name": "Purranque",
+      "population": 20705,
+      "postcode": "5380000"
+    },
+    {
+      "name": "Cañete",
+      "population": 20158,
+      "postcode": "4390000"
+    },
+    {
+      "name": "Los Álamos",
+      "population": 19494,
+      "postcode": "4380000"
+    },
+    {
+      "name": "Cabildo",
+      "population": 19315,
+      "postcode": "2050000"
+    },
+    {
+      "name": "Paillaco",
+      "population": 19088,
+      "postcode": "5230000"
+    },
+    {
+      "name": "Puerto Natales",
+      "population": 18505,
+      "postcode": "6160000"
+    },
+    {
+      "name": "Curacaví",
+      "population": 18378,
+      "postcode": "9630000"
+    },
+    {
+      "name": "Los Vilos",
+      "population": 18275,
+      "postcode": "1940000"
+    },
+    {
+      "name": "Cartagena",
+      "population": 17978,
+      "postcode": "2680000"
+    },
+    {
+      "name": "Colbún",
+      "population": 17619,
+      "postcode": "3610000"
+    },
+    {
+      "name": "Sagrada Familia",
+      "population": 17569,
+      "postcode": "3390000"
+    },
+    {
+      "name": "Quillón",
+      "population": 17485,
+      "postcode": "3940000"
+    },
+    {
+      "name": "La Cruz",
+      "population": 17310,
+      "postcode": "2280000"
+    },
+    {
+      "name": "Traiguén",
+      "population": 17164,
+      "postcode": "4730000"
+    },
+    {
+      "name": "San Esteban",
+      "population": 17090,
+      "postcode": "2120000"
+    },
+    {
+      "name": "El Quisco",
+      "population": 16967,
+      "postcode": "2700000"
+    },
+    {
+      "name": "Puerto Aysén",
+      "population": 16936,
+      "postcode": "6000000"
+    },
+    {
+      "name": "Pozo Almonte",
+      "population": 16878,
+      "postcode": "1180000"
+    },
+    {
+      "name": "Batuco",
+      "population": 16784,
+      "postcode": null
+    },
+    {
+      "name": "Chicureo",
+      "population": 16520,
+      "postcode": null
+    },
+    {
+      "name": "Llanquihue",
+      "population": 16249,
+      "postcode": "5610000"
+    },
+    {
+      "name": "Caldera",
+      "population": 16150,
+      "postcode": "1570000"
+    },
+    {
+      "name": "Coelemu",
+      "population": 15711,
+      "postcode": "3970000"
+    },
+    {
+      "name": "Cunco",
+      "population": 15628,
+      "postcode": "4890000"
+    },
+    {
+      "name": "Maullín",
+      "population": 15580,
+      "postcode": "5580000"
+    },
+    {
+      "name": "Teodoro Schmidt",
+      "population": 15504,
+      "postcode": "4990000"
+    },
+    {
+      "name": "Putaendo",
+      "population": 15361,
+      "postcode": "2190000"
+    },
+    {
+      "name": "Frutillar",
+      "population": 15034,
+      "postcode": "5620000"
+    }
+  ],
+  "streets": [
+    "Ruta Y-560",
+    "Camino Punta Prat",
+    "Ruta Y-500",
+    "Ruta Y-50",
+    "Ruta Y-435",
+    "Camino Ingreso Puerto Nuevo",
+    "Lenga",
+    "Pasaje Canelo",
+    "Ñirre",
+    "Ruta Y-460",
+    "Los Pioneros",
+    "Aonikenk",
+    "Santiago Alvarez",
+    "Rodeo Chileno",
+    "Antonio Latorre",
+    "Manuel Delgado",
+    "Teniente Merino",
+    "Cacique Mulato",
+    "Plaza Presidente Eduardo Frei Montalva",
+    "Ruta Y-344",
+    "Ruta Y-340",
+    "Ruta Y-300",
+    "Ruta Y-290",
+    "Camino Cerro Ballena",
+    "Estancia Flores",
+    "Miraflores",
+    "Bernardo O'Higgins",
+    "Ruta Y-315",
+    "Ruta 9 Norte",
+    "Ladrilleros",
+    "Diego Portales",
+    "Francisco Cortés de Ojea",
+    "Avenida Pedro Montt",
+    "García Hurtado de Mendoza",
+    "Ruta Y-342",
+    "Ruta Y-330",
+    "Camino Demaistre",
+    "Los Arrieros",
+    "Ignacio Carrera Pinto",
+    "Almirante Latorre",
+    "Eleuterio Ramírez",
+    "Manuel Baquedano",
+    "Teniente Serrano",
+    "Domeyco",
+    "Arauco",
+    "Carlos Condell",
+    "Ruta Nacional 40",
+    "Camino Bahía Chilota",
+    "Ruta Y-455",
+    "Camino Sector Alto",
+    "Camino Reserva Forestal",
+    "El Andino",
+    "Camino Laguna Lynch",
+    "Cerro Nevado",
+    "Prolongación Ignacio Carrera Pinto",
+    "Camino Andino",
+    "Prolongación Ramón Carnicer",
+    "Primera bajada al río",
+    "Avenida Monte Verde",
+    "José Cardin",
+    "Eusebio Lillo",
+    "Velero Anclado",
+    "Mundos Australes",
+    "Corazón del Témpano",
+    "Pasaje El Mirador",
+    "Pasaje Bellavista",
+    "Pasos del Hombre",
+    "Tierra de Olvido",
+    "Gaspar Marín",
+    "Avenida Cardenal Antonio Samoré",
+    "Chorrillos",
+    "Paula Jaraquemada",
+    "Fray Pedro Valderrama",
+    "José Miguel Infante",
+    "José Gregorio Argomedo",
+    "Galvarino",
+    "Tucapel",
+    "Cancha Rayada",
+    "Juan Enrique Rosales",
+    "Avenida Brazil",
+    "Francisco Javier Reyna",
+    "Fray Camilo Henríquez",
+    "José Victorino Lastarria",
+    "José Kramarenko Downer",
+    "Avenida Circunvalación General Ramón Cañas Montalva",
+    "Juan Martínez de Rozas",
+    "18 de Septiembre",
+    "Calle 2 Norte",
+    "Calle 1 Oriente",
+    "Rolando Matus",
+    "Viaje Al Este",
+    "El Guanaco Blanco",
+    "Curva de Las Brujas",
+    "Cerro Mirador",
+    "Conquistadores de la Antártida",
+    "Golfo de Penas",
+    "Pasaje Monte Verde",
+    "Calle Monte Fenton",
+    "Calle 1 Poniente",
+    "Pasaje 1",
+    "Calle 2",
+    "Témpano de Kanasaka",
+    "General Augusto Lutz",
+    "Sara Braun",
+    "Abdón Fuentealba",
+    "Arcabus",
+    "Avenida Padre Samuel Jofré",
+    "Subida Las Lomas",
+    "Población los Jara",
+    "Sargento Aldea",
+    "Avenida Costanera",
+    "Las Brisas",
+    "Riquelme",
+    "Arturo Prat",
+    "Serrano",
+    "Camino Viejo Curanipe",
+    "Maria Floripa",
+    "Profesor Luis Aparicio",
+    "Las Lomas de Colligualles",
+    "Magdalena Matte",
+    "Los Papayos",
+    "Sara Luisa Soto",
+    "Valentina Apablaza",
+    "Costanera",
+    "El Molino",
+    "Arturo Aparicio",
+    "Los Cerezos",
+    "Pasaje Caleta Blanca",
+    "5 de Abril",
+    "La Vega",
+    "Calle 4",
+    "Las Vegas",
+    "Los Jaimes",
+    "La Marina",
+    "Los Chonos",
+    "Los Coipos",
+    "Esperanza",
+    "Los Aromos",
+    "Camino Mariscadero",
+    "Ruta L-375",
+    "Ruta L-355",
+    "Camino Cabañas El lago",
+    "El Colorado",
+    "Colbún",
+    "El Petril Colorado",
+    "Posta Vieja",
+    "La Bomba",
+    "Puente La Arboleda",
+    "Variante Armerillo",
+    "Ruta K-487",
+    "Camino Los Cipreses",
+    "Tranquera",
+    "Camino Interior Armerillo",
+    "Camino El Quincho",
+    "Tres Puertas",
+    "Ruta K-255",
+    "Ruta K-473",
+    "Ruta K-551",
+    "Ruta K-85-L",
+    "Ruta K-405",
+    "Ruta J-75-K"
+  ],
+  "sources": {
+    "geonames": "GeoNames, CC-BY 4.0 (https://www.geonames.org/export/)",
+    "osm": "(c) OpenStreetMap contributors, ODbL (https://www.openstreetmap.org/copyright)"
+  }
+}
