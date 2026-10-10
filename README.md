@@ -1,12 +1,54 @@
 # identity-generator
 
+[![CI](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-411%20passed-brightgreen.svg)](tests)
+
 A command-line tool that produces complete, self-consistent synthetic identities. Every field in a generated profile (name, address, phone, postcode) belongs to the same country and language, so the data reads as coherent rather than a random mix of regional formats. Profiles are saved to a local history file and can be exported as JSON or CSV, or copied to the clipboard.
 
 All data is entirely fictional. No real person is referenced or affected.
 
+## Quick start
+
+    pip install -r requirements.txt
+    python -X utf8 main.py --locale es_ES
+
+Reproduce the exact same identity whenever you need it, and export a batch for a database seed:
+
+    python -X utf8 main.py --seed 42 --email-offline --count 100 --csv
+
+No configuration, no database and no API key are needed to get a usable profile, and `--email-offline` keeps the whole run local if you do not want a real inbox created. Docker works too, see the Docker section below.
+
 ## Use cases
 
 Registering on services that require personal data when you do not want to share your real information, testing forms and sign-up flows during development, and generating realistic seed data for demos.
+
+## Why not Faker directly?
+
+Faker produces fields. This produces a person that survives a real registration form.
+
+Calling `Faker` yourself gives you independent values, so a profile assembled from several providers can contradict itself: a Spanish name next to a German postcode, or a passport serial in the wrong shape. Here the locale drives every field at once, the official document passes the country's own check digit, the city is a real one with its real postal code, and the address follows the local convention.
+
+| | Faker directly | identity-generator |
+|---|---|---|
+| Official national document | Provider exists (NIF, SSN, CPF) but nothing validates it | Ten locales with the country's own control letters and check digits, `null` where there is none |
+| Address | Plausible string from the locale provider | Real cities, real postcodes and real streets from GeoNames and OpenStreetMap in 11 locales |
+| Email | A string that goes nowhere | A real temporary inbox you can read with `--check-inbox`, or offline on request |
+| Coherence | Per field, you assemble it | Per profile, the locale drives everything |
+| Reproducibility | `Faker.seed()` exists | `--seed` repeats the whole profile including the password, and the batch sequence too |
+| Output | Dict you have to serialise | JSON, CSV, JSONL, clipboard, plus a published JSON Schema |
+| Shape | A library you code against | A CLI you script, also usable as a library |
+
+Use Faker directly when you want a single value of one kind, when you already have your own coherence layer, or when you need a provider this tool does not wrap. Use this tool when the output has to pass a form that validates the data it receives.
+
+### Other tools worth knowing
+
+These do different jobs and are worth a look if they match yours better:
+
+- [faker-cli](https://github.com/zcaceres/faker-cli): agent-friendly CLI wrapping faker-js, with schema templates, NDJSON and a `--describe` mode for discovery. The right pick if you want faker-js coverage from the shell.
+- [fauxdata](https://github.com/aborruso/fauxdata): generate and validate datasets from YAML schemas, with Parquet output and the ability to infer a schema from real data. The right pick when you need column types, constraints and a validation pass over rows of business data.
+- [demo-data-simulator](https://github.com/ozbayorcun/demo-data-simulator): agent-inferred demo data for business workflows, with linked entities, lifecycle events and a reproducibility manifest. The right pick for SaaS demos where the relationships between tables matter more than any single row.
 
 ## Requirements
 
