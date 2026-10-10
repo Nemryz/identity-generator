@@ -89,6 +89,12 @@ Generate 50 identities as CSV rows for database seeding:
 
 Batch mode prints one compact line per identity, writes all of them to history and writes identities.csv (overwritten every run, no email_token column). Combine with --delay to stay inside email provider limits, or --email-offline for a fully offline batch.
 
+Write the same batch as newline-delimited JSON instead, one compact object per line, ready for jq or a data loader:
+
+    python -X utf8 main.py --count 50 --jsonl
+
+The JSONL file is overwritten every run and keeps every identity in a single file, so it can be read incrementally while a longer batch is still running. Like the CSV it omits email_token, which means the records carry 22 of the 23 fields described by the schema (see --schema). Use --json when you need the full identity including the inbox token.
+
 Reproduce the same identity on every run with a seed:
 
     python -X utf8 main.py --seed 42 --email-offline
@@ -146,7 +152,8 @@ Run --list-locales to see the full list.
                     identity's names (tempmail.lol, then mail.tm), or a
                     plausible address on a disposable domain when offline.
     email_token     Inbox token enabling the --check-inbox command.
-                    Null when the email has no real inbox.
+                    Null when the email has no real inbox. Excluded from
+                    the CSV and JSONL exports.
     email_provider  Provider that owns the inbox ("tempmail", "mailtm" or
                     "offline"). Tells --check-inbox which API to query.
     username        ASCII-safe string built from the first name and birth year.
@@ -262,7 +269,7 @@ history.py
 
 exporter.py
 
-    Provides three output functions. to_json_file writes the identity dict to a file named after the username. to_csv_file writes every identity as a row in identities.csv (overwritten each run, with the email_token column excluded) for database seeding. to_clipboard formats the profile as a fixed-width plain-text block and copies it to the system clipboard using pyperclip. The plain-text format is intentionally simple so it can be pasted into any field without formatting artefacts.
+    Provides four output functions. to_json_file writes the identity dict to a file named after the username. to_csv_file writes every identity as a row in identities.csv (overwritten each run, with the email_token column excluded) for database seeding. to_jsonl_file writes one compact JSON object per line to identities.jsonl (also without email_token) so streaming consumers can read a batch incrementally. to_clipboard formats the profile as a fixed-width plain-text block and copies it to the system clipboard using pyperclip. The plain-text format is intentionally simple so it can be pasted into any field without formatting artefacts.
 
 schema.py
 

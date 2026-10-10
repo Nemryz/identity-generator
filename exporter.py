@@ -1,13 +1,15 @@
 """
 exporter.py
 
-Handles output of a generated identity in three formats.
+Handles output of a generated identity in four formats.
 
 JSON export writes the full identity dict to a file named after the username
 in the project directory. CSV export writes one row per identity to
-identities.csv (used by --count --csv for database seeding). Clipboard
-export formats the identity as a plain-text block and copies it to the
-system clipboard using pyperclip.
+identities.csv (used by --count --csv for database seeding). JSON Lines
+export writes one compact JSON object per identity to identities.jsonl
+(used by --jsonl to stream into data pipelines). Clipboard export formats
+the identity as a plain-text block and copies it to the system clipboard
+using pyperclip.
 
 The clipboard feature relies on the host system having a clipboard mechanism
 available (xclip or xsel on Linux, pbcopy on macOS, clip.exe on Windows).
@@ -109,6 +111,30 @@ def to_csv_file(identities: list[dict]) -> Path:
             writer.writerow(
                 {field: identity.get(field, "") for field in _CSV_FIELDS}
             )
+    return path
+
+
+def to_jsonl_file(identities: list[dict]) -> Path:
+    """
+    Write the identities as newline-delimited JSON to identities.jsonl in
+    the project directory, one compact JSON object per line, in generation
+    order. Unlike --json it keeps every identity in a single file, which is
+    what streaming consumers (jq, log shippers, data loaders) expect, and
+    the file can be read incrementally while a longer batch is still
+    running. The file is overwritten on every run so pipelines always know
+    the name. email_token is intentionally excluded, for the same reason as
+    in the CSV: inbox tokens are meaningless outside this tool.
+    Returns the resolved file path.
+    """
+    path = _OUTPUT_DIR / "identities.jsonl"
+    with path.open("w", encoding="utf-8") as fh:
+        for identity in identities:
+            record = {
+                field: value
+                for field, value in identity.items()
+                if field != "email_token"
+            }
+            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
     return path
 
 

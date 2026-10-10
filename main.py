@@ -161,6 +161,15 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Export the generated identities to identities.csv.",
     )
     parser.add_argument(
+        "--jsonl",
+        action="store_true",
+        dest="export_jsonl",
+        help=(
+            "Export the generated identities to identities.jsonl, one "
+            "compact JSON object per line for data pipelines."
+        ),
+    )
+    parser.add_argument(
         "--count",
         type=int,
         metavar="N",
@@ -337,6 +346,10 @@ def main() -> None:
     if args.csv:
         path = exporter.to_csv_file(identities)
         print(Fore.GREEN + f"\n  CSV written to: {path}")
+
+    if args.export_jsonl:
+        path = exporter.to_jsonl_file(identities)
+        print(Fore.GREEN + f"\n  JSONL written to: {path}")
 
     if args.clipboard:
         try:
