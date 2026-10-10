@@ -5,6 +5,8 @@ email_usage.json
 email_usage.json.lock
 *_identity.json
 identities.csv
+identities.jsonl
+identity.schema.json
 identity-generator.log
 
 # User configuration — commit domains.example.json instead
@@ -31,6 +33,10 @@ env/
 .vscode/
 .idea/
 *.iml
+
+# Local AI tooling state
+.opencode/
+.serena/
 
 # OS
 .DS_Store

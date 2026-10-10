@@ -26,6 +26,7 @@ from generator import (
     is_supported_locale,
     set_seed,
 )
+from schema import schema_json
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -245,6 +246,14 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--schema",
+        action="store_true",
+        help=(
+            "Print the JSON Schema of an identity and exit. "
+            "Combined with --json it is also written to identity.schema.json."
+        ),
+    )
+    parser.add_argument(
         "--verbose",
         action="store_true",
         help="Write debug details to the log file and stderr.",
@@ -272,6 +281,13 @@ def main() -> None:
         for loc in get_supported_locales():
             print(f"    {loc}")
         print()
+        sys.exit(0)
+
+    if args.schema:
+        print(schema_json())
+        if args.export_json:
+            path = exporter.to_schema_file()
+            print(f"Schema written to: {path}", file=sys.stderr)
         sys.exit(0)
 
     if args.history:

@@ -20,6 +20,8 @@ from pathlib import Path
 
 import pyperclip
 
+from schema import IDENTITY_SCHEMA
+
 _OUTPUT_DIR = Path(__file__).parent
 
 _CSV_FIELDS = [
@@ -65,6 +67,21 @@ def to_json_file(identity: dict) -> Path:
         )
     path.write_text(
         json.dumps(identity, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    return path
+
+
+def to_schema_file() -> Path:
+    """
+    Write the JSON Schema of the identity object to identity.schema.json
+    in the project directory. Overwritten on every run so the schema always
+    matches the code that produced the identities.
+    Returns the resolved file path.
+    """
+    path = _OUTPUT_DIR / "identity.schema.json"
+    path.write_text(
+        json.dumps(IDENTITY_SCHEMA, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
     return path

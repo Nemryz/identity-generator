@@ -69,6 +69,12 @@ Show email provider usage counters:
 
     python -X utf8 main.py --email-usage
 
+Print the JSON Schema of an identity (for validating exported data or generating clients):
+
+    python -X utf8 main.py --schema
+
+Combined with --json the schema is also written to identity.schema.json. The schema is the machine-readable contract of the output: every field with its type, nullability (national_id is null for locales without an official document) and the guarantees of the generated password. The test suite validates real identities against it, so the schema cannot drift from the code.
+
 Wait N seconds after generating (throttle for script loops):
 
     python -X utf8 main.py --delay 2
@@ -257,6 +263,10 @@ history.py
 exporter.py
 
     Provides three output functions. to_json_file writes the identity dict to a file named after the username. to_csv_file writes every identity as a row in identities.csv (overwritten each run, with the email_token column excluded) for database seeding. to_clipboard formats the profile as a fixed-width plain-text block and copies it to the system clipboard using pyperclip. The plain-text format is intentionally simple so it can be pasted into any field without formatting artefacts.
+
+schema.py
+
+    JSON Schema (draft 2020-12) of the identity object, printed by --schema and written to identity.schema.json when combined with --json. It describes every field with its type, nullability and format, and encodes the password guarantees (four character classes, no ambiguous glyphs). The test suite validates generated identities against it so the schema can never drift from the code.
 
 tools/build_datasets.py
 
