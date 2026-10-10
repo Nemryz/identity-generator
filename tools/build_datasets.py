@@ -163,7 +163,7 @@ def _keep_street(locale: str, name: str) -> bool:
 
 
 def _normalize(text: str) -> str:
-    """Casefold without diacritics for tolerant name matching."""
+    # Casefold without diacritics for tolerant name matching.
     ascii_text = (
         unicodedata.normalize("NFKD", text)
         .encode("ascii", "ignore")
@@ -181,7 +181,7 @@ def _download(session: requests.Session, url: str) -> bytes:
 def _read_cached(
     session: requests.Session, cache_dir: Path, url: str, name: str
 ) -> bytes:
-    """Download url into a persistent cache, reusing it on later runs."""
+    # Download url into a persistent cache, reusing it on later runs.
     cached = cache_dir / name
     if cached.exists():
         return cached.read_bytes()
@@ -231,7 +231,7 @@ def load_cities(
 
 
 def _alternate_names(field: str) -> list[str]:
-    """Normalized alias list from the cities15000 alternatenames column."""
+    # Normalized alias list from the cities15000 alternatenames column.
     names = []
     for raw in field.split(",")[:30]:
         name = _normalize(raw)
@@ -305,7 +305,7 @@ def _postcode_for(
 
 
 def _postcode_member(archive: zipfile.ZipFile, cc: str) -> str:
-    """I pick the <CC>.txt member, ignoring readme.txt and the other extras."""
+    # I pick the <CC>.txt member, ignoring readme.txt and the other extras.
     names = archive.namelist()
     for name in names:
         if name.casefold() == f"{cc}.txt":
@@ -320,9 +320,7 @@ def _postcode_member(archive: zipfile.ZipFile, cc: str) -> str:
 
 
 def _bbox_cells(cities: list[dict]) -> list[tuple[float, float, float, float]]:
-"""
-    I split the country into a GRID_ROWS x GRID_COLS grid of cells, taking the bounding box from the loaded cities so each cell is a fraction of the country and every street query stays light, and I hand back an empty list when the cities carry no usable coordinates (the caller then falls back to the area query).
-    """
+    """I split the country into a GRID_ROWS x GRID_COLS grid of cells, taking the bounding box from the loaded cities so each cell is a fraction of the country and every street query stays light, and I hand back an empty list when the cities carry no usable coordinates (the caller then falls back to the area query)."""
     latitudes = [city["latitude"] for city in cities if "latitude" in city]
     longitudes = [city["longitude"] for city in cities if "longitude" in city]
     if not latitudes or not longitudes:

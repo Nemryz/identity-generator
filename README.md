@@ -230,7 +230,7 @@ Writes take an exclusive lock file created with O_EXCL, which the operating syst
 
 ## Testing
 
-The project ships a fully automated test suite written with pytest, covering 377 test cases across 10 modules:
+The project ships a fully automated test suite written with pytest, covering 411 test cases across 11 modules:
 
     tests/test_generator.py   92 tests   identity fields, names, passwords, locale capabilities
     tests/test_datasets.py    66 tests   address dataset schema and quality
@@ -242,6 +242,7 @@ The project ships a fully automated test suite written with pytest, covering 377
     tests/test_exporter.py    17 tests   JSON, CSV, JSONL, schema and clipboard exports
     tests/test_properties.py  20 tests   property-based invariants (Hypothesis)
     tests/test_schema.py      38 tests   the JSON Schema contract and its drift guards
+    tests/test_repo_integrity.py 33 tests   the repo itself: compilation, declared dependencies, README claims
 
 Run the whole suite with:
 

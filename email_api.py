@@ -182,7 +182,7 @@ def _local_part(first_name: str, last_name: str) -> str:
 
 
 def _offline_email(local: str) -> str:
-    """Plausible address on a known disposable domain, no inbox."""
+    # I return a plausible address on a known disposable domain, with no inbox behind it.
     domain = random.choice(FALLBACK_DOMAINS)
     return f"{local}@{domain}"
 
@@ -288,7 +288,7 @@ def _tempmail_headers() -> dict:
 
 
 def _save_keys(keys: dict) -> None:
-    """I write the keys atomically and restrict access where supported."""
+    # I write the keys atomically and restrict access where supported.
     tmp = KEYS_FILE.with_name(KEYS_FILE.name + ".tmp")
     tmp.write_text(json.dumps(keys, indent=2), encoding="utf-8")
     os.replace(tmp, KEYS_FILE)
@@ -296,7 +296,7 @@ def _save_keys(keys: dict) -> None:
 
 
 def _backup_corrupt_keys() -> None:
-    """I move a corrupted keys file aside so it is not silently reset."""
+    # I move a corrupted keys file aside so it is not silently reset.
     backup = KEYS_FILE.with_name(f"email_keys.corrupt.{int(time.time())}.bak")
     try:
         os.replace(KEYS_FILE, backup)
@@ -306,7 +306,7 @@ def _backup_corrupt_keys() -> None:
 
 
 def _restrict_permissions(path: Path) -> None:
-    """I make a best-effort 0600 so the keys are not readable by other users."""
+    # I make a best-effort 0600 so the keys are not readable by other users.
     try:
         os.chmod(path, 0o600)
     except OSError:
@@ -357,7 +357,7 @@ def _mailtm_token(address: str, password: str) -> str | None:
 
 
 def _tempmail_email(prefix: str) -> tuple[str, str] | None:
-    """I create a real inbox at tempmail.lol with a custom prefix, giving back (address, token) on success or None."""
+    # I create a real inbox at tempmail.lol with a custom prefix, giving back (address, token) on success or None.
     try:
         response = requests.post(
             f"{TEMPMAIL_BASE}/v2/inbox/create",
@@ -440,7 +440,7 @@ def _mailtm_read(token: str, limit: int) -> list[dict]:
 
 
 def _usage_count(provider: str) -> int:
-    """I count the creations of a provider that fall inside its rate-limit window."""
+    # I count the creations of a provider that fall inside its rate-limit window.
     usage = _load_usage()
     window = PROVIDER_LIMITS.get(provider, {}).get("window", 0)
     if window <= 0:
@@ -450,7 +450,7 @@ def _usage_count(provider: str) -> int:
 
 
 def _can_use(provider: str) -> bool:
-    """I tell whether a provider still has room inside its rate limit."""
+    # I tell whether a provider still has room inside its rate limit.
     limit = PROVIDER_LIMITS.get(provider, {})
     if limit.get("max", 0) <= 0:
         return True
@@ -458,7 +458,7 @@ def _can_use(provider: str) -> bool:
 
 
 def _warn_provider(provider: str, next_name: str) -> None:
-    """I warn on stderr when a provider sits at or near its rate limit."""
+    # I warn on stderr when a provider sits at or near its rate limit.
     limit = PROVIDER_LIMITS.get(provider, {})
     if limit.get("max", 0) <= 0:
         return
@@ -523,7 +523,7 @@ def _load_usage() -> dict:
 
 
 def _backup_corrupt_usage() -> None:
-    """I move a corrupted usage file aside so it is not silently reset."""
+    # I move a corrupted usage file aside so it is not silently reset.
     backup = USAGE_FILE.with_name(
         f"email_usage.corrupt.{int(time.time())}.bak"
     )

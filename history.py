@@ -99,7 +99,7 @@ def _load() -> list[dict]:
 
 
 def _backup_corrupt() -> None:
-    """I move a corrupted history file aside so the next write cannot overwrite it."""
+    # I move a corrupted history file aside so the next write cannot overwrite it.
     backup = HISTORY_FILE.with_name(
         f"history.corrupt.{int(time.time())}.bak"
     )
@@ -143,7 +143,7 @@ def _acquire_lock() -> None:
 
 
 def _release_lock() -> None:
-    """I drop the lock file, ignoring the case where somebody already removed it."""
+    # I drop the lock file, ignoring the case where somebody already removed it.
     try:
         _lock_file().unlink()
     except OSError:

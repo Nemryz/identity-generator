@@ -211,7 +211,7 @@ def _pick_dataset_city(dataset: dict) -> dict:
 
 
 def _street_number() -> int:
-    """I return a plausible house number."""
+    # I return a plausible house number.
     return random.randint(1, 9999)
 
 
@@ -331,7 +331,7 @@ def _safe(primary_fn, fallback_fn=None) -> str:
 
 
 def _to_ascii(text: str) -> str:
-    """I strip the diacritics off a name and give back a lowercase ASCII-only string."""
+    # I strip the diacritics off a name and give back a lowercase ASCII-only string.
     return (
         unicodedata.normalize("NFKD", text)
         .encode("ascii", "ignore")

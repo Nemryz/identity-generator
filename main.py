@@ -37,7 +37,7 @@ _LABEL = Fore.CYAN + Style.BRIGHT
 
 
 def _row(label: str, value: str) -> None:
-    """I print a single aligned label-value pair."""
+    # I print a single aligned label-value pair.
     print(f"  {_LABEL}{label:<18}{Style.RESET_ALL} {value}")
 
 
@@ -97,7 +97,7 @@ def print_history(entries: list[dict]) -> None:
 
 
 def _print_inbox(selector: str) -> None:
-    """I fetch and render the received emails of one identity's inbox."""
+    # I fetch and render the received emails of one identity's inbox.
     if selector == "_latest":
         entries = hist.get_all(limit=1)
         if not entries:
@@ -154,7 +154,7 @@ def _print_locale_table() -> None:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    """I define and return the CLI argument parser."""
+    # I define and return the CLI argument parser.
     parser = argparse.ArgumentParser(
         prog="identity-generator",
         description=(
