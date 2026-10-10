@@ -181,7 +181,7 @@ Run --list-locales to see the full list with the document, passport shape, addre
 Emails are created against two free public APIs (no account or API key required), in order:
 
 0. Custom catch-all domain (see below), when configured.
-1. tempmail.lol: the inbox token is returned in the same response as the address. Free tier: inbox expires after 1 hour, 25 inboxes per 5 minutes per IP. With a stored API key the limits become per-account, the inbox lasts longer and custom domains are available.
+1. tempmail.lol: the inbox token is returned in the same response as the address. Free tier: inbox expires after 1 hour, 15 inboxes per 30 minutes per IP. With a stored API key the limits become per-account, the inbox lasts longer and custom domains are available.
 2. mail.tm: custom address, its /token endpoint can lag behind account creation, so the token is best-effort. 8 requests per second per IP.
 
 When both providers are unreachable or rate-limited, a plausible address on a known disposable domain is produced without an inbox (email_token is null). Use --email-offline to force this mode.
