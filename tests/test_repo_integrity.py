@@ -37,7 +37,14 @@ IMPORT_TO_DISTRIBUTION = {
     "pyperclip": "pyperclip",
     "pytest": "pytest",
     "requests": "requests",
+    "tomli": "tomli",
 }
+
+# Modules that ship with the standard library but only from a version newer
+# than the minimum we support. sys.stdlib_module_names lists them on the
+# interpreters that have them, so on 3.10 they would look like a missing
+# third-party dependency when they are really a version difference.
+NEWER_THAN_MINIMUM_STDLIB = {"tomllib": "3.11"}
 
 # The modules this repository ships, which are first-party imports and
 # therefore never belong in a requirements file.
@@ -75,15 +82,17 @@ def _top_level_imports(path: Path) -> set[str]:
     return {
         name
         for name in found
-        if name not in sys.stdlib_module_names and name not in LOCAL_MODULES
+        if name not in sys.stdlib_module_names
+        and name not in LOCAL_MODULES
+        and name not in NEWER_THAN_MINIMUM_STDLIB
     }
 
 
 def _declared(file_name: str) -> set[str]:
-    """I read the distribution names declared in a requirements file."""
+    """I read the distribution names declared in a requirements file, ignoring comments, version specifiers and environment markers."""
     lines = (REPO_ROOT / file_name).read_text(encoding="utf-8").splitlines()
     return {
-        line.split("==")[0].split(">=")[0].split("<")[0].strip().lower()
+        _requirement_name(line)
         for line in lines
         if line.strip() and not line.strip().startswith("#")
     }
@@ -174,3 +183,80 @@ def test_readme_paragraphs_are_not_wrapped():
         if re.match(r"^[a-z(]", line) and not re.match(r"^\s*[-*]\s", line):
             offenders.append((index + 1, line[:60]))
     assert not offenders, f"wrapped prose at lines {offenders}"
+
+# --- packaging metadata: the guards that keep pyproject honest (A7b) -----------------
+
+
+def _pyproject() -> dict:
+    """I read pyproject.toml with tomllib, falling back to tomli on Python 3.10 where tomllib is not in the standard library yet."""
+    try:
+        import tomllib
+    except ModuleNotFoundError:  # Python 3.10
+        import tomli as tomllib
+
+    with (REPO_ROOT / "pyproject.toml").open("rb") as handle:
+        return tomllib.load(handle)
+
+
+def _requirement_name(requirement: str) -> str:
+    """I reduce a requirement line to the distribution name, dropping any version specifier and extras."""
+    name = requirement.split(";")[0].strip()
+    for separator in ("==", ">=", "<=", "~=", "!=", ">", "<", "["):
+        name = name.split(separator)[0]
+    return name.strip().lower().replace("_", "-")
+
+
+def test_version_matches_the_package():
+    """I check __version__ in the package matches pyproject.toml, because two sources of truth means publishing the wrong number at some point."""
+    from identity_generator import __version__
+
+    assert __version__ == _pyproject()["project"]["version"]
+
+
+def test_pyproject_ships_the_entry_point_the_package_exposes():
+    """I check the console script points at a function that actually exists, since a renamed entry point would break the install silently."""
+    import importlib
+
+    entry = _pyproject()["project"]["scripts"]["identity-generator"]
+    module_name, _, attribute = entry.partition(":")
+    module = importlib.import_module(module_name)
+    assert callable(getattr(module, attribute))
+
+
+def test_pyproject_ships_the_address_datasets():
+    """I check the wheel configuration includes the package directory, because a pip install without data/addresses would fall back to Faker silently and nobody would know why the addresses changed."""
+    wheel = _pyproject()["tool"]["hatch"]["build"]["targets"]["wheel"]
+    assert wheel["packages"] == ["identity_generator"]
+    assert (PACKAGE_ROOT / "data" / "addresses").is_dir()
+    assert list((PACKAGE_ROOT / "data" / "addresses").glob("*.json"))
+
+
+def test_requirements_txt_matches_the_pyproject_dependencies():
+    """I check requirements.txt and pyproject declare the same runtime dependencies, since contributors install from one and users from the other."""
+    declared = _declared("requirements.txt")
+    from_pyproject = {
+        _requirement_name(item) for item in _pyproject()["project"]["dependencies"]
+    }
+    assert declared == from_pyproject
+
+
+def test_requirements_dev_matches_the_pyproject_dev_extra():
+    """I check requirements-dev.txt and the dev extra agree, which is what lets the README offer either way of installing the tooling."""
+    declared = _declared("requirements-dev.txt")
+    extra = _pyproject()["project"]["optional-dependencies"]["dev"]
+    assert declared == {_requirement_name(item) for item in extra}
+
+
+def test_pyproject_requires_the_python_the_ci_tests():
+    """I check the declared minimum matches the oldest interpreter the CI matrix runs, so the claim on PyPI is one we actually test."""
+    workflow = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "3.10" in workflow
+    assert _pyproject()["project"]["requires-python"] == ">=3.10"
+
+
+def test_the_package_documents_itself_on_the_readme():
+    """I check the README tells a reader both ways to run the tool, the launcher and the installed command, so the package layout is never a surprise."""
+    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    assert "python -X utf8 main.py" in readme
+    for document in ("CHANGELOG.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md"):
+        assert document in readme, f"{document} exists but the README never mentions it"

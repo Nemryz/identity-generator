@@ -1,0 +1,91 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "identity-generator"
+version = "1.0.0"
+description = "CLI that generates coherent synthetic identities with official documents, real addresses and usable temporary inboxes"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+keywords = [
+    "fake-data",
+    "synthetic-data",
+    "test-data",
+    "seed-data",
+    "identity",
+    "faker",
+    "cli",
+    "privacy",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Utilities",
+]
+
+# I keep the lower bound at the version whose provider formats the test
+# suite asserts, and the upper bound below the next major, because a new
+# Faker major can reshape a provider and silently invalidate the document
+# validation the tests rely on.
+dependencies = [
+    "faker>=40.15,<41",
+    "requests>=2.31",
+    "pyperclip>=1.8",
+    "colorama>=0.4.6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "hypothesis>=6.100",
+    "jsonschema>=4.20",
+    # tomllib only joined the standard library in 3.11, and the suite reads
+    # pyproject.toml to check the metadata against this file.
+    "tomli>=2.0; python_version < '3.11'",
+]
+
+[project.scripts]
+identity-generator = "identity_generator.main:main"
+
+[project.urls]
+Homepage = "https://github.com/Nemryz/identity-generator"
+Repository = "https://github.com/Nemryz/identity-generator"
+Issues = "https://github.com/Nemryz/identity-generator/issues"
+Changelog = "https://github.com/Nemryz/identity-generator/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+# I list the package directory so the address datasets under data/addresses/
+# travel inside the wheel, since the generator reads them at runtime and a
+# pip install would otherwise land without them.
+packages = ["identity_generator"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/identity_generator",
+    "/tests",
+    "/tools",
+    "/main.py",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/CONTRIBUTING.md",
+    "/CODE_OF_CONDUCT.md",
+    "/LICENSE",
+    "/requirements.txt",
+    "/requirements-dev.txt",
+    "/.github",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

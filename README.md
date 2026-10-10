@@ -3,7 +3,7 @@
 [![CI](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-421%20passed-brightgreen.svg)](tests)
+[![Tests](https://img.shields.io/badge/tests-434%20passed-brightgreen.svg)](tests)
 
 A command-line tool that produces complete, self-consistent synthetic identities. Every field in a generated profile (name, address, phone, postcode) belongs to the same country and language, so the data reads as coherent rather than a random mix of regional formats. Profiles are saved to a local history file and can be exported as JSON or CSV, or copied to the clipboard.
 
@@ -59,6 +59,14 @@ Python 3.10 or newer. Install dependencies with:
 To run the automated test suite (see Testing) also install the development dependencies:
 
     pip install -r requirements-dev.txt
+
+The same thing through the package metadata, which is what you would use if you installed from a checkout:
+
+    pip install -e ".[dev]"
+
+Once the package is installed you get an `identity-generator` command that is equivalent to `python -X utf8 main.py`:
+
+    identity-generator --locale es_ES
 
 ## Usage
 
@@ -291,19 +299,19 @@ Writes take an exclusive lock file created with O_EXCL, which the operating syst
 
 ## Testing
 
-The project ships a fully automated test suite written with pytest, covering 421 test cases across 11 modules:
+The project ships a fully automated test suite written with pytest, covering 434 test cases across 11 modules:
 
     tests/test_generator.py   92 tests   identity fields, names, passwords, locale capabilities
     tests/test_datasets.py    66 tests   address dataset schema and quality
     tests/test_addresses.py   25 tests   real addresses and postcodes
     tests/test_documents.py   26 tests   official national IDs and passports
     tests/test_email_api.py   51 tests   provider chain, rate limits, tokens and API keys
-    tests/test_history.py     15 tests   persistence, locking, concurrency
+    tests/test_history.py     21 tests   persistence, locking, concurrency
     tests/test_main.py        27 tests   command-line flags, seeded reproducibility, table output
     tests/test_exporter.py    17 tests   JSON, CSV, JSONL, schema and clipboard exports
     tests/test_properties.py  20 tests   property-based invariants (Hypothesis)
     tests/test_schema.py      41 tests   the JSON Schema contract and its drift guards
-    tests/test_repo_integrity.py 41 tests   the repo itself: compilation, declared dependencies, README claims
+    tests/test_repo_integrity.py 48 tests   the repo itself: compilation, dependencies, packaging metadata, README claims
 
 Run the whole suite with:
 
@@ -393,7 +401,23 @@ tests/
 
 requirements.txt
 
-    Runtime dependencies: faker, requests, pyperclip, colorama. requirements-dev.txt adds the test tooling (pytest) and is only needed when running the suite.
+    Runtime dependencies: faker, requests, pyperclip, colorama. requirements-dev.txt adds the test tooling (pytest, hypothesis, jsonschema) and is only needed when running the suite. Both are kept in sync with pyproject.toml by a test, so they can never drift from what the package actually declares.
+
+pyproject.toml
+
+    The package metadata: name, version, dependencies, the `identity-generator` console script and the hatchling build configuration. The version lives here and nowhere else, this project does not use git tags, and a test keeps it equal to __version__ inside the package.
+
+CHANGELOG.md
+
+    What changed in each version, following Keep a Changelog.
+
+CONTRIBUTING.md
+
+    How to set up a development environment, run the suite, work on a branch and open a pull request, plus the steps to add a new locale and the documentation conventions the guards enforce.
+
+CODE_OF_CONDUCT.md
+
+    The behaviour expected from anyone taking part, adapted from the Contributor Covenant v2.1.
 
 ## Data sources
 
