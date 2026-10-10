@@ -277,7 +277,8 @@ def test_counters_within_window(usage_file, fake_clock):
 
 
 def test_tempmail_skipped_at_limit(usage_file, fake_clock, monkeypatch, caplog):
-    for _ in range(25):
+    limit = email_api.PROVIDER_LIMITS["tempmail"]["max"]
+    for _ in range(limit):
         _record_usage("tempmail")
     assert not _can_use("tempmail")
 

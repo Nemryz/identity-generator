@@ -6,7 +6,7 @@ I handle temporary email address generation for a synthetic identity, and the pr
 1. tempmail.lol - REST API. The free tier needs no key (per-IP limits); a stored API key switches it to per-account limits, longer inbox lifespan and access to custom domains. The creation response includes the inbox token in the same request.
 2. mail.tm      - REST API, no key. Custom address + best-effort session token (its /token endpoint can lag behind account creation).
 3. Offline      - plausible address with a known disposable domain, no inbox.
-I track rate limits per provider in email_usage.json (tempmail.lol: 25 inboxes per 5 minutes per IP, mail.tm: 8 requests/second) so the chain skips a provider before it rejects us, warning the user when a limit approaches. The returned token lets --check-inbox read the mailbox for verification codes, and I count read operations too so their usage stays visible.
+I track rate limits per provider in email_usage.json (tempmail.lol free tier: 15 inboxes per 30 minutes per IP, mail.tm: 8 requests/second) so the chain skips a provider before it rejects us, warning the user when a limit approaches. The tempmail.lol figures are the free tier ones, since a stored API key moves the provider to per-account limits and a Plus or Ultra plan is unaffected by that change. The returned token lets --check-inbox read the mailbox for verification codes, and I count read operations too so their usage stays visible.
 
 API references:
 - https://docs.mail.tm/
@@ -58,7 +58,7 @@ KEY_PROVIDERS = ("tempmail",)
 
 PROVIDER_LIMITS = {
     "custom": {"window": 0, "max": 0},
-    "tempmail": {"window": 300, "max": 25},
+    "tempmail": {"window": 1800, "max": 15},
     "mailtm": {"window": 1, "max": 8},
     "offline": {"window": 0, "max": 0},
 }
