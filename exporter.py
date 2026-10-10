@@ -1,19 +1,8 @@
 """
 exporter.py
 
-Handles output of a generated identity in four formats.
-
-JSON export writes the full identity dict to a file named after the username
-in the project directory. CSV export writes one row per identity to
-identities.csv (used by --count --csv for database seeding). JSON Lines
-export writes one compact JSON object per identity to identities.jsonl
-(used by --jsonl to stream into data pipelines). Clipboard export formats
-the identity as a plain-text block and copies it to the system clipboard
-using pyperclip.
-
-The clipboard feature relies on the host system having a clipboard mechanism
-available (xclip or xsel on Linux, pbcopy on macOS, clip.exe on Windows).
-It will not work inside a Docker container unless a display is forwarded.
+I handle the four output formats an identity can take, writing the full dict as a JSON file named after the username, spilling a batch into identities.csv as one row per identity (used by --count --csv for database seeding), streaming a batch into identities.jsonl as one compact object per line for data pipelines, and finally copying a plain-text rendering of the profile to the system clipboard through pyperclip.
+The clipboard route depends on the host offering a clipboard mechanism at all (xclip or xsel on Linux, pbcopy on macOS, clip.exe on Windows), so it stays unavailable inside a Docker container unless a display is forwarded.
 """
 
 import csv
@@ -53,14 +42,7 @@ _CSV_FIELDS = [
 
 
 def to_json_file(identity: dict) -> Path:
-    """
-    Write the identity dict to a JSON file.
-
-    The file is named <username>_identity.json and is placed in the same
-    directory as the project. If that name is already taken, a short id
-    suffix is appended so existing exports are never silently overwritten.
-    Returns the resolved file path.
-    """
+    """I write the identity dict to <username>_identity.json in the project directory and, when that name is already taken, append a short id suffix so an earlier export is never silently overwritten."""
     path = _OUTPUT_DIR / f"{identity['username']}_identity.json"
     if path.exists():
         path = (
@@ -74,35 +56,13 @@ def to_json_file(identity: dict) -> Path:
     return path
 
 
-def to_schema_file() -> Path:
-    """
-    Write the JSON Schema of the identity object to identity.schema.json
-    in the project directory. Overwritten on every run so the schema always
-    matches the code that produced the identities.
-    Returns the resolved file path.
-    """
-    path = _OUTPUT_DIR / "identity.schema.json"
-    path.write_text(
-        json.dumps(IDENTITY_SCHEMA, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
-    return path
-
-
 def to_clipboard(identity: dict) -> None:
-    """Copy the identity formatted as plain text to the system clipboard."""
+    """I copy the identity to the system clipboard, formatted as the plain-text block below."""
     pyperclip.copy(_format_profile(identity))
 
 
 def to_csv_file(identities: list[dict]) -> Path:
-    """
-    Write the identities as rows to identities.csv in the project directory.
-
-    The file is overwritten on every run so pipelines always know the
-    name. email_token is intentionally excluded: the CSV targets database
-    seeding, where inbox tokens are meaningless.
-    Returns the resolved file path.
-    """
+    """I write one row per identity into identities.csv in the project directory, overwriting it on every run so a pipeline always knows the filename, and leaving out email_token because inbox tokens mean nothing to a database seed."""
     path = _OUTPUT_DIR / "identities.csv"
     with path.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=_CSV_FIELDS)
@@ -114,18 +74,18 @@ def to_csv_file(identities: list[dict]) -> Path:
     return path
 
 
+def to_schema_file() -> Path:
+    """I dump the identity JSON Schema to identity.schema.json in the project directory, overwriting it each run so the published schema always matches the code that produced the data."""
+    path = _OUTPUT_DIR / "identity.schema.json"
+    path.write_text(
+        json.dumps(IDENTITY_SCHEMA, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
 def to_jsonl_file(identities: list[dict]) -> Path:
-    """
-    Write the identities as newline-delimited JSON to identities.jsonl in
-    the project directory, one compact JSON object per line, in generation
-    order. Unlike --json it keeps every identity in a single file, which is
-    what streaming consumers (jq, log shippers, data loaders) expect, and
-    the file can be read incrementally while a longer batch is still
-    running. The file is overwritten on every run so pipelines always know
-    the name. email_token is intentionally excluded, for the same reason as
-    in the CSV: inbox tokens are meaningless outside this tool.
-    Returns the resolved file path.
-    """
+    """I write the identities to identities.jsonl in the project directory, one compact JSON object per line in generation order, overwriting the file each run so streaming consumers (jq, log shippers, data loaders) can read it incrementally even while a longer batch is still going, and I drop email_token for the same reason the CSV does."""
     path = _OUTPUT_DIR / "identities.jsonl"
     with path.open("w", encoding="utf-8") as fh:
         for identity in identities:
@@ -139,12 +99,7 @@ def to_jsonl_file(identities: list[dict]) -> Path:
 
 
 def _format_profile(identity: dict) -> str:
-    """
-    Render an identity dict as a fixed-width plain-text block.
-
-    The layout uses separator lines and aligned labels so the output is
-    readable both in the terminal and when pasted into a plain-text field.
-    """
+    """I render the identity as a fixed-width plain-text block, using separator lines and aligned labels so it reads well both in the terminal and pasted into a plain-text field."""
     lines = [
         "=" * 48,
         f"  GENERATED IDENTITY  —  {identity.get('country', '')}",

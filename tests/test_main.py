@@ -1,11 +1,5 @@
 """
-CLI tests for main.py.
-
-Runs the real entry point in a subprocess to verify argument handling,
-especially the friendly error for unsupported --locale values.
-
-Every subprocess points IDENTITY_HISTORY_FILE at a temporary path so the
-generated identities never pollute the real history.json of the project.
+CLI tests for main.py: I run the real entry point in a subprocess to verify argument handling, especially the friendly error for unsupported --locale values, and every subprocess points IDENTITY_HISTORY_FILE at a temporary path so the generated identities never pollute the real history.json of the project.
 """
 
 import csv

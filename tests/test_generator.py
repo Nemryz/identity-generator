@@ -1,8 +1,5 @@
 """
-Tests for the age calculation in generator.py.
-
-Covers the exact-age fix: the age must not be overstated when the
-birthday of the current year has not happened yet.
+Tests for the age calculation in generator.py, covering the exact-age fix where the age must not be overstated when the birthday of the current year has not happened yet.
 """
 
 from datetime import date

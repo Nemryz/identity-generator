@@ -1,9 +1,5 @@
 """
-Property-based tests (Paso 7, issue 5).
-
-Randomized invariants over generate_identity and its helpers using
-Hypothesis, targeting exotic Faker locales and arbitrary unicode input
-that directed tests would not enumerate by hand.
+Property-based tests (Paso 7, issue 5): randomized invariants over generate_identity and its helpers using Hypothesis, targeting exotic Faker locales and arbitrary unicode input that directed tests would not enumerate by hand.
 """
 
 import random

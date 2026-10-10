@@ -1,13 +1,9 @@
 """
 generator.py (use alt+z to toggle word wrap in VS Code)
 
-Builds a complete synthetic identity using the Faker library.
-
-Each call to generate_identity produces a self-consistent profile: the locale controls the language and regional conventions for every field (names, addresses, phone formats), so all data points in a profile belong to the same cultural context.
-
-Supported locales are listed in LOCALE_COUNTRY_MAP. Any locale supported by Faker can also be used directly; only the locales in the map get a human-readable country name in the output.
-
-The returned identity dict contains all profile fields plus metadata (id, created_at, locale). The date_of_birth is a date object, and age is calculated from it. The email is generated using a temporary email service.
+I build a complete synthetic identity on top of the Faker library, and every call to generate_identity() returns a self-consistent profile because the locale drives the language and the regional conventions for all the fields at once (names, addresses, phone formats), so each data point in a profile belongs to the same cultural context.
+The locales I list explicitly in LOCALE_COUNTRY_MAP get a human-readable country name in the output, though any locale supported by Faker can still be passed in directly and will simply show its own code as the country.
+The identity dict I return holds all the profile fields plus some metadata (id, created_at, locale), where date_of_birth is a date object, age is computed from it, and the email is generated through a temporary email service.
 """
 
 import json
@@ -29,12 +25,11 @@ import history as hist
 
 logger = get_logger("generator")
 
-# True while a seed set with set_seed() is active. Switches the password
-# generator from the system secure source to the seeded random module so a
-# seeded run reproduces the whole profile.
+# I flip this on while a seed set through set_seed() is active, which swaps the password generator over to the seeded random module so a seeded run reproduces the whole profile.
+
 _SEEDED = False
 
-# Mapping of locale codes to human-readable country names. Only locales in this map get a country name in the output, other Faker-supported locales will return the locale code itself. LOCALE_COUNTRY_MAP is used to provide a more user-friendly country name in the generated identity profiles.
+# I map locale codes to human-readable country names here, so only the locales present in this table get a proper country name in the output and every other Faker-supported locale falls back to showing its own code.
 
 LOCALE_COUNTRY_MAP = {
     "es_ES": "Espana",
@@ -68,6 +63,8 @@ LOCALE_COUNTRY_MAP = {
     "bg_BG": "Bulgaria",
 }
 
+# I default to this set of locales when the caller passes none, and I chose them for the cultural variety they add to the output, since Spanish (Spain and Mexico) and English (United States) are the most widely used and instantly recognisable.
+
 DEFAULT_LOCALES = ["es_ES", "es_MX", "en_US"]
 _VOWELS = set("aeiou")
 _PASSWORD_LENGTH = 16
@@ -80,22 +77,18 @@ _NICKNAME_SUFFIXES = {
     "ja": ["chan", "kun", "tan", "z", "x", "99", "pro", "dark"],
     "default": ["x", "z", "99", "pro", "dark", "neo", "star", "king", "queen"],
 }
-# DEFAULT_LOCALES is a list of locale codes that are used as defaults when generating synthetic identities. These locales are chosen to provide a diverse set of cultural contexts for the generated profiles. The list includes Spanish (Spain and Mexico) and English (United States) locales, which are commonly used and widely recognized.
 
-# Real-address datasets (Paso 3/4). Locales with a dataset in
-# data/addresses/ get a city weighted by population, its real postal
-# code and a real street name; all other locales fall back to Faker.
+# Real-address datasets (Paso 3/4): a locale that has a dataset in data/addresses/ gets a city weighted by population, its real postal code and a real street name, while every other locale falls back to Faker.
+
 DATASETS_DIR = Path(__file__).resolve().parent / "data" / "addresses"
 
-# Locales that put the house number before the street name, and the
-# single locale that separates them with a comma (Portuguese convention).
+# I track which locales put the house number before the street name, and the single one that separates the two with a comma (the Portuguese convention).
+
 ADDRESS_NUMBER_FIRST = {"en_US", "en_GB", "fr_FR"}
 ADDRESS_COMMA = {"pt_BR"}
 
-# Official national ID providers per locale (Paso 5). Locales without
-# an entry (e.g. es_AR, ja_JP) have no official Faker provider and
-# omit the national_id field. de_DE rvnr embeds the birth date, so the
-# identity's own date of birth is passed to it.
+# Official national ID providers per locale (Paso 5): a locale missing from this table (es_AR, ja_JP, ...) has no official Faker provider so I leave its national_id out, and since de_DE rvnr embeds the birth date I hand the identity's own date of birth to it.
+
 _NATIONAL_ID_PROVIDERS = {
     "es_ES": "nif",
     "es_MX": "curp",
@@ -109,9 +102,8 @@ _NATIONAL_ID_PROVIDERS = {
     "pt_BR": "cpf",
 }
 
-# Plausible passport serial formats: (letters, digits) per locale.
-# Faker has no passport provider, so these are locally generated shapes
-# that follow each country's official length conventions.
+# I hold the plausible passport serial shapes as (letters, digits) per locale: since Faker ships no passport provider I generate these locally, following each country's official length conventions.
+
 _PASSPORT_FORMATS = {
     "es_ES": (3, 6),
     "es_MX": (3, 6),
@@ -128,26 +120,17 @@ _PASSPORT_FORMATS = {
 
 
 def get_supported_locales() -> list[str]:
-    """Return the list of locales that have an explicit country name mapping."""
+    """I return the sorted list of locales that carry an explicit country name mapping."""
     return sorted(LOCALE_COUNTRY_MAP.keys())
 
 
 def is_supported_locale(locale: str) -> bool:
-    """
-    Return True when Faker accepts the given locale code.
-    Any locale Faker supports is valid, not only the ones with an explicit country name in LOCALE_COUNTRY_MAP (e.g. en_CA, es_PE).
-    """
+    """I check whether Faker accepts this locale code, and because Faker drives the generation I accept anything it supports rather than only the locales named in LOCALE_COUNTRY_MAP (en_CA or es_PE, for example)."""
     return locale in AVAILABLE_LOCALES
 
 
 def _calculate_age(dob, today: date | None = None) -> int:
-    """
-    Calculate the exact age in whole years for a birth date.
-
-    A year is only counted once the birthday has occurred in the current year. Subtracting years alone overstates the age when the birthday is still pending (e.g. born Dec 1965, seen in Aug 2026: 60, not 61).
-
-    Accepts a date or datetime; ``today`` is injectable for deterministic tests and defaults to the current date.
-    """
+    """I work out the exact age in whole years for a birth date, counting a year only once the birthday has actually happened this year so that subtracting years alone never overstates it (born December 1965, seen in August 2026 is 60, not 61), and I take either a date or a datetime while letting ``today`` be injected for deterministic tests and defaulting to the current date otherwise."""
     dob_date = dob.date() if hasattr(dob, "date") else dob
     if today is None:
         today = datetime.now().date()
@@ -159,12 +142,7 @@ def _calculate_age(dob, today: date | None = None) -> int:
 
 @lru_cache(maxsize=None)
 def _load_address_dataset(locale: str) -> dict | None:
-    """
-    Return the real-address dataset for a locale, or None.
-
-    Returns None when the locale has no dataset or the file is missing
-    or unreadable, so the caller falls back to Faker.
-    """
+    """I return the real-address dataset for a locale, or None when it has none or the file is missing or unreadable so the caller can fall back to Faker."""
     path = DATASETS_DIR / f"{locale}.json"
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -178,44 +156,29 @@ def _load_address_dataset(locale: str) -> dict | None:
 
 
 def _pick_dataset_city(dataset: dict) -> dict:
-    """
-    Pick a city from a dataset, weighted by population.
-
-    Only cities that have a real postal code participate, so the
-    returned city always carries a usable postcode.
-    """
+    """I pick a city out of a dataset weighted by population, letting only the cities that carry a real postal code take part so the one I hand back always has a usable postcode."""
     pool = [city for city in dataset["cities"] if city.get("postcode")]
     return random.choices(pool, weights=[c["population"] for c in pool])[0]
 
 
 def _street_number() -> int:
-    """Return a plausible house number."""
+    """I return a plausible house number."""
     return random.randint(1, 9999)
 
 
 def _format_address(locale: str, street: str, number: int) -> str:
     """
-    Format a street address following the locale's convention.
-
-    Number-first for US/GB/French ("123 Main Street", "12 rue de la
-    Paix"), comma-separated for Brazilian Portuguese ("Rua Augusta,
-    123"), street-first for the rest ("Calle X 123", "Hauptstraße 12").
+    I format a street address following the locale's convention: number-first for US/GB/French ("123 Main Street", "12 rue de la Paix"), comma-separated for Brazilian Portuguese ("Rua Augusta, 123") and street-first for the rest ("Calle X 123", "Hauptstraße 12").
     """
     if locale in ADDRESS_NUMBER_FIRST:
         return f"{number} {street}"
     if locale in ADDRESS_COMMA:
         return f"{street}, {number}"
     return f"{street} {number}"
-def _national_id(locale: str, fake: Faker, dob: date) -> str | None:
-    """
-    Return the official national ID for a locale, or None.
 
-    Uses the locale's Faker provider (DNI/NIF for Spain, CURP for
-    Mexico, RUT for Chile, cédula NUIP for Colombia, SSN for the US,
-    National Insurance Number for the UK, NIR for France, German
-    pension number for Germany, codice fiscale for Italy, CPF for
-    Brazil). Locales without a provider omit the field entirely.
-    """
+
+def _national_id(locale: str, fake: Faker, dob: date) -> str | None:
+    """I return the official national ID for a locale by asking its Faker provider (DNI/NIF for Spain, CURP for Mexico, RUT for Chile, cédula NUIP for Colombia, SSN for the US, National Insurance Number for the UK, NIR for France, German pension number for Germany, codice fiscale for Italy, CPF for Brazil), give back None when the locale has no provider, and swallow any provider exception so a missing document never breaks the whole profile."""
     method = _NATIONAL_ID_PROVIDERS.get(locale)
     if method is None:
         return None
@@ -228,12 +191,7 @@ def _national_id(locale: str, fake: Faker, dob: date) -> str | None:
 
 
 def _passport_number(locale: str) -> str:
-    """
-    Return a plausible passport serial for the locale.
-
-    Faker has no passport provider, so the number is built locally with
-    the letter/digit shape used by each country's official passports.
-    """
+    """I return a plausible passport serial for the locale, assembling it locally out of the letter and digit shape used by that country's official passports because Faker ships no passport provider."""
     letters, digits = _PASSPORT_FORMATS.get(locale, (0, 9))
     part_letters = "".join(random.choices(string.ascii_uppercase, k=letters))
     part_digits = "".join(random.choices(string.digits, k=digits))
@@ -243,16 +201,7 @@ def _passport_number(locale: str) -> str:
 def generate_identity(
     locale: str | None = None, email_usable: bool = True, reuse: bool = False
 ) -> dict:
-    """
-    Generate a single synthetic identity.
-
-    If locale is None, a random entry from DEFAULT_LOCALES is used.
-    The returned dict contains all profile fields plus metadata (id,
-    created_at, locale). email_usable=False requests a plausible email
-    without a real inbox (no network calls). reuse=True copies the most
-    recent usable inbox from history instead of creating a new one
-    (no network calls, no provider usage recorded).
-    """
+    """I generate one synthetic identity and return a dict with all the profile fields plus metadata (id, created_at, locale): when locale is None I pick a random entry from DEFAULT_LOCALES, email_usable=False asks for a plausible email without a real inbox (no network calls), and reuse=True copies the most recent usable inbox from history instead of creating a new one (no network calls, no provider usage recorded)."""
     if locale is None:
         locale = random.choice(DEFAULT_LOCALES)
 
@@ -309,11 +258,7 @@ def generate_identity(
 
 
 def _get_first_name(fake: Faker, gender: str) -> str:
-    """
-    Retrieve a gendered first name from Faker.
-
-    Falls back to the generic first_name() method if the locale does not provide gender-specific variants.
-    """
+    """I retrieve a gendered first name from Faker and fall back to the generic first_name() method when the locale offers no gender-specific variants."""
     try:
         return fake.first_name_male() if gender == "male" else fake.first_name_female()
     except AttributeError:
@@ -322,9 +267,7 @@ def _get_first_name(fake: Faker, gender: str) -> str:
 
 def _safe(primary_fn, fallback_fn=None) -> str:
     """
-    Call primary_fn and return its result.
-
-    If primary_fn raises any exception, call fallback_fn instead. If fallback_fn is also unavailable or raises, return "N/A". The broad exception catch is intentional: Faker locale coverage varies and some providers raise unexpected errors for unsupported locales.
+    I call primary_fn and hand back its result, falling through to fallback_fn whenever primary_fn raises, and giving up with "N/A" when there is no fallback or it fails too, keeping the broad exception catch on purpose because Faker's locale coverage varies and some providers blow up in unexpected ways on unsupported locales.
     """
     try:
         return primary_fn()
@@ -339,7 +282,7 @@ def _safe(primary_fn, fallback_fn=None) -> str:
 
 
 def _to_ascii(text: str) -> str:
-    """Strip diacritics and return an ASCII-only lowercase string."""
+    """I strip the diacritics off a name and give back a lowercase ASCII-only string."""
     return (
         unicodedata.normalize("NFKD", text)
         .encode("ascii", "ignore")
@@ -348,12 +291,7 @@ def _to_ascii(text: str) -> str:
 
 
 def _build_username(first_name: str, birth_year: int) -> str:
-    """
-    Build an ASCII-safe username from a first name and birth year.
-
-    Format: <name><two-digit-year><three-digit-suffix>
-    Example: carlos85042
-    """
+    """I build an ASCII-safe username out of a first name and a birth year, following the <name><two-digit-year><three-digit-suffix> format (carlos85042)."""
     clean = _to_ascii(first_name).lower()
     clean = "".join(c for c in clean if c.isalnum())
     suffix = "".join(random.choices(string.digits, k=3))
@@ -363,16 +301,7 @@ def _build_username(first_name: str, birth_year: int) -> str:
 
 
 def set_seed(seed: int | None) -> None:
-    """
-    Seed every random source used by the generator so a run is reproducible.
-
-    Seeds both the standard `random` module (locale, gender, street, house
-    number, passport serial) and the Faker generator (names, dates of birth,
-    national IDs, phone, job), because Faker uses its own random instance.
-    While a seed is active the generated password also switches from the
-    system secure source to `random` so the whole profile repeats. Passing
-    None restores the default behaviour.
-    """
+    """I seed every random source the generator draws from so a whole run reproduces: the standard `random` module (locale, gender, street, house number, passport serial) and the Faker generator (names, dates of birth, national IDs, phone, job), which needs its own because Faker runs on a separate random instance, and while a seed is active I also pull the password over to `random` so the entire profile repeats, whereas passing None restores the default behaviour."""
     global _SEEDED
     if seed is None:
         _SEEDED = False
@@ -383,11 +312,7 @@ def set_seed(seed: int | None) -> None:
 
 
 def _build_password() -> str:
-    """
-    Generate a 16-character password that passes common validators.
-
-    Guarantees at least one lowercase, one uppercase, one digit and one symbol, and avoids ambiguous characters (I, l, 1, O, 0). Every character comes from the operating system's secure random source, unless a seed was set with set_seed(), in which case the seeded random module is used so the password is reproducible too.
-    """
+    """I generate a 16-character password that satisfies common validators by guaranteeing at least one lowercase, one uppercase, one digit and one symbol while steering clear of ambiguous characters (I, l, 1, O, 0), and every character comes from the operating system's secure random source unless a seed was set with set_seed(), in which case I use the seeded random module so the password is reproducible too."""
     pools = [_PASSWORD_LOWER, _PASSWORD_UPPER,
              _PASSWORD_DIGITS, _PASSWORD_SYMBOLS]
     if _SEEDED:
@@ -408,20 +333,12 @@ def _build_password() -> str:
 
 
 def _nickname_suffixes(locale: str) -> list[str]:
-    """
-    Return the nickname suffixes appropriate for the locale's language.
-
-    Language-specific suffixes (Spanish diminutives, Japanese honorifics) are only used for locales of that language, everything else falls back to a universal set of informal handles.
-    """
+    """I return the nickname suffixes that suit the locale's language, reserving the language-specific ones (Spanish diminutives, Japanese honorifics) for locales of that language and falling back to a universal set of informal handles for everything else."""
     return _NICKNAME_SUFFIXES.get(locale.split("_")[0], _NICKNAME_SUFFIXES["default"])
 
 
 def _build_nickname(first_name: str, locale: str) -> str:
-    """
-    Derive a short creative nickname from the first name.
-
-    Takes the first syllable-like chunk of the name (up to and including the first vowel after position 0) and appends a random informal suffix from the locale's language set.
-    """
+    """I derive a short creative nickname from the first name by taking the first syllable-like chunk of it (everything up to and including the first vowel after position 0) and tacking on a random informal suffix from the locale's language set."""
     clean = _to_ascii(first_name).lower()
     syllable = clean[:2]
     for i, char in enumerate(clean[1:], 1):

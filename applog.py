@@ -1,14 +1,8 @@
 """
 applog.py
 
-Minimal structured logging shared by all modules.
-
-main.py calls setup_logging() once at startup, attaching a file handler
-(identity-generator.log, overridable via IDENTITY_LOG_FILE) and a stderr
-handler. Modules obtain their logger with get_logger() instead of
-printing to stderr directly. When setup_logging() has not been called
-(for example inside tests), messages fall back to Python's last-resort
-handler, so warnings still reach stderr.
+I keep the structured logging that every module shares, so nobody has to print to stderr by hand.
+main.py calls setup_logging() once at startup and I attach a file handler (identity-generator.log, overridable through IDENTITY_LOG_FILE) plus a stderr handler, while modules grab their own logger with get_logger() and log through it. When setup_logging() has not run yet (inside tests, for example) messages fall back to Python's last-resort handler, so warnings still reach stderr.
 """
 
 import logging
@@ -27,12 +21,7 @@ _STREAM_FORMAT = "%(levelname)s %(name)s: %(message)s"
 
 
 def setup_logging(verbose: bool = False) -> None:
-    """
-    Configure the shared "identity" logger with file and stderr handlers.
-
-    Without verbose, INFO+ messages go to the log file and stderr.
-    With verbose, DEBUG messages are written to both.
-    """
+    """I wire the shared "identity" logger to a file and to stderr, doing nothing when handlers already exist, which keeps repeated calls harmless; without verbose I pass INFO and above to both, with verbose I let DEBUG through as well."""
     root = logging.getLogger("identity")
     if root.handlers:
         return
@@ -48,5 +37,5 @@ def setup_logging(verbose: bool = False) -> None:
 
 
 def get_logger(name: str) -> logging.Logger:
-    """Return a child of the shared "identity" logger."""
+    """I hand back a child of the shared "identity" logger, named after the calling module."""
     return logging.getLogger(f"identity.{name}")

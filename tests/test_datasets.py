@@ -1,10 +1,5 @@
 """
-Tests for the committed address datasets in data/addresses/.
-
-These run offline against the generated JSON files: schema shape,
-coverage thresholds, per-country postal code formats, and ordering.
-The datasets are derived from GeoNames (CC-BY 4.0) and OpenStreetMap
-(ODbL); see the "Data sources" section of the README.
+Tests for the committed address datasets in data/addresses/: I run them offline against the generated JSON files to check the schema shape, the coverage thresholds, the per-country postal code formats and the ordering, and these datasets derive from GeoNames (CC-BY 4.0) and OpenStreetMap (ODbL) as the "Data sources" section of the README explains.
 """
 
 import json

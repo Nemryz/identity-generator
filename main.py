@@ -1,11 +1,7 @@
 """
 main.py
 
-Entry point for the identity-generator command-line tool.
-
-Parses arguments, delegates work to the generator, history, and exporter
-modules, and prints a colour-coded profile to the terminal. Colour output
-uses colorama so it works on Windows without additional configuration.
+I am the entry point for the identity-generator command-line tool: I parse the arguments, hand the real work over to the generator, history and exporter modules, and print a colour-coded profile to the terminal, where the colours come from colorama so they work on Windows without extra configuration.
 
 Run with: python -X utf8 main.py [options]
 """
@@ -40,12 +36,12 @@ _LABEL = Fore.CYAN + Style.BRIGHT
 
 
 def _row(label: str, value: str) -> None:
-    """Print a single aligned label-value pair."""
+    """I print a single aligned label-value pair."""
     print(f"  {_LABEL}{label:<18}{Style.RESET_ALL} {value}")
 
 
 def print_identity(identity: dict) -> None:
-    """Render a full identity profile to the terminal with colour."""
+    """I render a full identity profile to the terminal with colour."""
     country = identity.get("country", identity["locale"])
     print(_DIM + _SEP_FULL)
     print(Fore.GREEN + Style.BRIGHT + f"  IDENTITY  —  {country}")
@@ -77,7 +73,7 @@ def print_identity(identity: dict) -> None:
 
 
 def print_history(entries: list[dict]) -> None:
-    """Render the history list as a plain table to the terminal."""
+    """I render the history list as a plain table to the terminal."""
     if not entries:
         print(Fore.YELLOW + "  No identities in history yet.")
         return
@@ -100,7 +96,7 @@ def print_history(entries: list[dict]) -> None:
 
 
 def _print_inbox(selector: str) -> None:
-    """Fetch and render the received emails of one identity's inbox."""
+    """I fetch and render the received emails of one identity's inbox."""
     if selector == "_latest":
         entries = hist.get_all(limit=1)
         if not entries:
@@ -133,7 +129,7 @@ def _print_inbox(selector: str) -> None:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    """Define and return the CLI argument parser."""
+    """I define and return the CLI argument parser."""
     parser = argparse.ArgumentParser(
         prog="identity-generator",
         description=(
@@ -294,7 +290,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
-    """Parse arguments and execute the requested action."""
+    """I parse the arguments and execute the action they ask for."""
     parser = _build_parser()
     args = parser.parse_args()
 

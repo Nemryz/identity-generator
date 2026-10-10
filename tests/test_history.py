@@ -1,6 +1,5 @@
 """
-Tests for history.py: persistence, locking, atomic writes, and
-corruption handling.
+Tests for history.py: I cover persistence, locking, atomic writes and corruption handling.
 """
 
 import json

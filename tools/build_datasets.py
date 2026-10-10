@@ -1,19 +1,8 @@
 """
 tools/build_datasets.py
 
-One-time builder for the real-address datasets (Paso 3).
-
-For each of the 11 supported locales it downloads:
-- GeoNames cities15000 (top cities by population per country),
-- GeoNames postal codes per country (<CC>.zip),
-- OpenStreetMap street names via the Overpass API. The country is
-  split into a 2x2 grid of cells and each cell is queried separately
-  (50 streets per query), so every request stays light even for large
-  countries and a failing cell is skipped instead of aborting.
-
-The result is written to data/addresses/<locale>.json and committed to
-the repository, so the generator never needs network access at runtime.
-Re-running the script refreshes the datasets.
+I am the one-time builder for the real-address datasets (Paso 3), and for each of the 11 supported locales I download the GeoNames cities15000 (top cities by population per country), the GeoNames postal codes per country (<CC>.zip), and the OpenStreetMap street names through the Overpass API: since I split each country into a 2x2 grid of cells and query every cell on its own (50 streets per query), each request stays light even for large countries and a failing cell gets skipped rather than aborting the run.
+I write the result to data/addresses/<locale>.json and it is committed to the repository, so the generator never needs network access at runtime and re-running me just refreshes the datasets.
 
 Data sources and licenses:
 - GeoNames: https://www.geonames.org/export/  (CC-BY 4.0)
@@ -165,10 +154,7 @@ FOREIGN_PREFIXES: dict[str, set[str]] = {
 
 def _keep_street(locale: str, name: str) -> bool:
     """
-    Return True when a street name plausibly belongs to the locale.
-
-    Drops names written in non-Latin scripts (Arabic, CJK) and names
-    whose first word is a foreign-language prefix per FOREIGN_PREFIXES.
+    I tell whether a street name plausibly belongs to the locale, dropping the names written in non-Latin scripts (Arabic, CJK) along with those whose first word is a foreign-language prefix listed in FOREIGN_PREFIXES.
     """
     if any(unicodedata.category(char) == "Lo" for char in name):
         return False
@@ -208,12 +194,7 @@ def _read_cached(
 def load_cities(
     session: requests.Session, cache_dir: Path, cc: str, max_cities: int
 ) -> list[dict]:
-    """
-    Return the top cities by population for a country code.
-
-    Uses the GeoNames cities15000 dump (populated places with at least
-    15000 inhabitants), filtered by country and sorted by population.
-    """
+    """I return the top cities by population for a country code, reading the GeoNames cities15000 dump (populated places with at least 15000 inhabitants) and filtering it by country before sorting by population."""
     data = _read_cached(session, cache_dir, CITIES_URL, "cities15000.zip")
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
         text = archive.read("cities15000.txt").decode("utf-8")
@@ -262,15 +243,7 @@ def _alternate_names(field: str) -> list[str]:
 def load_postcodes(
     session: requests.Session, cache_dir: Path, cc: str
 ) -> dict[str, dict[str, str]]:
-    """
-    Return postal codes keyed by place and admin1.
-
-    Each place maps admin1 code to the first real postal code, with ""
-    holding the first code regardless of region (the plain first-match
-    fallback). The zip admin codes differ from the cities15000 admin1
-    codes (e.g. "MD" vs "29" for Madrid), so they are bridged per country
-    via a learned map in _learn_admin_map.
-    """
+    """I return the postal codes keyed by place and admin1: each place maps an admin1 code to the first real postal code, with "" holding the first code regardless of region as the plain first-match fallback, and because the zip admin codes differ from the cities15000 admin1 codes ("MD" against "29" for Madrid, for example) I bridge them per country through a learned map built in _learn_admin_map."""
     data = _read_cached(
         session, cache_dir, ZIP_URL.format(cc=cc), f"zip_{cc}.zip"
     )
@@ -302,14 +275,7 @@ def load_postcodes(
 def _learn_admin_map(
     codes: dict[str, dict[str, str]], cities: list[dict]
 ) -> dict[str, str]:
-    """
-    Bridge zip admin1 codes to cities15000 admin1 codes.
-
-    For every city whose name appears under exactly one zip region, that
-    region is the city's own; this pins zip_admin -> cities_admin for the
-    whole country. Used to prefer the correct region when a name collides
-    with a same-name district elsewhere.
-    """
+    """I bridge the zip admin1 codes to the cities15000 admin1 codes by treating every city whose name sits under exactly one zip region as belonging to that region, which pins zip_admin -> cities_admin for the whole country and lets me prefer the correct region when a name collides with a same-name district elsewhere."""
     admin_map: dict[str, str] = {}
     for city in cities:
         entry = codes.get(_normalize(city["name"]))
@@ -328,10 +294,7 @@ def _postcode_for(
     admin1: str,
     admin_map: dict[str, str],
 ) -> str | None:
-    """
-    Best postcode for a place: prefer the zip region that maps to the
-    city's own region, otherwise the plain first match.
-    """
+    """I pick the best postcode for a place by preferring the zip region that maps to the city's own region and settling for the plain first match otherwise."""
     entry = codes.get(place)
     if not entry:
         return None
@@ -342,7 +305,7 @@ def _postcode_for(
 
 
 def _postcode_member(archive: zipfile.ZipFile, cc: str) -> str:
-    """Pick the <CC>.txt member, ignoring readme.txt and other extras."""
+    """I pick the <CC>.txt member, ignoring readme.txt and the other extras."""
     names = archive.namelist()
     for name in names:
         if name.casefold() == f"{cc}.txt":
@@ -357,13 +320,8 @@ def _postcode_member(archive: zipfile.ZipFile, cc: str) -> str:
 
 
 def _bbox_cells(cities: list[dict]) -> list[tuple[float, float, float, float]]:
-    """
-    Split the country into a GRID_ROWS x GRID_COLS grid of cells.
-
-    The bounding box comes from the loaded cities, so each cell is a
-    fraction of the country and every street query stays light. Returns
-    (south, west, north, east) tuples, or an empty list when the cities
-    have no usable coordinates (caller falls back to the area query).
+"""
+    I split the country into a GRID_ROWS x GRID_COLS grid of cells, taking the bounding box from the loaded cities so each cell is a fraction of the country and every street query stays light, and I hand back an empty list when the cities carry no usable coordinates (the caller then falls back to the area query).
     """
     latitudes = [city["latitude"] for city in cities if "latitude" in city]
     longitudes = [city["longitude"] for city in cities if "longitude" in city]
@@ -387,15 +345,7 @@ def _match_postcode(
     city: dict,
     admin_map: dict[str, str],
 ) -> str | None:
-    """
-    Find the best real postcode for a city.
-
-    Tries the city name and its alternate names (normalized), preferring
-    the zip region that maps to the city's own region (via the learned
-    admin map) and falling back to the plain first match. Then tries
-    prefix matches (e.g. "Bogotá" matching the zip place "Bogotá, D.C.").
-    Returns None when the country dataset has no entry at all.
-    """
+    """I find the best real postcode for a city by trying the name and its alternate names (normalized), preferring the zip region that maps to the city's own region through the learned admin map and falling back to the plain first match, then trying prefix matches ("Bogotá" against the zip place "Bogotá, D.C.", for example), and I hand back None when the country dataset has no entry at all."""
     admin1 = city.get("admin1_code", "")
     candidates = [city["name"], *city.get("alternate_names", [])]
     for name in candidates:
@@ -423,13 +373,7 @@ def _query_cell(
     cc: str,
     mirror: str,
 ) -> list[str] | None:
-    """
-    Run one Overpass query and return the named streets found.
-
-    With a bbox the query targets a fraction of the country (small and
-    fast); without one it falls back to the whole-country area query.
-    Returns None when every mirror fails.
-    """
+    """I run one Overpass query and return the named streets I find, targeting a fraction of the country (small and fast) when I get a bbox and falling back to the whole-country area query without one, and I hand back None when every mirror fails."""
     if bbox is None:
         where = f'area["ISO3166-1"="{cc}"][admin_level=2]->.search;\n(way["highway"~"' + STREET_HIGHWAYS + '"]["name"](area.search););'
     else:
@@ -477,14 +421,7 @@ def fetch_streets(
     mirror: str,
     sleep: float,
 ) -> list[str]:
-    """
-    Collect up to max_streets named streets of a country.
-
-    The country is queried cell by cell (default 50 streets per cell,
-    requested as 100 to compensate for unnamed ways), so every query is
-    light enough not to time out even for large countries. A failing
-    cell is skipped with a log line instead of aborting the country.
-    """
+    """I collect up to max_streets named streets of a country by querying it cell by cell (50 streets per cell by default, requested as 100 to compensate for unnamed ways) so every query stays light enough not to time out even for large countries, and a failing cell is skipped with a log line instead of aborting the whole country."""
     streets: list[str] = []
     seen: set[str] = set()
     queries = cells if cells else [None]

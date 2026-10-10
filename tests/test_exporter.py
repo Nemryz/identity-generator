@@ -1,6 +1,5 @@
 """
-Tests for exporter.py, focusing on JSON export collision handling
-and CSV batch export.
+Tests for exporter.py, focusing on the JSON export collision handling and the CSV and JSONL batch exports.
 """
 
 import csv

@@ -1,18 +1,8 @@
 """
 schema.py
 
-JSON Schema of the identity object produced by generator.generate_identity().
-
-The schema is the machine-readable contract of the output: it is printed by
-the --schema flag, written to identity.schema.json when combined with --json,
-and used by the test suite to prove that generated identities match what the
-schema promises. Keeping it here (instead of inside the CLI) makes it usable
-as a library by anyone importing the package.
-
-Field list, types and nullability are derived from the dict returned by
-generate_identity(). national_id is null for locales without an official
-document provider (es_AR, ja_JP), email_token is null when the address has
-no real inbox (offline mode).
+I keep the JSON Schema of the identity object that generator.generate_identity() returns, which is what makes the output a real contract rather than a convention: --schema prints it, --json alongside that flag writes it to identity.schema.json, and the test suite validates generated identities against it so the description can never drift away from the code.
+I derive the field list, the types and the nullability straight from the dict generate_identity() builds, where national_id comes back null for locales with no official document provider (es_AR, ja_JP) and email_token is null whenever the address has no real inbox behind it, and I keep this in its own module instead of inside the CLI so anyone importing the package can use it too.
 """
 
 from typing import Any
@@ -20,8 +10,10 @@ from typing import Any
 SCHEMA_DIALECT = "https://json-schema.org/draft/2020-12/schema"
 SCHEMA_ID = "https://github.com/Nemryz/identity-generator/schema/identity.schema.json"
 
-# 16 characters drawn from a charset with no ambiguous glyphs (I, l, 1, O, 0),
-# guaranteeing at least one lowercase, one uppercase, one digit and one symbol.
+# I match a 16-character password drawn from a charset with no ambiguous
+# glyphs (I, l, 1, O, 0) while the four lookaheads require at least one
+# lowercase, one uppercase, one digit and one symbol, which is exactly what
+# the generator guarantees.
 _PASSWORD_PATTERN = (
     "^(?!.*[Il1O0])"
     "(?=.*[a-z])(?=.*[A-Z])(?=.*[2-9])(?=.*[!@#$%^&*+=?])"
@@ -230,7 +222,7 @@ IDENTITY_SCHEMA: dict[str, Any] = {
 
 
 def schema_json(indent: int = 2) -> str:
-    """Return the JSON Schema as a pretty-printed string."""
+    """I render the schema as a pretty-printed JSON string, ready to be piped into a validator or saved to disk."""
     import json
 
     return json.dumps(IDENTITY_SCHEMA, indent=indent, ensure_ascii=False)

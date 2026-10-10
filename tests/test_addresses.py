@@ -1,11 +1,5 @@
 """
-Tests for the real-address datasets (Paso 4).
-
-For the 11 locales that ship a dataset in data/addresses/, the generated
-address must come entirely from that dataset: a city weighted by
-population, the postal code stored for that exact city, and a real
-street name, formatted following the locale's convention. Locales
-without a dataset keep the Faker fallback.
+Tests for the real-address datasets (Paso 4): for the 11 locales that ship a dataset in data/addresses/ the generated address has to come entirely from that dataset (a city weighted by population, the postal code stored for that exact city, and a real street name formatted following the locale's convention), while the locales without a dataset keep the Faker fallback.
 """
 
 import json

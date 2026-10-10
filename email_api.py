@@ -1,28 +1,12 @@
 """
 email_api.py
 
-Handles temporary email address generation for a synthetic identity.
-
-The preferred path creates a REAL usable inbox whose address is built from
-the identity's first and last names (e.g. carlos.garcia@<provider>):
-
-0. Custom    - own catch-all domain (domains.json, e.g. Cloudflare Email
-               Routing). Addresses are deliverable to the user's real
-               inbox, never rate-limited and never blocked as disposable.
-1. tempmail.lol - REST API. Free tier needs no key (per-IP limits). A
-   stored API key switches it to per-account limits, longer inbox
-   lifespan and access to custom domains. The creation response includes
-   the inbox token in the same request.
-2. mail.tm      - REST API, no key. Custom address + best-effort session
-   token (its /token endpoint can lag behind account creation).
+I handle temporary email address generation for a synthetic identity, and the preferred path always creates a REAL usable inbox whose address is built from the identity's first and last names (carlos.garcia@<provider>, for example) through this chain:
+0. Custom    - the user's own catch-all domain (domains.json, Cloudflare Email Routing, and the like), where addresses are deliverable to the user's real inbox, never rate-limited and never blocked as disposable.
+1. tempmail.lol - REST API. The free tier needs no key (per-IP limits); a stored API key switches it to per-account limits, longer inbox lifespan and access to custom domains. The creation response includes the inbox token in the same request.
+2. mail.tm      - REST API, no key. Custom address + best-effort session token (its /token endpoint can lag behind account creation).
 3. Offline      - plausible address with a known disposable domain, no inbox.
-
-Rate limits are tracked per provider in email_usage.json (tempmail.lol: 25
-inboxes per 5 minutes per IP, mail.tm: 8 requests/second) so the chain
-skips a provider before it rejects us, and the user is warned when a limit
-is approaching. The returned token lets the --check-inbox command read the
-mailbox for verification codes; read operations are also counted so their
-usage stays visible.
+I track rate limits per provider in email_usage.json (tempmail.lol: 25 inboxes per 5 minutes per IP, mail.tm: 8 requests/second) so the chain skips a provider before it rejects us, warning the user when a limit approaches. The returned token lets --check-inbox read the mailbox for verification codes, and I count read operations too so their usage stays visible.
 
 API references:
 - https://docs.mail.tm/
@@ -87,19 +71,7 @@ _LOCK_STALE_SECONDS = 10
 def get_temp_email(
     first_name: str, last_name: str, usable: bool = True
 ) -> dict:
-    """
-    Create an email address for the identity, returned as
-    {"email": str, "token": str | None, "provider": str}.
-
-    When a custom catch-all domain is configured in domains.json it is
-    used first: addresses are deliverable to the user's real inbox with
-    no API, no rate limit and no blocking risk. Otherwise, with
-    usable=True the real-inbox providers are tried in order (tempmail.lol
-    then mail.tm), falling back to a plausible address without an inbox
-    when both are unreachable or rate-limited. With usable=False only the
-    plausible offline address is produced. The token, when present, can
-    later be used to read the inbox.
-    """
+    """I create an email address for the identity and return it as {"email": str, "token": str | None, "provider": str}: when a custom catch-all domain is configured in domains.json I use it first so addresses are deliverable to the user's real inbox with no API, no rate limit and no blocking risk, otherwise with usable=True I try the real-inbox providers in order (tempmail.lol then mail.tm) and fall back to a plausible address without an inbox when both are unreachable or rate-limited, and with usable=False I produce only the plausible offline address. The token, when present, can later be used to read the inbox."""
     local = _local_part(first_name, last_name)
 
     custom = _custom_domains()
@@ -152,15 +124,7 @@ def get_temp_email(
 
 
 def check_inbox(identity: dict, limit: int = 10) -> list[dict]:
-    """
-    Fetch received emails for an identity's inbox.
-
-    Uses the provider and token stored on the identity. Returns a list of
-    message dicts with keys "from", "subject" and "text". Raises ValueError
-    when the identity has no inbox to read (offline email or unknown
-    provider). An unreachable or rejecting API returns an empty list after
-    warning on stderr.
-    """
+    """I fetch the received emails for an identity's inbox by using the provider and token stored on it, returning a list of message dicts with keys "from", "subject" and "text"; I raise ValueError when the identity has no inbox to read (an offline email or an unknown provider), and an unreachable or rejecting API gives back an empty list after warning on stderr."""
     provider = identity.get("email_provider")
     token = identity.get("email_token")
     if provider == "custom":
@@ -199,12 +163,7 @@ def usage_summary() -> str:
 
 
 def _local_part(first_name: str, last_name: str) -> str:
-    """
-    Build an ASCII-safe email local part from the identity names.
-
-    Example: carlos.garcia. Falls back to "user" when no name
-    transliterates to ASCII (e.g. CJK names).
-    """
+    """I build an ASCII-safe email local part from the identity names (carlos.garcia.), falling back to "user" when no name transliterates to ASCII as happens with CJK names."""
     parts = []
     for name in (first_name, last_name):
         ascii_name = (
@@ -229,12 +188,7 @@ def _offline_email(local: str) -> str:
 
 
 def _custom_domains() -> list[str]:
-    """
-    Read the user's catch-all domains from domains.json.
-
-    Expected format: {"domains": ["mail.example.com"]}. Returns an empty
-    list when the file is missing, invalid or has no usable entries.
-    """
+    """I read the user's catch-all domains from domains.json, expecting the {"domains": ["mail.example.com"]} format, and return an empty list when the file is missing, invalid or has no usable entries."""
     if not CUSTOM_DOMAINS_FILE.exists():
         return []
     try:
@@ -248,24 +202,13 @@ def _custom_domains() -> list[str]:
 
 
 def _custom_email(local: str, domains: list[str]) -> str:
-    """
-    Build an address on a custom catch-all domain.
-
-    A random 4-digit suffix avoids collisions with earlier addresses in
-    the user's own inbox while staying readable.
-    """
+    """I build an address on a custom catch-all domain, adding a random 4-digit suffix to avoid collisions with earlier addresses in the user's own inbox while staying readable."""
     suffix = "".join(random.choices(string.digits, k=4))
     return f"{local}.{suffix}@{random.choice(domains)}"
 
 
 def load_api_keys() -> dict:
-    """
-    Read the stored API keys, or an empty dict on any error.
-
-    Expected format: {"tempmail": "tm.1234567890.secret"}. A corrupted file
-    is backed up and reported so a key is never lost silently, mirroring
-    the protection on the usage counters.
-    """
+    """I read the stored API keys, giving back an empty dict on any error, and I expect the {"tempmail": "tm.1234567890.secret"} format while backing a corrupted file up and reporting it so a key is never lost silently, the same protection the usage counters enjoy."""
     if not KEYS_FILE.exists():
         return {}
     try:
@@ -284,17 +227,12 @@ def load_api_keys() -> dict:
 
 
 def api_key(provider: str) -> str | None:
-    """Return the stored API key for a provider, or None when there is none."""
+    """I return the stored API key for a provider, or None when there is none."""
     return load_api_keys().get(provider) or None
 
 
 def set_api_key(provider: str, key: str) -> None:
-    """
-    Store an API key for a provider, replacing any previous key.
-
-    Raises ValueError for an unknown provider or an empty key, so a typo
-    is reported instead of being written to the file.
-    """
+    """I store an API key for a provider, replacing any previous key, and I raise ValueError on an unknown provider or an empty key so a typo is reported instead of being written to the file."""
     provider = provider.strip().lower()
     key = key.strip()
     if provider not in KEY_PROVIDERS:
@@ -310,12 +248,7 @@ def set_api_key(provider: str, key: str) -> None:
 
 
 def clear_api_key(provider: str) -> bool:
-    """
-    Remove the stored API key for a provider.
-
-    Returns True when a key was actually removed, False when there was none
-    or the provider is unknown.
-    """
+    """I remove the stored API key for a provider, returning True when a key was actually removed and False when there was none or the provider is unknown."""
     provider = provider.strip().lower()
     keys = load_api_keys()
     if provider not in keys:
@@ -326,18 +259,14 @@ def clear_api_key(provider: str) -> bool:
 
 
 def mask_api_key(key: str) -> str:
-    """
-    Return a printable preview of a key that reveals only its first and
-    last four characters, so the value can be identified without leaking
-    the secret into the terminal or the log file.
-    """
+    """I return a printable preview of a key that reveals only its first and last four characters, so the value can be identified without leaking the secret into the terminal or the log file."""
     if len(key) <= 8:
         return "*" * len(key)
     return f"{key[:4]}...{key[-4:]}"
 
 
 def keys_summary() -> str:
-    """Render the stored API keys (masked) for --email-keys."""
+    """I render the stored API keys (masked) for --email-keys."""
     keys = load_api_keys()
     lines = []
     for provider in KEY_PROVIDERS:
@@ -353,19 +282,13 @@ def keys_summary() -> str:
 
 
 def _tempmail_headers() -> dict:
-    """
-    Auth headers for tempmail.lol.
-
-    Empty on the free tier, and an Authorization bearer header when an API
-    key is stored, which moves the limits from per-IP to per-account and
-    extends the inbox lifespan.
-    """
+    """I build the auth headers for tempmail.lol, leaving them empty on the free tier and adding an Authorization bearer header once an API key is stored, which moves the limits from per-IP to per-account and extends the inbox lifespan."""
     key = api_key("tempmail")
     return {"Authorization": f"Bearer {key}"} if key else {}
 
 
 def _save_keys(keys: dict) -> None:
-    """Write the keys atomically and restrict access where supported."""
+    """I write the keys atomically and restrict access where supported."""
     tmp = KEYS_FILE.with_name(KEYS_FILE.name + ".tmp")
     tmp.write_text(json.dumps(keys, indent=2), encoding="utf-8")
     os.replace(tmp, KEYS_FILE)
@@ -373,7 +296,7 @@ def _save_keys(keys: dict) -> None:
 
 
 def _backup_corrupt_keys() -> None:
-    """Move a corrupted keys file aside so it is not silently reset."""
+    """I move a corrupted keys file aside so it is not silently reset."""
     backup = KEYS_FILE.with_name(f"email_keys.corrupt.{int(time.time())}.bak")
     try:
         os.replace(KEYS_FILE, backup)
@@ -383,7 +306,7 @@ def _backup_corrupt_keys() -> None:
 
 
 def _restrict_permissions(path: Path) -> None:
-    """Best-effort 0600 so the keys are not readable by other users."""
+    """I make a best-effort 0600 so the keys are not readable by other users."""
     try:
         os.chmod(path, 0o600)
     except OSError:
@@ -391,12 +314,7 @@ def _restrict_permissions(path: Path) -> None:
 
 
 def _mailtm_email(local: str) -> tuple[str, str] | None:
-    """
-    Create a real inbox at mail.tm with a custom address.
-
-    Returns (address, token) on success or None. Retries with a numeric
-    suffix when the address is already taken.
-    """
+    """I create a real inbox at mail.tm with a custom address, giving back (address, token) on success or None, and retrying with a numeric suffix when the address is already taken."""
     try:
         response = requests.get(f"{MAILTM_BASE}/domains", timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
@@ -422,13 +340,7 @@ def _mailtm_email(local: str) -> tuple[str, str] | None:
 
 
 def _mailtm_token(address: str, password: str) -> str | None:
-    """
-    Exchange mail.tm account credentials for a bearer token.
-
-    The token endpoint can lag behind account creation, so a few short
-    retries are attempted. Returns None when it never validates; the
-    address itself is still a real inbox in that case.
-    """
+    """I exchange mail.tm account credentials for a bearer token, attempting a few short retries because the token endpoint can lag behind account creation, and giving back None when it never validates even though the address itself is still a real inbox."""
     for _ in range(3):
         try:
             response = requests.post(
@@ -445,11 +357,7 @@ def _mailtm_token(address: str, password: str) -> str | None:
 
 
 def _tempmail_email(prefix: str) -> tuple[str, str] | None:
-    """
-    Create a real inbox at tempmail.lol with a custom prefix.
-
-    Returns (address, token) on success or None.
-    """
+    """I create a real inbox at tempmail.lol with a custom prefix, giving back (address, token) on success or None."""
     try:
         response = requests.post(
             f"{TEMPMAIL_BASE}/v2/inbox/create",
@@ -468,13 +376,7 @@ def _tempmail_email(prefix: str) -> tuple[str, str] | None:
 
 
 def _tempmail_read(token: str, limit: int) -> list[dict]:
-    """
-    Read received emails from a tempmail.lol inbox.
-
-    v3 consumes only the emails it returns, so the limit keeps later
-    messages intact. Returns an empty list when the API is unreachable
-    or rejects the token.
-    """
+    """I read received emails from a tempmail.lol inbox, keeping in mind that v3 consumes only the emails it returns so the limit keeps later messages intact, and I give back an empty list when the API is unreachable or rejects the token."""
     try:
         response = requests.get(
             f"{TEMPMAIL_BASE}/v3/inboxes/{token}/emails",
@@ -500,13 +402,7 @@ def _tempmail_read(token: str, limit: int) -> list[dict]:
 
 
 def _mailtm_read(token: str, limit: int) -> list[dict]:
-    """
-    Read received emails from a mail.tm inbox.
-
-    The message list is fetched with the bearer token; each message body
-    is fetched individually. Returns an empty list when the API is
-    unreachable or rejects the token.
-    """
+    """I read received emails from a mail.tm inbox: the message list arrives with the bearer token and then each body is fetched on its own, which gives back an empty list when the API is unreachable or rejects the token."""
     try:
         headers = {"Authorization": f"Bearer {token}"}
         response = requests.get(
@@ -544,7 +440,7 @@ def _mailtm_read(token: str, limit: int) -> list[dict]:
 
 
 def _usage_count(provider: str) -> int:
-    """Number of creations of a provider inside its rate-limit window."""
+    """I count the creations of a provider that fall inside its rate-limit window."""
     usage = _load_usage()
     window = PROVIDER_LIMITS.get(provider, {}).get("window", 0)
     if window <= 0:
@@ -554,7 +450,7 @@ def _usage_count(provider: str) -> int:
 
 
 def _can_use(provider: str) -> bool:
-    """True when the provider still has room inside its rate limit."""
+    """I tell whether a provider still has room inside its rate limit."""
     limit = PROVIDER_LIMITS.get(provider, {})
     if limit.get("max", 0) <= 0:
         return True
@@ -562,7 +458,7 @@ def _can_use(provider: str) -> bool:
 
 
 def _warn_provider(provider: str, next_name: str) -> None:
-    """Warn on stderr when a provider is at or near its rate limit."""
+    """I warn on stderr when a provider sits at or near its rate limit."""
     limit = PROVIDER_LIMITS.get(provider, {})
     if limit.get("max", 0) <= 0:
         return
@@ -575,13 +471,7 @@ def _warn_provider(provider: str, next_name: str) -> None:
 
 
 def _record_usage(provider: str) -> None:
-    """
-    Append a timestamp for provider, prune expired entries and persist.
-
-    Writes atomically under an exclusive lock so parallel runs do not
-    lose counts. If the lock cannot be acquired the count is dropped
-    (benign: the API limit is still caught by the chain fallback).
-    """
+    """I append a timestamp for the provider, prune expired entries and persist, writing atomically under an exclusive lock so parallel runs do not lose counts; if the lock cannot be acquired I drop the count, which is benign since the API limit is still caught by the chain fallback."""
     lock = USAGE_FILE.with_name(USAGE_FILE.name + ".lock")
     for _ in range(_LOCK_RETRIES):
         try:
@@ -618,12 +508,7 @@ def _record_usage(provider: str) -> None:
 
 
 def _load_usage() -> dict:
-    """
-    Read the persisted usage counters, or an empty dict on any error.
-
-    A corrupted file is backed up and reported so the counters are not
-    reset silently, mirroring the history.json protection.
-    """
+    """I read the persisted usage counters, or give back an empty dict on any error, and when the file is corrupted I back it up and report so the counters are not reset silently, mirroring the history.json protection."""
     if not USAGE_FILE.exists():
         return {}
     try:
@@ -638,7 +523,7 @@ def _load_usage() -> dict:
 
 
 def _backup_corrupt_usage() -> None:
-    """Move a corrupted usage file aside so it is not silently reset."""
+    """I move a corrupted usage file aside so it is not silently reset."""
     backup = USAGE_FILE.with_name(
         f"email_usage.corrupt.{int(time.time())}.bak"
     )
