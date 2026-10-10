@@ -29,6 +29,11 @@ import history as hist
 
 logger = get_logger("generator")
 
+# True while a seed set with set_seed() is active. Switches the password
+# generator from the system secure source to the seeded random module so a
+# seeded run reproduces the whole profile.
+_SEEDED = False
+
 # Mapping of locale codes to human-readable country names. Only locales in this map get a country name in the output, other Faker-supported locales will return the locale code itself. LOCALE_COUNTRY_MAP is used to provide a more user-friendly country name in the generated identity profiles.
 
 LOCALE_COUNTRY_MAP = {
@@ -357,21 +362,47 @@ def _build_username(first_name: str, birth_year: int) -> str:
     return f"{clean}{birth_year % 100}{suffix}"
 
 
+def set_seed(seed: int | None) -> None:
+    """
+    Seed every random source used by the generator so a run is reproducible.
+
+    Seeds both the standard `random` module (locale, gender, street, house
+    number, passport serial) and the Faker generator (names, dates of birth,
+    national IDs, phone, job), because Faker uses its own random instance.
+    While a seed is active the generated password also switches from the
+    system secure source to `random` so the whole profile repeats. Passing
+    None restores the default behaviour.
+    """
+    global _SEEDED
+    if seed is None:
+        _SEEDED = False
+        return
+    random.seed(seed)
+    Faker.seed(seed)
+    _SEEDED = True
+
+
 def _build_password() -> str:
     """
     Generate a 16-character password that passes common validators.
 
-    Guarantees at least one lowercase, one uppercase, one digit and one symbol, and avoids ambiguous characters (I, l, 1, O, 0). Every character comes from the operating system's secure random source.
+    Guarantees at least one lowercase, one uppercase, one digit and one symbol, and avoids ambiguous characters (I, l, 1, O, 0). Every character comes from the operating system's secure random source, unless a seed was set with set_seed(), in which case the seeded random module is used so the password is reproducible too.
     """
     pools = [_PASSWORD_LOWER, _PASSWORD_UPPER,
              _PASSWORD_DIGITS, _PASSWORD_SYMBOLS]
-    chars = [secrets.choice(pool) for pool in pools]
+    if _SEEDED:
+        choice = random.choice
+        randbelow = random.randrange
+    else:
+        choice = secrets.choice
+        randbelow = secrets.randbelow
+    chars = [choice(pool) for pool in pools]
     charset = "".join(pools)
     chars.extend(
-        secrets.choice(charset) for _ in range(_PASSWORD_LENGTH - len(chars))
+        choice(charset) for _ in range(_PASSWORD_LENGTH - len(chars))
     )
     for i in range(len(chars) - 1, 0, -1):
-        j = secrets.randbelow(i + 1)
+        j = randbelow(i + 1)
         chars[i], chars[j] = chars[j], chars[i]
     return "".join(chars)
 

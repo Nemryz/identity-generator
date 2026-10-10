@@ -20,7 +20,12 @@ import exporter
 import history as hist
 import email_api
 from applog import setup_logging
-from generator import generate_identity, get_supported_locales, is_supported_locale
+from generator import (
+    generate_identity,
+    get_supported_locales,
+    is_supported_locale,
+    set_seed,
+)
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -229,6 +234,17 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Wait SECONDS after generating (throttle for script loops).",
     )
     parser.add_argument(
+        "--seed",
+        type=int,
+        metavar="N",
+        default=None,
+        help=(
+            "Seed the random generators so the same N reproduces the same "
+            "profile (pair it with --email-offline, the email provider is "
+            "not deterministic)."
+        ),
+    )
+    parser.add_argument(
         "--verbose",
         action="store_true",
         help="Write debug details to the log file and stderr.",
@@ -242,6 +258,8 @@ def main() -> None:
     args = parser.parse_args()
 
     setup_logging(verbose=args.verbose)
+
+    set_seed(args.seed)
 
     if args.locale and not is_supported_locale(args.locale):
         parser.error(
