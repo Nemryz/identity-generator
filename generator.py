@@ -119,6 +119,55 @@ _PASSPORT_FORMATS = {
 }
 
 
+# Display names for the official document each locale gets. I keep them apart from _NATIONAL_ID_PROVIDERS because three locales (en_GB, fr_FR, it_IT) draw on Faker's "ssn" provider while standing for three different documents, so a lookup by method name would label all of them "SSN" and be wrong.
+
+_NATIONAL_ID_LABELS = {
+    "es_ES": "NIF/DNI",
+    "es_MX": "CURP",
+    "es_CL": "RUT",
+    "es_CO": "NUIP",
+    "en_US": "SSN",
+    "en_GB": "NIN",
+    "fr_FR": "NIR",
+    "de_DE": "RVNR",
+    "it_IT": "Codice fiscale",
+    "pt_BR": "CPF",
+}
+
+
+def _passport_shape(locale: str) -> str:
+    """I describe a locale's passport serial as a readable shape, so 3 letters plus 6 digits reads as "3 letters + 6 digits" and a digits-only locale as "9 digits"."""
+    letters, digits = _PASSPORT_FORMATS.get(locale, (0, 9))
+    parts = []
+    if letters:
+        parts.append(f"{letters} letters")
+    parts.append(f"{digits} digits")
+    return " + ".join(parts)
+
+
+def _address_style(locale: str) -> str:
+    """I name the convention used to write the house number and the street together for a locale: number first in the US, the UK and France, comma separated in Brazil and street first everywhere else."""
+    if locale in ADDRESS_COMMA:
+        return "street, number"
+    if locale in ADDRESS_NUMBER_FIRST:
+        return "number first"
+    return "street first"
+
+
+def locale_capabilities(locale: str) -> dict:
+    """I describe what the generator can actually produce for one locale (country, official document, passport shape, address convention and dataset sizes) so --list-locales can show real capabilities instead of bare codes, returning None for the dataset sizes when the locale has no real-address data and therefore falls back to Faker for its address."""
+    dataset = _load_address_dataset(locale)
+    return {
+        "locale": locale,
+        "country": LOCALE_COUNTRY_MAP.get(locale, locale),
+        "national_id": _NATIONAL_ID_LABELS.get(locale),
+        "passport": _passport_shape(locale),
+        "address_style": _address_style(locale) if dataset else "Faker fallback",
+        "cities": len(dataset["cities"]) if dataset else None,
+        "streets": len(dataset["streets"]) if dataset else None,
+    }
+
+
 def get_supported_locales() -> list[str]:
     """I return the sorted list of locales that carry an explicit country name mapping."""
     return sorted(LOCALE_COUNTRY_MAP.keys())

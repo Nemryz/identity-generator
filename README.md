@@ -48,9 +48,11 @@ Show only the last five entries:
 
     python -X utf8 main.py --history --limit 5
 
-List every supported locale:
+List every supported locale with what the generator actually produces for it:
 
     python -X utf8 main.py --list-locales
+
+The output is a table with one row per locale showing the country, the official document (or a dash when the locale has none, which is why those identities carry a null national_id), the passport serial shape, the address convention and the dataset sizes. Locales without a real-address dataset show "Faker fallback" because they take the address from Faker instead.
 
 Generate a plausible email without a real inbox (no network calls):
 
@@ -123,7 +125,7 @@ The -X utf8 flag is required on Windows to ensure special characters render corr
     it_IT   Italy
     pt_BR   Brazil
 
-Run --list-locales to see the full list.
+Run --list-locales to see the full list with the document, passport shape, address convention and dataset sizes of each one.
 
 ## Generated fields
 

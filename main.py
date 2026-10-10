@@ -20,6 +20,7 @@ from generator import (
     generate_identity,
     get_supported_locales,
     is_supported_locale,
+    locale_capabilities,
     set_seed,
 )
 from schema import schema_json
@@ -128,6 +129,30 @@ def _print_inbox(selector: str) -> None:
         print()
 
 
+def _print_locale_table() -> None:
+    """I print one aligned row per supported locale showing what the generator really produces for it (country, official document, passport shape, address convention and dataset sizes), marking with a dash the locales that have no official document or no real-address dataset."""
+    widths = (8, 16, 15, 22, 16, 16)
+    header = (
+        "  "
+        + f"{'Locale':<8}{'Country':<16}{'Document':<15}"
+        + f"{'Passport':<22}{'Address':<16}{'Cities/streets':<16}"
+    )
+    print(_DIM + header)
+    print(_DIM + "-" * (sum(widths) + 2))
+    for locale in get_supported_locales():
+        caps = locale_capabilities(locale)
+        dataset = (
+            f"{caps['cities']} / {caps['streets']}"
+            if caps["cities"] is not None
+            else "-"
+        )
+        print(
+            f"  {caps['locale']:<8}{caps['country']:<16}"
+            f"{caps['national_id'] or '-':<15}{caps['passport']:<22}"
+            f"{caps['address_style']:<16}{dataset:<16}"
+        )
+
+
 def _build_parser() -> argparse.ArgumentParser:
     """I define and return the CLI argument parser."""
     parser = argparse.ArgumentParser(
@@ -196,7 +221,11 @@ def _build_parser() -> argparse.ArgumentParser:
         "--list-locales",
         action="store_true",
         dest="list_locales",
-        help="Print all supported locale codes and exit.",
+        help=(
+            "Print every supported locale with its country, official "
+            "document, passport shape, address convention and dataset "
+            "sizes, then exit."
+        ),
     )
     parser.add_argument(
         "--email-offline",
@@ -306,8 +335,7 @@ def main() -> None:
 
     if args.list_locales:
         print(Fore.GREEN + Style.BRIGHT + "\n  Supported locales:\n")
-        for loc in get_supported_locales():
-            print(f"    {loc}")
+        _print_locale_table()
         print()
         sys.exit(0)
 
