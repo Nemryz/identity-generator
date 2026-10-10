@@ -21,6 +21,7 @@ from generator import (
     _pick_dataset_city,
     _street_number,
     generate_identity,
+    set_seed,
 )
 
 REQUIRED_FIELDS = [
@@ -142,3 +143,127 @@ def test_dataset_draws_stay_valid(locale):
         assert city["postcode"] in postcodes_by_name[city["name"]]
         assert street in dataset["streets"]
         assert address
+
+
+# --- seeded reproducibility and schema conformance as properties (A1, A2, A5) ---------
+
+# Hypothesis 6 removed seed= from @settings, so determinism comes from
+# derandomize=True on the properties whose subject is determinism itself,
+# while the rest keep exploring fresh examples and any failure replays with
+# pytest --hypothesis-seed=<seed> using the value Hypothesis prints.
+_METADATA = ("id", "created_at")
+
+
+def _profile_of(identity: dict) -> dict:
+    """I strip the two fields that are meant to be unique per run, leaving the reproducible part of the profile."""
+    return {k: v for k, v in identity.items() if k not in _METADATA}
+
+
+def test_same_seed_always_repeats_the_profile(monkeypatch):
+    """I assert the reproducibility invariant for arbitrary seeds instead of one lucky value, which is the guarantee a fixture-based suite leans on."""
+    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+
+    @given(seed=st.integers(min_value=0, max_value=2**31 - 1))
+    @settings(
+        max_examples=25,
+        deadline=None,
+        derandomize=True,
+        suppress_health_check=[HealthCheck.too_slow],
+    )
+    def _check(seed):
+        set_seed(seed)
+        first = generate_identity(locale="es_ES", email_usable=False)
+        set_seed(seed)
+        second = generate_identity(locale="es_ES", email_usable=False)
+        set_seed(None)
+        assert _profile_of(first) == _profile_of(second)
+
+    _check()
+
+
+def test_metadata_is_unique_even_when_seeded(monkeypatch):
+    """I check id and created_at stay out of the reproducibility guarantee, because freezing them would make seeded runs collide in history."""
+    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+
+    @given(seed=st.integers(min_value=0, max_value=2**31 - 1))
+    @settings(
+        max_examples=25,
+        deadline=None,
+        derandomize=True,
+        suppress_health_check=[HealthCheck.too_slow],
+    )
+    def _check(seed):
+        set_seed(seed)
+        first = generate_identity(locale="es_ES", email_usable=False)
+        set_seed(seed)
+        second = generate_identity(locale="es_ES", email_usable=False)
+        set_seed(None)
+        assert first["id"] != second["id"]
+
+    _check()
+
+
+def test_a_seeded_batch_holds_distinct_identities(monkeypatch):
+    """I assert no two identities in a seeded batch collide, which would mean the seed was being reapplied per identity instead of once per run."""
+    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+
+    @given(seed=st.integers(min_value=0, max_value=2**31 - 1))
+    @settings(
+        max_examples=20,
+        deadline=None,
+        derandomize=True,
+        suppress_health_check=[HealthCheck.too_slow],
+    )
+    def _check(seed):
+        set_seed(seed)
+        batch = [
+            generate_identity(locale="en_US", email_usable=False)
+            for _ in range(4)
+        ]
+        set_seed(None)
+        assert len({i["full_name"] for i in batch}) == 4
+        assert len({i["username"] for i in batch}) == 4
+        assert len({i["id"] for i in batch}) == 4
+
+    _check()
+
+
+def test_every_generated_identity_matches_the_published_schema(monkeypatch):
+    """I validate the schema against randomly sampled exotic locales instead of the eleven documented ones, so the contract is proven where a consumer is most likely to hit it."""
+    from jsonschema import Draft202012Validator, FormatChecker
+
+    from schema import IDENTITY_SCHEMA
+
+    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    validator = Draft202012Validator(IDENTITY_SCHEMA, format_checker=FormatChecker())
+
+    @given(locale=st.sampled_from(LOCALE_SAMPLE))
+    @settings(
+        max_examples=40,
+        deadline=None,
+        suppress_health_check=[HealthCheck.too_slow],
+    )
+    def _check(locale):
+        identity = generate_identity(locale=locale, email_usable=False)
+        errors = [error.message for error in validator.iter_errors(identity)]
+        assert errors == [], f"{locale}: {errors}"
+
+    _check()
+
+
+def test_capabilities_match_what_the_generator_actually_uses():
+    """I cross-check the --list-locales table against the internals for sampled locales, so the display can never advertise something the generator does not do."""
+    from generator import _NATIONAL_ID_PROVIDERS, locale_capabilities
+
+    @given(locale=st.sampled_from(LOCALE_SAMPLE))
+    @settings(
+        max_examples=40,
+        deadline=None,
+        suppress_health_check=[HealthCheck.too_slow],
+    )
+    def _check(locale):
+        caps = locale_capabilities(locale)
+        assert (caps["national_id"] is not None) == (locale in _NATIONAL_ID_PROVIDERS)
+        assert caps["cities"] is not None or caps["address_style"] == "Faker fallback"
+
+    _check()

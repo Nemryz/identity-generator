@@ -230,17 +230,18 @@ Writes take an exclusive lock file created with O_EXCL, which the operating syst
 
 ## Testing
 
-The project ships a fully automated test suite written with pytest, covering 243 test cases across 9 modules:
+The project ships a fully automated test suite written with pytest, covering 377 test cases across 10 modules:
 
-    tests/test_generator.py   43 tests   identity fields, names, passwords
+    tests/test_generator.py   92 tests   identity fields, names, passwords, locale capabilities
     tests/test_datasets.py    66 tests   address dataset schema and quality
     tests/test_addresses.py   25 tests   real addresses and postcodes
-    tests/test_documents.py   25 tests   official national IDs and passports
-    tests/test_email_api.py   35 tests   email provider chain and fallbacks
+    tests/test_documents.py   26 tests   official national IDs and passports
+    tests/test_email_api.py   51 tests   provider chain, rate limits, tokens and API keys
     tests/test_history.py     15 tests   persistence, locking, concurrency
-    tests/test_main.py        14 tests   command-line flags and output
-    tests/test_exporter.py     5 tests   JSON, CSV and clipboard exports
-    tests/test_properties.py  15 tests   property-based invariants (Hypothesis)
+    tests/test_main.py        27 tests   command-line flags, seeded reproducibility, table output
+    tests/test_exporter.py    17 tests   JSON, CSV, JSONL, schema and clipboard exports
+    tests/test_properties.py  20 tests   property-based invariants (Hypothesis)
+    tests/test_schema.py      38 tests   the JSON Schema contract and its drift guards
 
 Run the whole suite with:
 
@@ -248,7 +249,9 @@ Run the whole suite with:
 
 The tests are integration-first: they exercise the real filesystem, the real Faker providers and the real address datasets in data/addresses/. The only external interaction that is stubbed is the temporary-email API,so the suite runs offline and never hits the network. Every feature is covered by at least one test that follows its happy path end to end.
 
-Property-based tests (test_properties.py, using Hypothesis) generate random unicode names and sample exotic Faker locales to verify the invariants that directed tests cannot enumerate by hand: every generated identity has non-empty ASCII-safe usernames and emails, valid passportshapes, and dataset addresses that always stay inside their locale's data. A real two-process concurrency test verifies that parallel CLI runs never lose history entries (see History).
+Several tests exist to catch drift rather than to cover a line of code, and they are the ones that keep future changes honest. The schema and the generator are held to each other (every field generate_identity returns must be declared in the JSON Schema and every declared field must come back), the display label of an official document must exist for every locale that has a provider, and the CSV and the JSONL export must carry the same field set, so adding a locale or a field without finishing the surrounding wiring fails the suite with a message naming the offender instead of shipping quietly. Malformed values are fed to the schema on purpose too, which is what proves the constraints actually bite.
+
+Property-based tests (test_properties.py, using Hypothesis) generate random unicode names and sample exotic Faker locales to verify the invariants that directed tests cannot enumerate by hand: every generated identity has non-empty ASCII-safe usernames and emails, valid passport shapes, dataset addresses that always stay inside their locale's data, seeded runs repeat exactly for any seed while their ids stay unique, and identities from randomly sampled locales satisfy the published schema. The properties whose subject is determinism run with derandomize enabled so their examples are stable, and any other failure replays with pytest --hypothesis-seed=<seed> using the seed Hypothesis prints. A real two-process concurrency test verifies that parallel CLI runs never lose history entries (see History).
 
 Every push and pull request runs the full suite on GitHub Actions (ubuntu-latest and windows-latest, Python 3.10 and 3.12), so a broken commit cannot land unnoticed.
 
