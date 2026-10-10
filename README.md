@@ -69,6 +69,12 @@ Show email provider usage counters:
 
     python -X utf8 main.py --email-usage
 
+Store an API key for a provider and inspect the stored ones (masked):
+
+    python -X utf8 main.py --set-key tempmail <your-key>
+    python -X utf8 main.py --email-keys
+    python -X utf8 main.py --clear-key tempmail
+
 Print the JSON Schema of an identity (for validating exported data or generating clients):
 
     python -X utf8 main.py --schema
@@ -173,7 +179,7 @@ Run --list-locales to see the full list.
 Emails are created against two free public APIs (no account or API key required), in order:
 
 0. Custom catch-all domain (see below), when configured.
-1. tempmail.lol: the inbox token is returned in the same response as the address. Free tier: inbox expires after 1 hour, 25 inboxes per 5 minutes per IP.
+1. tempmail.lol: the inbox token is returned in the same response as the address. Free tier: inbox expires after 1 hour, 25 inboxes per 5 minutes per IP. With a stored API key the limits become per-account, the inbox lasts longer and custom domains are available.
 2. mail.tm: custom address, its /token endpoint can lag behind account creation, so the token is best-effort. 8 requests per second per IP.
 
 When both providers are unreachable or rate-limited, a plausible address on a known disposable domain is produced without an inbox (email_token is null). Use --email-offline to force this mode.
@@ -183,6 +189,23 @@ Read operations (--check-inbox) query the inbox with the stored token: tempmail.
 Usage counters per provider are persisted in email_usage.json (ignored by git) so the chain skips a provider before it rejects the request. A warning is printed to stderr at 80% of a provider's limit. Reads are counted too (read_tempmail / read_mailtm, informational, no hard limit).
 
 All API calls use a 5-second timeout, so a provider that stops responding (connection hangs rather than failing) still falls through to the next step of the chain instead of blocking the CLI indefinitely. If email_usage.json is ever corrupted it is backed up to email_usage.corrupt.<timestamp>.bak and the counters restart from zero with a logged warning, mirroring the history.json protection.
+
+## Provider API keys
+
+Only tempmail.lol has paid tiers that accept an API key. mail.tm is permanently free with no keys, so --set-key rejects it instead of silently ignoring the value. A key moves tempmail.lol from per-IP limits to per-account limits, extends the inbox lifespan (10 hours on Plus, 30 on Ultra) and unlocks your own custom domains.
+
+Store it with the command below. The key is written to email_keys.json, which is ignored by git, written atomically and left readable only by your user account on POSIX systems. The file format is the one shown in email_keys.example.json, so you can also create the file by hand:
+
+    {"tempmail": "tm.1234567890.your-key-here"}
+
+Check what is configured, remove it again:
+
+    python -X utf8 main.py --email-keys
+    python -X utf8 main.py --clear-key tempmail
+
+The key is never printed in full: --email-keys shows only the first and last four characters (tm.9...e123), and --set-key confirms the file path without echoing the value, so secrets do not leak into scrollback, screenshots or the log file. If email_keys.json is ever corrupted it is backed up to email_keys.corrupt.<timestamp>.bak instead of being silently reset. You can point the tool at a different location with the EMAIL_KEYS_FILE environment variable.
+
+The key is sent as an Authorization bearer header on inbox creation and inbox reads. The local rate counters in email_usage.json still apply, so a key does not remove the throttle: with a Plus or Ultra account you can raise them in PROVIDER_LIMITS (email_api.py) to match your plan.
 
 ## Custom catch-all domain
 
@@ -261,7 +284,7 @@ generator.py
 
 email_api.py
 
-    Creates a real temporary inbox whose address is built from the identity's names, using the tempmail.lol API first and the mail.tm API as fallback. When a custom catch-all domain is configured in domains.json it is used first: addresses are deliverable to the user's real inbox with no API and no rate limits. The returned token is stored with the identity so the inbox can be read later with check_inbox(), which fetches received emails for --check-inbox. When all real-inbox providers are unreachable or rate-limited, a plausible address is constructed locally using a hardcoded list of known disposable mail domains. Per-provider usage counters are persisted in email_usage.json to respect rate limits. No API key or account is required.
+    Creates a real temporary inbox whose address is built from the identity's names, using the tempmail.lol API first and the mail.tm API as fallback. When a custom catch-all domain is configured in domains.json it is used first: addresses are deliverable to the user's real inbox with no API and no rate limits. The returned token is stored with the identity so the inbox can be read later with check_inbox(), which fetches received emails for --check-inbox. When all real-inbox providers are unreachable or rate-limited, a plausible address is constructed locally using a hardcoded list of known disposable mail domains. It also owns the API key store (email_keys.json, written atomically with restricted permissions, backed up when corrupted) and injects the stored tempmail.lol key as an Authorization bearer header, while keys are only ever displayed masked. Per-provider usage counters are persisted in email_usage.json to respect rate limits. No API key or account is required.
 
 history.py
 

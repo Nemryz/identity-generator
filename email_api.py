@@ -9,8 +9,10 @@ the identity's first and last names (e.g. carlos.garcia@<provider>):
 0. Custom    - own catch-all domain (domains.json, e.g. Cloudflare Email
                Routing). Addresses are deliverable to the user's real
                inbox, never rate-limited and never blocked as disposable.
-1. tempmail.lol - REST API, no key on the free tier. Custom prefix. The
-   creation response includes the inbox token in the same request.
+1. tempmail.lol - REST API. Free tier needs no key (per-IP limits). A
+   stored API key switches it to per-account limits, longer inbox
+   lifespan and access to custom domains. The creation response includes
+   the inbox token in the same request.
 2. mail.tm      - REST API, no key. Custom address + best-effort session
    token (its /token endpoint can lag behind account creation).
 3. Offline      - plausible address with a known disposable domain, no inbox.
@@ -59,6 +61,16 @@ USAGE_FILE = Path(
 CUSTOM_DOMAINS_FILE = Path(
     os.environ.get("CUSTOM_DOMAINS_FILE", Path(__file__).parent / "domains.json")
 )
+
+# API keys live in their own file (never in domains.json) so the two
+# concerns stay separate and so the keys can be deleted independently.
+KEYS_FILE = Path(
+    os.environ.get("EMAIL_KEYS_FILE", Path(__file__).parent / "email_keys.json")
+)
+
+# Providers that accept an API key. mail.tm is deliberately absent: its API
+# is completely free with no key, no signup and no paid tiers.
+KEY_PROVIDERS = ("tempmail",)
 
 PROVIDER_LIMITS = {
     "custom": {"window": 0, "max": 0},
@@ -246,6 +258,138 @@ def _custom_email(local: str, domains: list[str]) -> str:
     return f"{local}.{suffix}@{random.choice(domains)}"
 
 
+def load_api_keys() -> dict:
+    """
+    Read the stored API keys, or an empty dict on any error.
+
+    Expected format: {"tempmail": "tm.1234567890.secret"}. A corrupted file
+    is backed up and reported so a key is never lost silently, mirroring
+    the protection on the usage counters.
+    """
+    if not KEYS_FILE.exists():
+        return {}
+    try:
+        data = json.loads(KEYS_FILE.read_text(encoding="utf-8-sig"))
+    except (json.JSONDecodeError, OSError):
+        _backup_corrupt_keys()
+        return {}
+    if not isinstance(data, dict):
+        _backup_corrupt_keys()
+        return {}
+    return {
+        provider: key
+        for provider, key in data.items()
+        if provider in KEY_PROVIDERS and isinstance(key, str) and key
+    }
+
+
+def api_key(provider: str) -> str | None:
+    """Return the stored API key for a provider, or None when there is none."""
+    return load_api_keys().get(provider) or None
+
+
+def set_api_key(provider: str, key: str) -> None:
+    """
+    Store an API key for a provider, replacing any previous key.
+
+    Raises ValueError for an unknown provider or an empty key, so a typo
+    is reported instead of being written to the file.
+    """
+    provider = provider.strip().lower()
+    key = key.strip()
+    if provider not in KEY_PROVIDERS:
+        raise ValueError(
+            f"Proveedor desconocido: {provider!r}. "
+            "Solo tempmail admite claves (mail.tm es gratuito y no las usa)."
+        )
+    if not key:
+        raise ValueError("La clave esta vacia.")
+    keys = load_api_keys()
+    keys[provider] = key
+    _save_keys(keys)
+
+
+def clear_api_key(provider: str) -> bool:
+    """
+    Remove the stored API key for a provider.
+
+    Returns True when a key was actually removed, False when there was none
+    or the provider is unknown.
+    """
+    provider = provider.strip().lower()
+    keys = load_api_keys()
+    if provider not in keys:
+        return False
+    del keys[provider]
+    _save_keys(keys)
+    return True
+
+
+def mask_api_key(key: str) -> str:
+    """
+    Return a printable preview of a key that reveals only its first and
+    last four characters, so the value can be identified without leaking
+    the secret into the terminal or the log file.
+    """
+    if len(key) <= 8:
+        return "*" * len(key)
+    return f"{key[:4]}...{key[-4:]}"
+
+
+def keys_summary() -> str:
+    """Render the stored API keys (masked) for --email-keys."""
+    keys = load_api_keys()
+    lines = []
+    for provider in KEY_PROVIDERS:
+        key = keys.get(provider)
+        if key:
+            lines.append(f"    {provider:<10} {mask_api_key(key)}")
+        else:
+            lines.append(
+                f"    {provider:<10} (sin clave, tier gratuito con limite por IP)"
+            )
+    lines.append(f"    archivo: {KEYS_FILE}")
+    return "\n".join(lines)
+
+
+def _tempmail_headers() -> dict:
+    """
+    Auth headers for tempmail.lol.
+
+    Empty on the free tier, and an Authorization bearer header when an API
+    key is stored, which moves the limits from per-IP to per-account and
+    extends the inbox lifespan.
+    """
+    key = api_key("tempmail")
+    return {"Authorization": f"Bearer {key}"} if key else {}
+
+
+def _save_keys(keys: dict) -> None:
+    """Write the keys atomically and restrict access where supported."""
+    tmp = KEYS_FILE.with_name(KEYS_FILE.name + ".tmp")
+    tmp.write_text(json.dumps(keys, indent=2), encoding="utf-8")
+    os.replace(tmp, KEYS_FILE)
+    _restrict_permissions(KEYS_FILE)
+
+
+def _backup_corrupt_keys() -> None:
+    """Move a corrupted keys file aside so it is not silently reset."""
+    backup = KEYS_FILE.with_name(f"email_keys.corrupt.{int(time.time())}.bak")
+    try:
+        os.replace(KEYS_FILE, backup)
+        logger.warning(f"corrupt keys file backed up to {backup.name}")
+    except OSError:
+        pass
+
+
+def _restrict_permissions(path: Path) -> None:
+    """Best-effort 0600 so the keys are not readable by other users."""
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
+
+
 def _mailtm_email(local: str) -> tuple[str, str] | None:
     """
     Create a real inbox at mail.tm with a custom address.
@@ -310,6 +454,7 @@ def _tempmail_email(prefix: str) -> tuple[str, str] | None:
         response = requests.post(
             f"{TEMPMAIL_BASE}/v2/inbox/create",
             json={"prefix": prefix},
+            headers=_tempmail_headers(),
             timeout=REQUEST_TIMEOUT,
         )
         response.raise_for_status()
@@ -334,6 +479,7 @@ def _tempmail_read(token: str, limit: int) -> list[dict]:
         response = requests.get(
             f"{TEMPMAIL_BASE}/v3/inboxes/{token}/emails",
             params={"limit": limit},
+            headers=_tempmail_headers(),
             timeout=REQUEST_TIMEOUT,
         )
         response.raise_for_status()

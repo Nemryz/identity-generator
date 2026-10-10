@@ -431,3 +431,128 @@ def test_valid_usage_file_is_untouched(usage_file):
     _record_usage("tempmail")
     assert _usage_count("tempmail") == 1
     assert not list(usage_file.parent.glob("email_usage.corrupt.*.bak"))
+
+
+@pytest.fixture
+def keys_file(tmp_path, monkeypatch):
+    monkeypatch.setattr(email_api, "KEYS_FILE", tmp_path / "email_keys.json")
+    return tmp_path / "email_keys.json"
+
+
+def test_set_api_key_writes_provider(keys_file):
+    email_api.set_api_key("tempmail", "tm.123.abc")
+    assert json.loads(keys_file.read_text(encoding="utf-8")) == {
+        "tempmail": "tm.123.abc"
+    }
+    assert email_api.api_key("tempmail") == "tm.123.abc"
+
+
+def test_set_api_key_normalizes_case_and_whitespace(keys_file):
+    email_api.set_api_key("  TempMail ", "  tm.999.zzz  ")
+    assert email_api.api_key("tempmail") == "tm.999.zzz"
+
+
+def test_set_api_key_replaces_previous_value(keys_file):
+    email_api.set_api_key("tempmail", "first-key")
+    email_api.set_api_key("tempmail", "second-key")
+    assert email_api.api_key("tempmail") == "second-key"
+
+
+def test_set_api_key_rejects_mailtm(keys_file):
+    with pytest.raises(ValueError, match="Solo tempmail"):
+        email_api.set_api_key("mailtm", "whatever")
+    assert not keys_file.exists()
+
+
+def test_set_api_key_rejects_empty_key(keys_file):
+    with pytest.raises(ValueError, match="vacia"):
+        email_api.set_api_key("tempmail", "   ")
+    assert not keys_file.exists()
+
+
+def test_clear_api_key_removes_and_reports(keys_file):
+    email_api.set_api_key("tempmail", "tm.123.abc")
+    assert email_api.clear_api_key("tempmail") is True
+    assert email_api.api_key("tempmail") is None
+    assert email_api.clear_api_key("tempmail") is False
+    assert json.loads(keys_file.read_text(encoding="utf-8")) == {}
+
+
+def test_api_key_missing_file_is_none(keys_file):
+    assert email_api.load_api_keys() == {}
+    assert email_api.api_key("tempmail") is None
+
+
+def test_corrupt_keys_file_is_backed_up(keys_file, caplog):
+    email_api.set_api_key("tempmail", "tm.123.abc")
+    keys_file.write_text("{broken", encoding="utf-8")
+    assert email_api.load_api_keys() == {}
+    assert len(list(keys_file.parent.glob("email_keys.corrupt.*.bak"))) == 1
+    assert "backed up" in caplog.text
+
+
+def test_keys_file_ignores_unknown_providers(keys_file):
+    keys_file.write_text(
+        json.dumps({"tempmail": "tm.1.a", "mailtm": "nope", "other": "nope"}),
+        encoding="utf-8",
+    )
+    assert email_api.load_api_keys() == {"tempmail": "tm.1.a"}
+
+
+@pytest.mark.parametrize(
+    "key",
+    ["tm.1234567890.SECRET", "short", "exactly-8"],
+)
+def test_mask_api_key_never_reveals_the_secret(key):
+    masked = email_api.mask_api_key(key)
+    assert key not in masked
+    assert set(masked) <= set("*." + key)
+
+
+def test_keys_summary_masks_stored_key(keys_file):
+    email_api.set_api_key("tempmail", "tm.9998887777.MYSECRET")
+    summary = email_api.keys_summary()
+    assert "MYSECRET" not in summary
+    assert "tm.9" in summary
+    assert "sin clave" not in summary
+
+
+def test_keys_summary_shows_free_tier_without_key(keys_file):
+    summary = email_api.keys_summary()
+    assert "sin clave" in summary
+    assert str(keys_file) in summary
+
+
+def test_tempmail_request_carries_authorization_header(keys_file):
+    seen = {}
+
+    def fake_post(url, **kwargs):
+        seen.update(kwargs.get("headers") or {})
+        return _Resp(200, {"address": "a@b.com", "token": "tok"})
+
+    monkey = email_api.requests.post
+    email_api.requests.post = fake_post
+    try:
+        email_api.set_api_key("tempmail", "tm.777.SECRETKEY")
+        assert email_api.get_temp_email("Ana", "Ruiz", usable=True)["provider"] == (
+            "tempmail"
+        )
+        assert seen["Authorization"] == "Bearer tm.777.SECRETKEY"
+    finally:
+        email_api.requests.post = monkey
+
+
+def test_tempmail_request_has_no_authorization_without_key(keys_file):
+    seen = {}
+
+    def fake_post(url, **kwargs):
+        seen.update(kwargs.get("headers") or {})
+        return _Resp(200, {"address": "a@b.com", "token": "tok"})
+
+    monkey = email_api.requests.post
+    email_api.requests.post = fake_post
+    try:
+        email_api.get_temp_email("Ana", "Ruiz", usable=True)
+        assert "Authorization" not in seen
+    finally:
+        email_api.requests.post = monkey

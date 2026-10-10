@@ -218,6 +218,29 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Show email provider usage counters and exit.",
     )
     parser.add_argument(
+        "--set-key",
+        nargs=2,
+        metavar=("PROVIDER", "KEY"),
+        dest="set_key",
+        help=(
+            "Store the API key for a provider (tempmail) and exit. "
+            "The key is saved to email_keys.json, which is ignored by git."
+        ),
+    )
+    parser.add_argument(
+        "--clear-key",
+        nargs=1,
+        metavar="PROVIDER",
+        dest="clear_key",
+        help="Remove the stored API key for a provider and exit.",
+    )
+    parser.add_argument(
+        "--email-keys",
+        action="store_true",
+        dest="email_keys",
+        help="Show which providers have an API key configured (masked) and exit.",
+    )
+    parser.add_argument(
         "--check-inbox",
         nargs="?",
         const="_latest",
@@ -306,6 +329,37 @@ def main() -> None:
     if args.email_usage:
         print(_LABEL + "\n  Email provider usage:\n")
         print(email_api.usage_summary())
+        print()
+        sys.exit(0)
+
+    if args.set_key:
+        provider, key = args.set_key
+        try:
+            email_api.set_api_key(provider, key)
+        except ValueError as exc:
+            print(Fore.RED + f"  {exc}")
+            sys.exit(1)
+        print(
+            Fore.GREEN
+            + f"\n  Clave guardada para {provider.lower()} en "
+            + f"{email_api.KEYS_FILE}"
+        )
+        print(_DIM + "  (visible solo parcialmente, nunca se imprime completa)\n")
+        sys.exit(0)
+
+    if args.clear_key:
+        provider = args.clear_key[0]
+        if email_api.clear_api_key(provider):
+            print(
+                Fore.GREEN + f"\n  Clave de {provider.lower()} eliminada.\n"
+            )
+        else:
+            print(Fore.YELLOW + f"\n  No habia clave guardada para {provider}.\n")
+        sys.exit(0)
+
+    if args.email_keys:
+        print(_LABEL + "\n  Claves de API de email:\n")
+        print(email_api.keys_summary())
         print()
         sys.exit(0)
 

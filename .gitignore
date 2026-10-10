@@ -9,8 +9,9 @@ identities.jsonl
 identity.schema.json
 identity-generator.log
 
-# User configuration — commit domains.example.json instead
+# User configuration — commit domains.example.json and email_keys.example.json instead
 domains.json
+email_keys.json
 
 # Python
 __pycache__/
