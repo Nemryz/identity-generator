@@ -24,6 +24,7 @@ def _run(history_file: Path, *args: str) -> subprocess.CompletedProcess:
         [PYTHON, "-X", "utf8", str(REPO_ROOT / "main.py"), *args],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         timeout=60,
         env=env,
     )
