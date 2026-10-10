@@ -37,7 +37,14 @@ IMPORT_TO_DISTRIBUTION = {
     "pyperclip": "pyperclip",
     "pytest": "pytest",
     "requests": "requests",
+    "tomli": "tomli",
 }
+
+# Modules that ship with the standard library but only from a version newer
+# than the minimum we support. sys.stdlib_module_names lists them on the
+# interpreters that have them, so on 3.10 they would look like a missing
+# third-party dependency when they are really a version difference.
+NEWER_THAN_MINIMUM_STDLIB = {"tomllib": "3.11"}
 
 # The modules this repository ships, which are first-party imports and
 # therefore never belong in a requirements file.
@@ -75,15 +82,17 @@ def _top_level_imports(path: Path) -> set[str]:
     return {
         name
         for name in found
-        if name not in sys.stdlib_module_names and name not in LOCAL_MODULES
+        if name not in sys.stdlib_module_names
+        and name not in LOCAL_MODULES
+        and name not in NEWER_THAN_MINIMUM_STDLIB
     }
 
 
 def _declared(file_name: str) -> set[str]:
-    """I read the distribution names declared in a requirements file."""
+    """I read the distribution names declared in a requirements file, ignoring comments, version specifiers and environment markers."""
     lines = (REPO_ROOT / file_name).read_text(encoding="utf-8").splitlines()
     return {
-        line.split("==")[0].split(">=")[0].split("<")[0].strip().lower()
+        _requirement_name(line)
         for line in lines
         if line.strip() and not line.strip().startswith("#")
     }
@@ -179,8 +188,11 @@ def test_readme_paragraphs_are_not_wrapped():
 
 
 def _pyproject() -> dict:
-    """I read pyproject.toml with the stdlib parser, since the test suite must not depend on a TOML library to check its own metadata."""
-    import tomllib
+    """I read pyproject.toml with tomllib, falling back to tomli on Python 3.10 where tomllib is not in the standard library yet."""
+    try:
+        import tomllib
+    except ModuleNotFoundError:  # Python 3.10
+        import tomli as tomllib
 
     with (REPO_ROOT / "pyproject.toml").open("rb") as handle:
         return tomllib.load(handle)

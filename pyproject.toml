@@ -51,6 +51,9 @@ dev = [
     "pytest>=8.0",
     "hypothesis>=6.100",
     "jsonschema>=4.20",
+    # tomllib only joined the standard library in 3.11, and the suite reads
+    # pyproject.toml to check the metadata against this file.
+    "tomli>=2.0; python_version < '3.11'",
 ]
 
 [project.scripts]
