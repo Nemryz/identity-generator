@@ -11,9 +11,14 @@ from pathlib import Path
 
 import pyperclip
 
-from schema import IDENTITY_SCHEMA
+from identity_generator.schema import IDENTITY_SCHEMA
+from identity_generator.paths import output_dir
 
-_OUTPUT_DIR = Path(__file__).parent
+
+def _output_dir() -> Path:
+    # I resolve the target on every call instead of at import time, so a
+    # change of working directory between two exports is respected.
+    return output_dir()
 
 _CSV_FIELDS = [
     "full_name",
@@ -42,11 +47,11 @@ _CSV_FIELDS = [
 
 
 def to_json_file(identity: dict) -> Path:
-    """I write the identity dict to <username>_identity.json in the project directory and, when that name is already taken, append a short id suffix so an earlier export is never silently overwritten."""
-    path = _OUTPUT_DIR / f"{identity['username']}_identity.json"
+    """I write the identity dict to <username>_identity.json in the current directory and, when that name is already taken, append a short id suffix so an earlier export is never silently overwritten."""
+    path = _output_dir() / f"{identity['username']}_identity.json"
     if path.exists():
         path = (
-            _OUTPUT_DIR
+            _output_dir()
             / f"{identity['username']}_{identity['id'][:8]}_identity.json"
         )
     path.write_text(
@@ -62,8 +67,8 @@ def to_clipboard(identity: dict) -> None:
 
 
 def to_csv_file(identities: list[dict]) -> Path:
-    """I write one row per identity into identities.csv in the project directory, overwriting it on every run so a pipeline always knows the filename, and leaving out email_token because inbox tokens mean nothing to a database seed."""
-    path = _OUTPUT_DIR / "identities.csv"
+    """I write one row per identity into identities.csv in the current directory, overwriting it on every run so a pipeline always knows the filename, and leaving out email_token because inbox tokens mean nothing to a database seed."""
+    path = _output_dir() / "identities.csv"
     with path.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=_CSV_FIELDS)
         writer.writeheader()
@@ -75,8 +80,8 @@ def to_csv_file(identities: list[dict]) -> Path:
 
 
 def to_schema_file() -> Path:
-    """I dump the identity JSON Schema to identity.schema.json in the project directory, overwriting it each run so the published schema always matches the code that produced the data."""
-    path = _OUTPUT_DIR / "identity.schema.json"
+    """I dump the identity JSON Schema to identity.schema.json in the current directory, overwriting it each run so the published schema always matches the code that produced the data."""
+    path = _output_dir() / "identity.schema.json"
     path.write_text(
         json.dumps(IDENTITY_SCHEMA, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
@@ -85,8 +90,8 @@ def to_schema_file() -> Path:
 
 
 def to_jsonl_file(identities: list[dict]) -> Path:
-    """I write the identities to identities.jsonl in the project directory, one compact JSON object per line in generation order, overwriting the file each run so streaming consumers (jq, log shippers, data loaders) can read it incrementally even while a longer batch is still going, and I drop email_token for the same reason the CSV does."""
-    path = _OUTPUT_DIR / "identities.jsonl"
+    """I write the identities to identities.jsonl in the current directory, one compact JSON object per line in generation order, overwriting the file each run so streaming consumers (jq, log shippers, data loaders) can read it incrementally even while a longer batch is still going, and I drop email_token for the same reason the CSV does."""
+    path = _output_dir() / "identities.jsonl"
     with path.open("w", encoding="utf-8") as fh:
         for identity in identities:
             record = {

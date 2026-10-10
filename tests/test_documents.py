@@ -7,8 +7,8 @@ from datetime import date
 
 import pytest
 
-from generator import _PASSPORT_FORMATS, generate_identity
-import exporter
+from identity_generator.generator import _PASSPORT_FORMATS, generate_identity
+from identity_generator import exporter
 
 PROVIDER_LOCALES = [
     "es_ES",
@@ -34,7 +34,7 @@ def _fake_email(*_args, **_kwargs):
 
 
 def _identity(locale: str, monkeypatch) -> dict:
-    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", _fake_email)
     return generate_identity(locale=locale, email_usable=False)
 
 

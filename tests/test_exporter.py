@@ -7,12 +7,12 @@ import json
 
 import pytest
 
-import exporter
+from identity_generator import exporter
 
 
 @pytest.fixture
 def out_dir(tmp_path, monkeypatch):
-    monkeypatch.setattr(exporter, "_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr(exporter, "output_dir", lambda: tmp_path)
     return tmp_path
 
 
@@ -202,7 +202,7 @@ def test_jsonl_handles_an_empty_batch(out_dir):
 
 def test_to_schema_file_writes_the_schema(out_dir):
     """I check the schema file lands where --schema and --json promise, and that it parses back to the same object."""
-    import schema as schema_module
+    from identity_generator import schema as schema_module
 
     path = exporter.to_schema_file()
     assert path.name == "identity.schema.json"

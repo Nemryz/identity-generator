@@ -3,7 +3,7 @@
 [![CI](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-411%20passed-brightgreen.svg)](tests)
+[![Tests](https://img.shields.io/badge/tests-421%20passed-brightgreen.svg)](tests)
 
 A command-line tool that produces complete, self-consistent synthetic identities. Every field in a generated profile (name, address, phone, postcode) belongs to the same country and language, so the data reads as coherent rather than a random mix of regional formats. Profiles are saved to a local history file and can be exported as JSON or CSV, or copied to the clipboard.
 
@@ -264,15 +264,34 @@ Many services block disposable domains outright. If you own a domain you can mak
 
 Without domains.json the tool behaves exactly as before (tempmail.lol then mail.tm, then offline fallback).
 
+## Where the files live
+
+State, secrets and the log belong to you, so they live in a per-user data directory instead of next to the code, which matters because once the tool is installed with pip the project directory is `site-packages`, where writing a history file would either fail for lack of permissions or pollute every other package in the environment.
+
+| File | Location | Override |
+|---|---|---|
+| history.json | per-user data directory | `IDENTITY_HISTORY_FILE` |
+| email_usage.json | per-user data directory | `EMAIL_USAGE_FILE` |
+| email_keys.json | per-user data directory | `EMAIL_KEYS_FILE` |
+| domains.json | per-user data directory | `CUSTOM_DOMAINS_FILE` |
+| identity-generator.log | per-user data directory | `IDENTITY_LOG_FILE` |
+| The whole directory | platform default | `IDENTITY_HOME` |
+
+The per-user directory is `%LOCALAPPDATA%\identity-generator` on Windows, `~/Library/Application Support/identity-generator` on macOS and `$XDG_DATA_HOME/identity-generator` (or `~/.local/share/identity-generator`) on Linux. Nothing here is committed to git. If the tool finds a file in the old location and no file in the new one, it moves it across once and says so in the log, so nobody ends up with two diverging histories.
+
+Exports go somewhere different on purpose: `identities.csv`, `identities.jsonl`, `identity.schema.json` and the individual JSON files are written to the current working directory, since they are the output you asked for right now and belong where you are standing.
+
+    python -X utf8 main.py --verbose --list-locales > locales.txt
+
 ## History
 
-Each generated identity is automatically appended to history.json in the project directory. The file is created on first use and ignored by git so it stays local. There is no automatic limit on the number of entries.
+Each generated identity is automatically appended to history.json in the per-user data directory. The file is created on first use and there is no automatic limit on the number of entries.
 
 Writes take an exclusive lock file created with O_EXCL, which the operating system guarantees atomically across processes, so two parallel CLI runs cannot lose entries (verified by a two-process test). Saves are atomic too (temporary file renamed into place), so an interrupted write never leaves a truncated history. If the file is corrupted it is backed up to history.corrupt.<timestamp>.bak and the error is logged instead of being silently destroyed.
 
 ## Testing
 
-The project ships a fully automated test suite written with pytest, covering 411 test cases across 11 modules:
+The project ships a fully automated test suite written with pytest, covering 421 test cases across 11 modules:
 
     tests/test_generator.py   92 tests   identity fields, names, passwords, locale capabilities
     tests/test_datasets.py    66 tests   address dataset schema and quality
@@ -283,8 +302,8 @@ The project ships a fully automated test suite written with pytest, covering 411
     tests/test_main.py        27 tests   command-line flags, seeded reproducibility, table output
     tests/test_exporter.py    17 tests   JSON, CSV, JSONL, schema and clipboard exports
     tests/test_properties.py  20 tests   property-based invariants (Hypothesis)
-    tests/test_schema.py      38 tests   the JSON Schema contract and its drift guards
-    tests/test_repo_integrity.py 33 tests   the repo itself: compilation, declared dependencies, README claims
+    tests/test_schema.py      41 tests   the JSON Schema contract and its drift guards
+    tests/test_repo_integrity.py 41 tests   the repo itself: compilation, declared dependencies, README claims
 
 Run the whole suite with:
 
@@ -318,45 +337,59 @@ The --clipboard flag does not work inside a container because there is no displa
 
 ## Source files
 
+The code lives in the `identity_generator` package and the root `main.py` is a launcher that keeps `python -X utf8 main.py` working exactly as before, so the tool runs the same way from a checkout and the same way from an installed copy, where the entry point is the `identity-generator` command.
+
 main.py
+
+    The launcher at the repository root. It only puts the repository on sys.path and hands over to the package, so `python -X utf8 main.py [options]` keeps working and there is a single implementation rather than a second copy to keep in sync.
+
+identity_generator/__init__.py
+
+    The public surface of the package, small on purpose: generate_identity() returns one coherent profile, set_seed() makes a run reproducible, locale_capabilities() describes what a locale yields, and IDENTITY_SCHEMA is the machine-readable contract of the output. Importing the package is enough to generate identities without touching the terminal.
+
+identity_generator/main.py
 
     Parses command-line arguments using argparse and coordinates all other modules. Handles terminal colour output via colorama so that escape codes work on Windows as well as Unix systems. The stdout encoding is set to UTF-8 at startup so that accented characters print correctly regardless of the system default. Calls setup_logging() at startup, --verbose enables DEBUG detail in the log file and on stderr.
 
-applog.py
+identity_generator/paths.py
 
-    Minimal structured logging shared by every module. setup_logging() attaches a file handler (identity-generator.log, ignored by git, overridable via IDENTITY_LOG_FILE) and a stderr handler, modules log through get_logger() instead of printing to stderr directly. Outside main.py the loggers are safe to use with no configuration, so tests capture records via pytest's caplog.
+    Decides where this tool keeps its files, which is the piece that has to change when the tool stops being a checkout. State, secrets and the log resolve to a per-user data directory and exports to the current directory, an environment variable always wins over either, and a file found in the old location is migrated once and logged so nobody ends up with two diverging histories. IDENTITY_HOME moves the whole directory.
 
-generator.py
+identity_generator/applog.py
 
-    Contains the generate_identity function, which creates a Faker instance for the chosen locale and uses it to produce every regional field. Helper functions handle gendered first names, ASCII-safe username construction, syllable-based nickname derivation, safe calls to Faker providers that may not exist for every locale, and NIST-aligned password generation (16 characters, guaranteed character classes, no ambiguous glyphs) via the operating system secure random source.
+    Minimal structured logging shared by every module. setup_logging() attaches a file handler (identity-generator.log in the per-user data directory, overridable via IDENTITY_LOG_FILE) and a stderr handler, modules log through get_logger() instead of printing to stderr directly. Outside main.py the loggers are safe to use with no configuration, so tests capture records via pytest's caplog.
 
-email_api.py
+identity_generator/generator.py
+
+    Contains the generate_identity function, which creates a Faker instance for the chosen locale and uses it to produce every regional field. Helper functions handle gendered first names, ASCII-safe username construction, syllable-based nickname derivation, safe calls to Faker providers that may not exist for every locale, and NIST-aligned password generation (16 characters, guaranteed character classes, no ambiguous glyphs) via the operating system secure random source, which the seeded random module replaces when a seed is active.
+
+identity_generator/email_api.py
 
     Creates a real temporary inbox whose address is built from the identity's names, using the tempmail.lol API first and the mail.tm API as fallback. When a custom catch-all domain is configured in domains.json it is used first: addresses are deliverable to the user's real inbox with no API and no rate limits. The returned token is stored with the identity so the inbox can be read later with check_inbox(), which fetches received emails for --check-inbox. When all real-inbox providers are unreachable or rate-limited, a plausible address is constructed locally using a hardcoded list of known disposable mail domains. It also owns the API key store (email_keys.json, written atomically with restricted permissions, backed up when corrupted) and injects the stored tempmail.lol key as an Authorization bearer header, while keys are only ever displayed masked. Per-provider usage counters are persisted in email_usage.json to respect rate limits. No API key or account is required.
 
-history.py
+identity_generator/history.py
 
     Reads and writes history.json. Every generated identity is appended to the list on disk (batches via append_many, one locked write). The get_all function accepts an optional limit to return only the most recent entries. get_by_uuid finds an identity by its ID (used by --check-inbox), and find_usable_email returns the most recent inbox that can be reused (used by --reuse). If the file is missing or cannot be parsed, all read operations return an empty list. A corrupted file is backed up to history.corrupt.<timestamp>.bak and announced on stderr instead of being silently destroyed.
 
-exporter.py
+identity_generator/exporter.py
 
     Provides four output functions. to_json_file writes the identity dict to a file named after the username. to_csv_file writes every identity as a row in identities.csv (overwritten each run, with the email_token column excluded) for database seeding. to_jsonl_file writes one compact JSON object per line to identities.jsonl (also without email_token) so streaming consumers can read a batch incrementally. to_clipboard formats the profile as a fixed-width plain-text block and copies it to the system clipboard using pyperclip. The plain-text format is intentionally simple so it can be pasted into any field without formatting artefacts.
 
-schema.py
+identity_generator/schema.py
 
-    JSON Schema (draft 2020-12) of the identity object, printed by --schema and written to identity.schema.json when combined with --json. It describes every field with its type, nullability and format, and encodes the password guarantees (four character classes, no ambiguous glyphs). The test suite validates generated identities against it so the schema can never drift from the code.
+    JSON Schema (draft 2020-12) of the identity object, printed by --schema and written to identity.schema.json when combined with --json. It describes every field with its type, nullability and format, and encodes the password guarantees (four character classes, no ambiguous glyphs). email_token is the single optional field, which is what lets the JSON export and the JSONL records validate against this same schema. The test suite validates generated identities against it so the schema can never drift from the code.
 
 tools/build_datasets.py
 
-    One-time offline script that builds the address datasets in data/addresses/ from GeoNames and OpenStreetMap data (see Data sources). Caches downloads in the system temp directory, retries across Overpass mirrors, and learns the zip-admin to cities-admin1 mapping so postal codes match the right region. The datasets are committed to the repository, so the script only needs to run when a refresh is wanted.
+    One-time offline script that builds the address datasets in identity_generator/data/addresses/ from GeoNames and OpenStreetMap data (see Data sources). Caches downloads in the system temp directory, retries across Overpass mirrors, and learns the zip-admin to cities-admin1 mapping so postal codes match the right region. The datasets are committed to the repository, so the script only needs to run when a refresh is wanted.
 
-data/addresses/
+identity_generator/data/addresses/
 
     One JSON file per dataset locale (es_ES, es_MX, es_AR, es_CL, es_CO, en_US, en_GB, fr_FR, de_DE, it_IT, pt_BR), each holding up to 300 cities sorted by population with their postal codes, up to 250 language-filtered street names, and source attribution. Together they weigh under 400 KB.
 
 tests/
 
-    The pytest suite described in Testing, one file per module under test. It exercises the real filesystem, the real Faker providers and the real datasets, and stubs only the temporary-email API so it runs offline.
+    The pytest suite described in Testing, one file per module under test. It exercises the real filesystem, the real Faker providers and the real datasets, and stubs only the temporary-email API so it runs offline. conftest.py points every state, secret and config file at a throwaway directory for each test, so the suite can never write into the real per-user data directory.
 
 requirements.txt
 
@@ -364,7 +397,7 @@ requirements.txt
 
 ## Data sources
 
-The address datasets in data/addresses/ are generated by tools/build_datasets.py from two open data sources, used so that every generated address contains a real city, a real postal code and real street names:
+The address datasets in identity_generator/data/addresses/ are generated by tools/build_datasets.py from two open data sources, used so that every generated address contains a real city, a real postal code and real street names:
 
 - GeoNames (CC-BY 4.0, <https://www.geonames.org/export/>): the cities15000 dataset (city names, population, coordinates) and the per-country postal code datasets.
 - OpenStreetMap (c) OpenStreetMap contributors (ODbL, <https://www.openstreetmap.org/copyright>), queried through the public Overpass API.

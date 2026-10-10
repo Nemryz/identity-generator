@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-import history
+from identity_generator import history
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -126,7 +126,7 @@ def test_concurrent_processes_do_not_lose_entries(history_file):
     """
     env = {**os.environ, "IDENTITY_HISTORY_FILE": str(history_file)}
     code = (
-        "import history\n"
+        "from identity_generator import history\n"
         "history.append_many([{'id': 'x', 'n': i} for i in range(20)])\n"
     )
     processes = [
@@ -142,3 +142,78 @@ def test_concurrent_processes_do_not_lose_entries(history_file):
     for process in processes:
         assert process.wait(timeout=60) == 0
     assert len(history.get_all()) == 40
+
+# --- paths: the behaviour that the package move introduced (A7) ----------------------
+
+
+def test_user_data_dir_follows_identity_home(tmp_path, monkeypatch):
+    """I check IDENTITY_HOME wins over the platform default, which is what containers and tests rely on."""
+    from identity_generator import paths
+
+    monkeypatch.setenv(paths.HOME_ENV, str(tmp_path / "elsewhere"))
+    assert paths.user_data_dir() == tmp_path / "elsewhere"
+
+
+def test_user_data_dir_is_created_on_demand(tmp_path, monkeypatch):
+    """I check the directory appears only when something is written, so importing the package never creates folders as a side effect."""
+    from identity_generator import paths
+
+    monkeypatch.setenv(paths.HOME_ENV, str(tmp_path / "fresh"))
+    assert paths.user_data_dir().exists() is False
+    created = paths.ensure_user_data_dir()
+    assert created.is_dir()
+
+
+def test_environment_override_wins_over_the_data_dir(tmp_path, monkeypatch):
+    """I check an explicit IDENTITY_HISTORY_FILE beats both the data directory and the legacy path, because that is the escape hatch every test and script uses."""
+    from identity_generator import paths
+
+    monkeypatch.setenv(paths.HOME_ENV, str(tmp_path / "home"))
+    monkeypatch.setenv("IDENTITY_HISTORY_FILE", str(tmp_path / "explicit.json"))
+    resolved = paths.resolve_state_file("history.json", "IDENTITY_HISTORY_FILE")
+    assert resolved == tmp_path / "explicit.json"
+
+
+def test_a_legacy_file_is_migrated_once(tmp_path, monkeypatch):
+    """I check a file left in the old location is moved across and not left behind, so nobody ends up with two diverging histories."""
+    from identity_generator import paths
+
+    legacy = tmp_path / "legacy"
+    legacy.mkdir()
+    (legacy / "history.json").write_text("[]", encoding="utf-8")
+    monkeypatch.setattr(paths, "legacy_project_dir", lambda: legacy)
+    monkeypatch.setenv(paths.HOME_ENV, str(tmp_path / "home"))
+
+    resolved = paths.resolve_state_file("history.json", "IDENTITY_HISTORY_FILE")
+    assert resolved == tmp_path / "home" / "history.json"
+    assert resolved.exists()
+    assert not (legacy / "history.json").exists()
+
+    # A second run must not move anything, since the file is already home.
+    (resolved.parent / "marker").write_text("x", encoding="utf-8")
+    paths.resolve_state_file("history.json", "IDENTITY_HISTORY_FILE")
+    assert (resolved.parent / "marker").exists()
+
+
+def test_first_use_on_a_fresh_directory_creates_it(tmp_path, monkeypatch):
+    """I check the first write on a directory that does not exist yet succeeds, because creating the lock before the folder is what would otherwise crash a library user on their very first call."""
+    from identity_generator import email_api, history
+
+    fresh = tmp_path / "brand-new"
+    monkeypatch.setenv("IDENTITY_HOME", str(fresh))
+    monkeypatch.setattr(email_api, "USAGE_FILE", fresh / "email_usage.json")
+    monkeypatch.setattr(history, "HISTORY_FILE", fresh / "history.json")
+
+    email_api._record_usage("offline")
+    history.append({"id": "first", "full_name": "First Run"})
+
+    assert (fresh / "email_usage.json").exists()
+    assert history.get_by_uuid("first") is not None
+
+
+def test_output_dir_is_the_working_directory(tmp_path, monkeypatch):
+    """I check exports follow where the user is standing, since they are requested output rather than state."""
+    from identity_generator import paths
+
+    monkeypatch.chdir(tmp_path)
+    assert paths.output_dir() == Path.cwd()

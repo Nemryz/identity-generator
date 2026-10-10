@@ -6,18 +6,27 @@ main.py calls setup_logging() once at startup and I attach a file handler (ident
 """
 
 import logging
-import os
 import sys
 from pathlib import Path
 
-LOG_FILE = Path(
-    os.environ.get(
-        "IDENTITY_LOG_FILE", Path(__file__).parent / "identity-generator.log"
-    )
-)
+from identity_generator.paths import ensure_user_data_dir, resolve_state_file
+
+LOG_FILENAME = "identity-generator.log"
 
 _FILE_FORMAT = "%(asctime)s %(levelname)s %(name)s: %(message)s"
 _STREAM_FORMAT = "%(levelname)s %(name)s: %(message)s"
+
+
+def log_file() -> Path:
+    """
+    I return the path of the log file, resolving it here instead of at import time.
+
+    Resolving at import time would close an import cycle, since the paths
+    module logs through me while migrating a file, and it would also freeze
+    a location before the user had a chance to set IDENTITY_HOME or
+    IDENTITY_LOG_FILE for this run.
+    """
+    return resolve_state_file(LOG_FILENAME, "IDENTITY_LOG_FILE")
 
 
 def setup_logging(verbose: bool = False) -> None:
@@ -26,7 +35,8 @@ def setup_logging(verbose: bool = False) -> None:
     if root.handlers:
         return
     root.setLevel(logging.DEBUG)
-    file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
+    ensure_user_data_dir()
+    file_handler = logging.FileHandler(log_file(), encoding="utf-8")
     file_handler.setLevel(logging.DEBUG if verbose else logging.INFO)
     file_handler.setFormatter(logging.Formatter(_FILE_FORMAT))
     root.addHandler(file_handler)

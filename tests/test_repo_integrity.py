@@ -12,14 +12,18 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+PACKAGE_ROOT = REPO_ROOT / "identity_generator"
 SOURCE_FILES = [
-    "applog.py",
-    "email_api.py",
-    "exporter.py",
-    "generator.py",
-    "history.py",
+    "identity_generator/__init__.py",
+    "identity_generator/applog.py",
+    "identity_generator/email_api.py",
+    "identity_generator/exporter.py",
+    "identity_generator/generator.py",
+    "identity_generator/history.py",
+    "identity_generator/main.py",
+    "identity_generator/paths.py",
+    "identity_generator/schema.py",
     "main.py",
-    "schema.py",
     "tools/build_datasets.py",
 ]
 
@@ -35,16 +39,6 @@ IMPORT_TO_DISTRIBUTION = {
     "requests": "requests",
 }
 
-
-def _all_python_files() -> list[Path]:
-    """I gather every Python file the repository ships, skipping caches."""
-    return [
-        path
-        for path in REPO_ROOT.rglob("*.py")
-        if "__pycache__" not in path.parts and ".git" not in path.parts
-    ]
-
-
 # The modules this repository ships, which are first-party imports and
 # therefore never belong in a requirements file.
 LOCAL_MODULES = {
@@ -53,9 +47,20 @@ LOCAL_MODULES = {
     "exporter",
     "generator",
     "history",
+    "identity_generator",
     "main",
+    "paths",
     "schema",
 }
+
+
+def _all_python_files() -> list[Path]:
+    """I gather every Python file the repository ships, skipping caches."""
+    return [
+        path
+        for path in REPO_ROOT.rglob("*.py")
+        if "__pycache__" not in path.parts and ".git" not in path.parts
+    ]
 
 
 def _top_level_imports(path: Path) -> set[str]:

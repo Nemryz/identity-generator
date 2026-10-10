@@ -6,8 +6,8 @@ import json
 
 import pytest
 
-import email_api
-from email_api import (
+from identity_generator import email_api
+from identity_generator.email_api import (
     _can_use,
     _custom_domains,
     _custom_email,

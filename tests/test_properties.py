@@ -11,8 +11,8 @@ from hypothesis import strategies as st
 
 from faker.config import AVAILABLE_LOCALES
 
-from email_api import _local_part
-from generator import (
+from identity_generator.email_api import _local_part
+from identity_generator.generator import (
     _PASSPORT_FORMATS,
     _build_nickname,
     _build_username,
@@ -67,7 +67,7 @@ def _fake_email(*_args, **_kwargs):
 
 
 def test_identity_invariants_across_locales(monkeypatch):
-    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", _fake_email)
 
     @given(st.sampled_from(LOCALE_SAMPLE))
     @settings(
@@ -161,7 +161,7 @@ def _profile_of(identity: dict) -> dict:
 
 def test_same_seed_always_repeats_the_profile(monkeypatch):
     """I assert the reproducibility invariant for arbitrary seeds instead of one lucky value, which is the guarantee a fixture-based suite leans on."""
-    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", _fake_email)
 
     @given(seed=st.integers(min_value=0, max_value=2**31 - 1))
     @settings(
@@ -183,7 +183,7 @@ def test_same_seed_always_repeats_the_profile(monkeypatch):
 
 def test_metadata_is_unique_even_when_seeded(monkeypatch):
     """I check id and created_at stay out of the reproducibility guarantee, because freezing them would make seeded runs collide in history."""
-    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", _fake_email)
 
     @given(seed=st.integers(min_value=0, max_value=2**31 - 1))
     @settings(
@@ -205,7 +205,7 @@ def test_metadata_is_unique_even_when_seeded(monkeypatch):
 
 def test_a_seeded_batch_holds_distinct_identities(monkeypatch):
     """I assert no two identities in a seeded batch collide, which would mean the seed was being reapplied per identity instead of once per run."""
-    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", _fake_email)
 
     @given(seed=st.integers(min_value=0, max_value=2**31 - 1))
     @settings(
@@ -232,9 +232,9 @@ def test_every_generated_identity_matches_the_published_schema(monkeypatch):
     """I validate the schema against randomly sampled exotic locales instead of the eleven documented ones, so the contract is proven where a consumer is most likely to hit it."""
     from jsonschema import Draft202012Validator, FormatChecker
 
-    from schema import IDENTITY_SCHEMA
+    from identity_generator.schema import IDENTITY_SCHEMA
 
-    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", _fake_email)
     validator = Draft202012Validator(IDENTITY_SCHEMA, format_checker=FormatChecker())
 
     @given(locale=st.sampled_from(LOCALE_SAMPLE))
@@ -253,7 +253,7 @@ def test_every_generated_identity_matches_the_published_schema(monkeypatch):
 
 def test_capabilities_match_what_the_generator_actually_uses():
     """I cross-check the --list-locales table against the internals for sampled locales, so the display can never advertise something the generator does not do."""
-    from generator import _NATIONAL_ID_PROVIDERS, locale_capabilities
+    from identity_generator.generator import _NATIONAL_ID_PROVIDERS, locale_capabilities
 
     @given(locale=st.sampled_from(LOCALE_SAMPLE))
     @settings(

@@ -6,7 +6,7 @@ from datetime import date
 
 import pytest
 
-from generator import (
+from identity_generator.generator import (
     _NATIONAL_ID_LABELS,
     _NATIONAL_ID_PROVIDERS,
     _PASSPORT_FORMATS,
@@ -103,7 +103,7 @@ def test_nickname_suffixes_unknown_language_falls_back_to_default():
 
 def test_nickname_uses_locale_suffixes(monkeypatch):
     monkeypatch.setattr(
-        "generator.random.choice", lambda suffixes: suffixes[0]
+        "identity_generator.generator.random.choice", lambda suffixes: suffixes[0]
     )
     assert _build_nickname("Cristian", "es_ES").endswith("ito")
     assert _build_nickname("Joshua", "en_US").endswith("x")
@@ -129,13 +129,13 @@ def test_password_avoids_ambiguous_characters():
 
 
 def test_generated_identity_password_is_valid(monkeypatch):
-    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", _fake_email)
     for _ in range(20):
         _assert_password_valid(generate_identity(locale="en_US")["password"])
 
 
 def test_generated_identity_includes_email_token(monkeypatch):
-    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", _fake_email)
     identity = generate_identity(locale="en_US")
     assert identity["email"] == "test@example.com"
     assert identity["email_token"] == "fake-token"
@@ -146,7 +146,7 @@ def test_generated_identity_email_offline_passes_flag(monkeypatch):
     def offline_email(*_args, **_kwargs):
         return {"email": "x@yopmail.com", "token": None, "provider": "offline"}
 
-    monkeypatch.setattr("generator.get_temp_email", offline_email)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", offline_email)
     identity = generate_identity(locale="en_US", email_usable=False)
     assert identity["email"] == "x@yopmail.com"
     assert identity["email_token"] is None
@@ -155,14 +155,14 @@ def test_generated_identity_email_offline_passes_flag(monkeypatch):
 
 def test_reuse_copies_previous_inbox_without_network(monkeypatch):
     monkeypatch.setattr(
-        "history.find_usable_email",
+        "identity_generator.history.find_usable_email",
         lambda: {"email": "reused@tmp.com", "token": "t1", "provider": "tempmail"},
     )
 
     def boom(*_args, **_kwargs):
         raise AssertionError("get_temp_email must not be called with --reuse")
 
-    monkeypatch.setattr("generator.get_temp_email", boom)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", boom)
 
     identity = generate_identity(locale="en_US", reuse=True)
     assert identity["email"] == "reused@tmp.com"
@@ -172,8 +172,8 @@ def test_reuse_copies_previous_inbox_without_network(monkeypatch):
 
 def test_reuse_falls_back_to_creation_without_previous(monkeypatch, caplog):
     caplog.set_level("INFO")
-    monkeypatch.setattr("history.find_usable_email", lambda: None)
-    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    monkeypatch.setattr("identity_generator.history.find_usable_email", lambda: None)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", _fake_email)
 
     identity = generate_identity(locale="en_US", reuse=True)
     assert identity["email"] == "test@example.com"
@@ -182,7 +182,7 @@ def test_reuse_falls_back_to_creation_without_previous(monkeypatch, caplog):
 
 def test_cjk_name_username_falls_back_to_user_prefix(monkeypatch):
     monkeypatch.setattr(
-        "generator.random.choices", lambda *a, **k: ["123"]
+        "identity_generator.generator.random.choices", lambda *a, **k: ["123"]
     )
     username = _build_username("太郎", 1988)
     assert username == "user88123"
@@ -191,7 +191,7 @@ def test_cjk_name_username_falls_back_to_user_prefix(monkeypatch):
 
 def test_cjk_name_nickname_keeps_original_first_char(monkeypatch):
     monkeypatch.setattr(
-        "generator.random.choice", lambda suffixes: suffixes[0]
+        "identity_generator.generator.random.choice", lambda suffixes: suffixes[0]
     )
     nickname = _build_nickname("太郎", "ja_JP")
     assert nickname.startswith("太")
@@ -202,7 +202,7 @@ def test_cjk_name_nickname_keeps_original_first_char(monkeypatch):
 def test_generated_identity_cjk_username_and_nickname_non_empty(
     locale, monkeypatch
 ):
-    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", _fake_email)
     identity = generate_identity(locale=locale)
     assert identity["username"].isascii()
     assert len(identity["username"]) >= 4
@@ -211,7 +211,7 @@ def test_generated_identity_cjk_username_and_nickname_non_empty(
 
 @pytest.mark.parametrize("locale", ["es_ES", "en_US", "fr_FR", "ja_JP"])
 def test_generated_identity_age_matches_birth_date(locale, monkeypatch):
-    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", _fake_email)
     identity = generate_identity(locale=locale)
     expected = _calculate_age(date.fromisoformat(identity["date_of_birth"]))
     assert identity["age"] == expected
@@ -219,7 +219,7 @@ def test_generated_identity_age_matches_birth_date(locale, monkeypatch):
 
 @pytest.mark.parametrize("locale", ["es_ES", "en_US", "fr_FR", "de_DE", "pt_BR"])
 def test_generated_identity_age_within_bounds(locale, monkeypatch):
-    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", _fake_email)
     for _ in range(30):
         identity = generate_identity(locale=locale)
         assert 18 <= identity["age"] <= 60
@@ -255,7 +255,7 @@ def test_locale_capabilities_is_complete_for_every_locale(locale):
 def test_locale_capabilities_country_matches_the_country_map():
     """I tie the displayed country back to LOCALE_COUNTRY_MAP, since that map is what actually reaches the identity."""
     for locale in get_supported_locales():
-        from generator import LOCALE_COUNTRY_MAP
+        from identity_generator.generator import LOCALE_COUNTRY_MAP
 
         assert locale_capabilities(locale)["country"] == LOCALE_COUNTRY_MAP[locale]
 

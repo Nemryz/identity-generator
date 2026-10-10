@@ -12,8 +12,8 @@ import re
 import pytest
 from jsonschema import Draft202012Validator, FormatChecker
 
-import generator
-from schema import IDENTITY_SCHEMA, SCHEMA_DIALECT, schema_json
+from identity_generator import generator
+from identity_generator.schema import IDENTITY_SCHEMA, SCHEMA_DIALECT, schema_json
 
 VALIDATOR = Draft202012Validator(IDENTITY_SCHEMA, format_checker=FormatChecker())
 
@@ -21,6 +21,15 @@ VALIDATOR = Draft202012Validator(IDENTITY_SCHEMA, format_checker=FormatChecker()
 def _identity(locale: str = "es_ES") -> dict:
     """I generate one offline identity so the checks never touch the network."""
     return generator.generate_identity(locale=locale, email_usable=False)
+
+
+@pytest.fixture
+def out_dir(tmp_path, monkeypatch):
+    """I point the exporters at a throwaway directory so the tests never write into the project."""
+    from identity_generator import exporter
+
+    monkeypatch.setattr(exporter, "output_dir", lambda: tmp_path)
+    return tmp_path
 
 
 def _errors(instance: dict) -> list[str]:
@@ -40,19 +49,24 @@ def test_schema_json_round_trips():
 
 
 def test_required_fields_match_generated_identity_keys():
-    """I guard the drift that matters most: a new field in generate_identity that nobody added to the schema, or a required field the generator never returns, has to break this test instead of silently shipping a wrong contract."""
+    """I guard the drift that matters most: a new field in generate_identity that nobody added to the schema, or a required field the generator never returns, has to break this test instead of silently shipping a wrong contract. email_token is the single documented exception, since the CSV and JSONL exports leave it out."""
     generated = set(_identity())
     required = set(IDENTITY_SCHEMA["required"])
-    assert generated == required, (
+    optional = set(IDENTITY_SCHEMA["properties"]) - required
+    assert optional == {"email_token"}, (
+        "only email_token may be optional, otherwise the CSV and JSONL "
+        f"exports stop validating against this schema: {sorted(optional)}"
+    )
+    assert required == generated - optional, (
         "the schema and generate_identity disagree: "
         f"only in the schema {sorted(required - generated)}, "
         f"only in the identity {sorted(generated - required)}"
     )
 
 
-def test_properties_cover_exactly_the_required_fields():
-    """I check no property is described but left optional and no required field goes undescribed, because both states confuse a consumer reading the schema."""
-    assert set(IDENTITY_SCHEMA["properties"]) == set(IDENTITY_SCHEMA["required"])
+def test_properties_cover_exactly_the_known_fields():
+    """I check every described property is a real field of the identity and every field is described, because a schema that mentions a name nobody returns is a lie a consumer would trip over."""
+    assert set(IDENTITY_SCHEMA["properties"]) == set(_identity())
 
 
 def test_generated_identity_validates_in_every_supported_locale():
@@ -184,3 +198,51 @@ def test_validating_identities_does_not_mutate_the_schema():
     for locale in ("es_ES", "es_AR", "pt_BR"):
         assert _errors(_identity(locale)) == []
     assert IDENTITY_SCHEMA == before
+
+def test_every_export_format_validates_against_the_same_schema(out_dir):
+    """I prove the three output formats share one contract: the JSON export and the JSONL record validate against IDENTITY_SCHEMA as they are, and the CSV row validates once its one number is coerced, since CSV has no types and every value arrives as text."""
+    import csv as csv_module
+
+    from identity_generator import exporter
+
+    identity = _identity("es_ES")
+
+    payload = json.loads(
+        exporter.to_json_file(identity).read_text(encoding="utf-8")
+    )
+    assert _errors(payload) == []
+
+    record = json.loads(
+        exporter.to_jsonl_file([identity]).read_text(encoding="utf-8")
+    )
+    assert _errors(record) == []
+
+    with exporter.to_csv_file([identity]).open(encoding="utf-8", newline="") as fh:
+        row = next(csv_module.DictReader(fh))
+    assert set(row) == set(payload) - {"email_token"}
+    coerced = {**row, "age": int(row["age"])}
+    assert _errors(coerced) == []
+
+
+def test_the_csv_projection_carries_no_types(out_dir):
+    """I pin the one difference between the CSV and the typed formats, so nobody mistakes the CSV for a schema-valid document: age is the only integer in the identity and it arrives as text."""
+    import csv as csv_module
+
+    from identity_generator import exporter
+
+    identity = _identity("es_ES")
+    with exporter.to_csv_file([identity]).open(encoding="utf-8", newline="") as fh:
+        row = next(csv_module.DictReader(fh))
+    assert row["age"] == str(identity["age"])
+    assert _errors(row), "a raw CSV row must not validate, since age is text"
+
+
+def test_only_the_csv_and_jsonl_drop_the_optional_field(out_dir):
+    """I check the optional field is exactly the one the two pipeline formats leave out, so making it optional did not quietly weaken the full JSON export."""
+    from identity_generator import exporter
+
+    identity = _identity("es_ES")
+    full = json.loads(exporter.to_json_file(identity).read_text(encoding="utf-8"))
+    record = json.loads(exporter.to_jsonl_file([identity]).read_text(encoding="utf-8"))
+    assert "email_token" in full
+    assert "email_token" not in record
