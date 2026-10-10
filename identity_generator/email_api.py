@@ -24,7 +24,8 @@ from pathlib import Path
 
 import requests
 
-from applog import get_logger
+from identity_generator.applog import get_logger
+from identity_generator.paths import ensure_user_data_dir, resolve_state_file
 
 logger = get_logger("email")
 
@@ -38,19 +39,13 @@ FALLBACK_DOMAINS = [
 ]
 REQUEST_TIMEOUT = 5
 
-USAGE_FILE = Path(
-    os.environ.get("EMAIL_USAGE_FILE", Path(__file__).parent / "email_usage.json")
-)
+USAGE_FILE = resolve_state_file("email_usage.json", "EMAIL_USAGE_FILE")
 
-CUSTOM_DOMAINS_FILE = Path(
-    os.environ.get("CUSTOM_DOMAINS_FILE", Path(__file__).parent / "domains.json")
-)
+CUSTOM_DOMAINS_FILE = resolve_state_file("domains.json", "CUSTOM_DOMAINS_FILE")
 
 # API keys live in their own file (never in domains.json) so the two
 # concerns stay separate and so the keys can be deleted independently.
-KEYS_FILE = Path(
-    os.environ.get("EMAIL_KEYS_FILE", Path(__file__).parent / "email_keys.json")
-)
+KEYS_FILE = resolve_state_file("email_keys.json", "EMAIL_KEYS_FILE")
 
 # Providers that accept an API key. mail.tm is deliberately absent: its API
 # is completely free with no key, no signup and no paid tiers.
@@ -289,6 +284,7 @@ def _tempmail_headers() -> dict:
 
 def _save_keys(keys: dict) -> None:
     # I write the keys atomically and restrict access where supported.
+    ensure_user_data_dir()
     tmp = KEYS_FILE.with_name(KEYS_FILE.name + ".tmp")
     tmp.write_text(json.dumps(keys, indent=2), encoding="utf-8")
     os.replace(tmp, KEYS_FILE)
@@ -472,6 +468,7 @@ def _warn_provider(provider: str, next_name: str) -> None:
 
 def _record_usage(provider: str) -> None:
     """I append a timestamp for the provider, prune expired entries and persist, writing atomically under an exclusive lock so parallel runs do not lose counts; if the lock cannot be acquired I drop the count, which is benign since the API limit is still caught by the chain fallback."""
+    ensure_user_data_dir()
     lock = USAGE_FILE.with_name(USAGE_FILE.name + ".lock")
     for _ in range(_LOCK_RETRIES):
         try:
@@ -497,6 +494,7 @@ def _record_usage(provider: str) -> None:
         window = PROVIDER_LIMITS.get(provider, {}).get("window", 0)
         if window > 0:
             usage[provider] = [t for t in timestamps if now - t <= window]
+        ensure_user_data_dir()
         tmp = USAGE_FILE.with_name(USAGE_FILE.name + ".tmp")
         tmp.write_text(json.dumps(usage, indent=2), encoding="utf-8")
         os.replace(tmp, USAGE_FILE)

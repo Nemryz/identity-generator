@@ -1,7 +1,7 @@
 """
 history.py
 
-I keep a persistent local record of every identity I generate, storing each one as a JSON object inside history.json next to this file, which I create on first use and never cap, so the file simply grows with each run.
+I keep a persistent local record of every identity I generate, storing each one as a JSON object inside history.json, which lives in the per-user data directory (see paths.py), gets created on first use and is never capped, so the file simply grows with each run.
 Concurrency and corruption safety come down to three things: I take an exclusive lock file on every write so two simultaneous runs cannot lose entries to a read-modify-write race, I save atomically by writing a temporary file and renaming it into place so an interrupted run never leaves truncated JSON behind, and when the file is missing or unreadable I return an empty list, moving a corrupted file aside to history.corrupt.<timestamp>.bak instead of letting the next write destroy it.
 """
 
@@ -10,15 +10,12 @@ import os
 import time
 from pathlib import Path
 
-from applog import get_logger
+from identity_generator.applog import get_logger
+from identity_generator.paths import ensure_user_data_dir, resolve_state_file
 
 logger = get_logger("history")
 
-HISTORY_FILE = Path(
-    os.environ.get(
-        "IDENTITY_HISTORY_FILE", Path(__file__).parent / "history.json"
-    )
-)
+HISTORY_FILE = resolve_state_file("history.json", "IDENTITY_HISTORY_FILE")
 
 _LOCK_RETRIES = 10
 _LOCK_WAIT_SECONDS = 0.05
@@ -112,6 +109,7 @@ def _backup_corrupt() -> None:
 
 def _save(entries: list[dict]) -> None:
     """I serialize the whole list to a temporary file and rename it over the real one, so readers only ever see the previous or the new content."""
+    ensure_user_data_dir()
     tmp = HISTORY_FILE.with_name(HISTORY_FILE.name + ".tmp")
     tmp.write_text(
         json.dumps(entries, ensure_ascii=False, indent=2),
@@ -122,6 +120,7 @@ def _save(entries: list[dict]) -> None:
 
 def _acquire_lock() -> None:
     """I create the lock file with O_CREAT and O_EXCL, which the kernel guarantees is atomic even between processes, retrying briefly while another run holds it and clearing a lock older than _LOCK_STALE_SECONDS; when I still cannot get it I raise RuntimeError rather than risk losing entries."""
+    ensure_user_data_dir()
     lock = _lock_file()
     for _ in range(_LOCK_RETRIES):
         try:

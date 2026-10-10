@@ -1,5 +1,5 @@
 """
-Tests for the committed address datasets in data/addresses/: I run them offline against the generated JSON files to check the schema shape, the coverage thresholds, the per-country postal code formats and the ordering, and these datasets derive from GeoNames (CC-BY 4.0) and OpenStreetMap (ODbL) as the "Data sources" section of the README explains.
+Tests for the committed address datasets in identity_generator/data/addresses/: I run them offline against the generated JSON files to check the schema shape, the coverage thresholds, the per-country postal code formats and the ordering, and these datasets derive from GeoNames (CC-BY 4.0) and OpenStreetMap (ODbL) as the "Data sources" section of the README explains.
 """
 
 import json
@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "addresses"
+DATA_DIR = Path(__file__).resolve().parents[1] / "identity_generator" / "data" / "addresses"
 
 # Cities (population, desc) and their postcode shapes.
 # GB codes are outward-only (e.g. "EC1A"), ES codes start 01-52.

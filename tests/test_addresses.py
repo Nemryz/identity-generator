@@ -1,5 +1,5 @@
 """
-Tests for the real-address datasets (Paso 4): for the 11 locales that ship a dataset in data/addresses/ the generated address has to come entirely from that dataset (a city weighted by population, the postal code stored for that exact city, and a real street name formatted following the locale's convention), while the locales without a dataset keep the Faker fallback.
+Tests for the real-address datasets (Paso 4): for the 11 locales that ship a dataset in identity_generator/data/addresses/ the generated address has to come entirely from that dataset (a city weighted by population, the postal code stored for that exact city, and a real street name formatted following the locale's convention), while the locales without a dataset keep the Faker fallback.
 """
 
 import json
@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from generator import generate_identity
+from identity_generator.generator import generate_identity
 
-DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "addresses"
+DATA_DIR = Path(__file__).resolve().parents[1] / "identity_generator" / "data" / "addresses"
 DATASET_LOCALES = sorted(p.stem for p in DATA_DIR.glob("*.json"))
 
 ADDRESS_NUMBER_FIRST = {"en_US", "en_GB", "fr_FR"}
@@ -46,7 +46,7 @@ def _street_from_address(locale: str, address: str) -> str | None:
 
 @pytest.mark.parametrize("locale", DATASET_LOCALES)
 def test_address_components_come_from_dataset(locale, monkeypatch):
-    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", _fake_email)
     dataset = _load(locale)
     streets = dataset["streets"]
     postcodes_by_name: dict[str, set[str]] = {}
@@ -66,7 +66,7 @@ def test_address_components_come_from_dataset(locale, monkeypatch):
 
 @pytest.mark.parametrize("locale", DATASET_LOCALES)
 def test_generated_cities_always_have_postcode(locale, monkeypatch):
-    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", _fake_email)
     dataset = _load(locale)
     streets = set(dataset["streets"])
 
@@ -78,7 +78,7 @@ def test_generated_cities_always_have_postcode(locale, monkeypatch):
 
 
 def test_city_selection_is_weighted_and_varies(monkeypatch):
-    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", _fake_email)
     cities = {
         generate_identity(locale="es_ES", email_usable=False)["city"]
         for _ in range(30)
@@ -88,7 +88,7 @@ def test_city_selection_is_weighted_and_varies(monkeypatch):
 
 @pytest.mark.parametrize("locale", ["pt_PT", "ja_JP"])
 def test_faker_fallback_without_dataset(locale, monkeypatch):
-    monkeypatch.setattr("generator.get_temp_email", _fake_email)
+    monkeypatch.setattr("identity_generator.generator.get_temp_email", _fake_email)
     identity = generate_identity(locale=locale, email_usable=False)
     assert identity["city"] not in {"", "N/A"}
     assert identity["postcode"] not in {"", "N/A"}

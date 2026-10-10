@@ -347,7 +347,7 @@ def test_list_locales_prints_the_capability_table(tmp_path):
 def test_list_locales_shows_every_supported_locale(tmp_path):
     """I check no locale disappears from the table, which is the whole point of the command."""
     result = _run(tmp_path / "h1.json", "--list-locales")
-    from generator import get_supported_locales
+    from identity_generator.generator import get_supported_locales
 
     for locale in get_supported_locales():
         assert locale in result.stdout

@@ -51,7 +51,6 @@ IDENTITY_SCHEMA: dict[str, Any] = {
         "phone",
         "occupation",
         "email",
-        "email_token",
         "email_provider",
         "username",
         "nickname",
@@ -161,7 +160,13 @@ IDENTITY_SCHEMA: dict[str, Any] = {
         },
         "email_token": {
             "type": ["string", "null"],
-            "description": "Inbox token that lets --check-inbox read the mailbox. Null when there is no real inbox.",
+            "description": (
+                "Inbox token that lets --check-inbox read the mailbox, null when there is no real inbox. "
+                "This is the one field the CSV and JSONL exports leave out on purpose, because an inbox "
+                "token is a credential and those two formats target pipelines and database seeds. It is "
+                "therefore the only field that is not required, which is what lets all three formats "
+                "validate against this single schema."
+            ),
         },
         "email_provider": {
             "type": ["string", "null"],

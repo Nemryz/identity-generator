@@ -19,9 +19,9 @@ from pathlib import Path
 from faker import Faker
 from faker.config import AVAILABLE_LOCALES
 
-from email_api import get_temp_email
-from applog import get_logger
-import history as hist
+from identity_generator.email_api import get_temp_email
+from identity_generator.applog import get_logger
+from identity_generator import history as hist
 
 logger = get_logger("generator")
 
@@ -78,7 +78,7 @@ _NICKNAME_SUFFIXES = {
     "default": ["x", "z", "99", "pro", "dark", "neo", "star", "king", "queen"],
 }
 
-# Real-address datasets (Paso 3/4): a locale that has a dataset in data/addresses/ gets a city weighted by population, its real postal code and a real street name, while every other locale falls back to Faker.
+# Real-address datasets (Paso 3/4): a locale that has a dataset in the package's data/addresses/ gets a city weighted by population, its real postal code and a real street name, while every other locale falls back to Faker. The path is resolved from this file so it works from a checkout and from an installed package alike.
 
 DATASETS_DIR = Path(__file__).resolve().parent / "data" / "addresses"
 
