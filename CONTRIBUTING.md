@@ -48,6 +48,21 @@ The matrix runs on ubuntu and windows with Python 3.10 and 3.12, which is not de
 
 If a conflict shows up, `git fetch origin` then `git rebase origin/main`, resolve the marked blocks, `git add` and `git rebase --continue`. `git rebase --abort` throws it away and starts over.
 
+## Releasing a new version
+
+The version that gets published lives in `pyproject.toml` alone, because this project does not use git tags and the test suite already refuses a `pyproject.toml` and `__version__` mismatch:
+
+1. Bump `version` in `pyproject.toml` and open the change as a pull request, so the build job verifies the artifact before `main` moves.
+2. On `main`, publish manually with the command below, since the workflow only runs from the default branch and reads the name and version from `pyproject.toml` itself.
+3. The workflow refuses a version that already exists on PyPI, since a published version is immutable and can only be yanked, never reused under the same number.
+
+```bash
+gh workflow run publish.yml
+gh run watch
+```</think>The release guard connects `CONTRIBUTING` with the workflow file, so I need to add the release section now:<tool_call>edit<arg_key>newString</arg_key><arg_value>3. The workflow refuses a version that already exists on PyPI, since a published version is immutable and can only be yanked, never reused under the same number.
+
+The first publish needs the trusted publisher configured once on the PyPI side, at Publishing under Add a trusted publisher, with owner, repository, workflow name and environment matching the repository exactly.
+
 ## Adding a locale
 
 The tables and the display labels have to move together, and there are guards that will tell you if they do not:

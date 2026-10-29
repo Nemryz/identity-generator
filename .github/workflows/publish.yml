@@ -1,0 +1,46 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  publish:
+    # Publishing runs from main alone, because the workflow file on the default branch is what the PyPI trusted publisher validates.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: pip install build twine
+
+      - name: Build sdist and wheel
+        run: python -m build
+
+      - name: Check package metadata
+        run: twine check dist/*
+
+      - name: Refuse to republish a version that already exists
+        run: |
+          name=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['name'])")
+          version=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          if curl -sf -o /dev/null "https://pypi.org/pypi/$name/$version/json"; then
+            echo "$name $version already exists on PyPI and a version cannot be published twice. Bump the version in pyproject.toml."
+            exit 1
+          fi
+          echo "$name $version is free on PyPI, publishing."
+
+      - name: Publish the package with trusted publishing
+        uses: pypa/gh-action-pypi-publish@release/v1
