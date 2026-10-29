@@ -5,8 +5,21 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions:
+        patterns: ["*"]
 
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      python-minor:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      # A Faker major can reshape a provider and invalidate generated documents in
+      # silence, so those upgrades stay deliberate and land as their own pull request.
+      - dependency-name: "faker"
+        update-types: ["version-update:semver-major"]
