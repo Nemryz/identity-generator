@@ -260,3 +260,24 @@ def test_the_package_documents_itself_on_the_readme():
     assert "python -X utf8 main.py" in readme
     for document in ("CHANGELOG.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md"):
         assert document in readme, f"{document} exists but the README never mentions it"
+
+
+# --- publication: the guards that keep the release path honest (B2) -------------------
+
+
+def test_publish_workflow_ships_trusted_publishing_only():
+    """I check the publish workflow needs no stored token, runs from the pypi environment on main and dies on an existing version, because a workflow file readable by every fork holding a PyPI password is the one leak this project cannot patch after the fact."""
+    workflow = (REPO_ROOT / ".github" / "workflows" / "publish.yml").read_text(encoding="utf-8")
+    assert "workflow_dispatch" in workflow
+    assert "environment: pypi" in workflow
+    assert "refs/heads/main" in workflow
+    assert "pypa/gh-action-pypi-publish" in workflow
+    assert "TWINE_TOKEN" not in workflow
+    assert "password" not in workflow
+
+
+def test_the_release_instructions_name_the_workflow_that_exists():
+    """I check CONTRIBUTING tells the maintainer to run the workflow file that actually is in the repository, so the release document and the `.github` tree cannot drift apart."""
+    contributing = (REPO_ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
+    assert (REPO_ROOT / ".github" / "workflows" / "publish.yml").is_file()
+    assert "gh workflow run publish.yml" in contributing

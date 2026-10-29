@@ -28,6 +28,7 @@ The first versioned release. Everything below landed on `main` between the initi
 - The code moved into the `identity_generator` package, with `main.py` kept at the root as a thin launcher so `python -X utf8 main.py` is unchanged, and an `identity-generator` command once installed.
 - The project packages itself through `pyproject.toml` built by hatchling, with the `identity-generator` console script as an entry point and the address datasets travelling inside the wheel.
 - Every pull request builds the sdist and the wheel, runs `twine check`, and installs the wheel into a clean venv, where it must generate a real address from the packaged dataset before the change is accepted.
+- Publication to PyPI is manual through a `workflow_dispatch` workflow on the `pypi` environment, which builds the package, refuses to republish an existing version, and ships with trusted publishing OIDC instead of a stored token.
 - State, secrets and the log moved to a per-user data directory, overridable with `IDENTITY_HOME`, with a one-time migration from the old location.
 - Exports now land in the current working directory instead of next to the code.
 - The tempmail.lol free-tier rate limit moved from 25 per 5 minutes to 15 per 30 minutes, matching the change the provider made on 7 September 2026.
