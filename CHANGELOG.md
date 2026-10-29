@@ -26,6 +26,8 @@ The first versioned release. Everything below landed on `main` between the initi
 ### Changed
 
 - The code moved into the `identity_generator` package, with `main.py` kept at the root as a thin launcher so `python -X utf8 main.py` is unchanged, and an `identity-generator` command once installed.
+- The project packages itself through `pyproject.toml` built by hatchling, with the `identity-generator` console script as an entry point and the address datasets travelling inside the wheel.
+- Every pull request builds the sdist and the wheel, runs `twine check`, and installs the wheel into a clean venv, where it must generate a real address from the packaged dataset before the change is accepted.
 - State, secrets and the log moved to a per-user data directory, overridable with `IDENTITY_HOME`, with a one-time migration from the old location.
 - Exports now land in the current working directory instead of next to the code.
 - The tempmail.lol free-tier rate limit moved from 25 per 5 minutes to 15 per 30 minutes, matching the change the provider made on 7 September 2026.
@@ -36,6 +38,7 @@ The first versioned release. Everything below landed on `main` between the initi
 - A corrupted history or usage file is now backed up and reported instead of being silently reset.
 - An interrupted write can no longer leave truncated JSON, since saves are atomic.
 - The RUT validation now accepts every serial shape the provider can emit, including the short ones, which the previous regex rejected.
+- Reading `pyproject.toml` in the test suite falls back to `tomli` on Python 3.10, where the standard library `tomllib` does not exist yet.
 
 ### Security
 

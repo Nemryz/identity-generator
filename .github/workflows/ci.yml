@@ -23,3 +23,27 @@ jobs:
           pip install -r requirements.txt -r requirements-dev.txt
       - name: Run test suite
         run: python -m pytest tests/ -q
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install build tools
+        run: pip install build twine
+      - name: Build sdist and wheel
+        run: python -m build
+      - name: Check package metadata
+        run: twine check dist/*
+      - name: Install the wheel in a clean venv
+        run: |
+          python -m venv wheelcheck
+          wheelcheck/bin/pip install --quiet dist/identity_generator-*.whl
+      - name: Smoke test the installed console script
+        run: |
+          wheelcheck/bin/identity-generator --list-locales
+          wheelcheck/bin/identity-generator --locale de_DE --seed 42 --email-offline --json
+          wheelcheck/bin/python -c "import glob, json; path = glob.glob('*_identity.json')[0]; data = json.load(open(path, encoding='utf-8')); assert data['city'] == 'Berlin', data; assert data['national_id']; print('wheel smoke OK, datasets shipped:', data['address'])"
