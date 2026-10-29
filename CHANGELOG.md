@@ -22,6 +22,8 @@ The first versioned release. Everything below landed on `main` between the initi
 - `--jsonl` for newline-delimited JSON that a pipeline can read while the batch is still running.
 - `--list-locales` showing a capability table per locale, including its document, passport shape, address convention and dataset sizes.
 - `--verbose` writing structured detail to a log file and stderr.
+- A network-marked suite of two tests that exercises the real tempmail.lol and mail.tm contracts, excluded from the default pytest run because it consumes rate limited quota, with every number in the README testing section pinned to the actual pytest collection by a guard.
+- An `ATTRIBUTION.md` next to the address datasets, crediting GeoNames and OpenStreetMap inside the wheel itself.
 
 ### Changed
 

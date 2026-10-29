@@ -89,3 +89,7 @@ include = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-m 'not network'"
+markers = [
+    "network: touches the real tempmail.lol and mail.tm APIs and consumes rate limited quota, run manually with pytest tests/ -m network",
+]

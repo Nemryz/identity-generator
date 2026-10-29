@@ -26,6 +26,7 @@ The whole suite runs offline in well under a minute: the only external interacti
 
 - Tests never touch your real data. `tests/conftest.py` points every state, secret and config file at a throwaway directory, so a forgotten fixture cannot write into your history.
 - A few tests assert things about the repository itself, not about the code. They check that every file compiles, that the declared dependencies match the imports, and that the README keeps describing the modules and the test counts that actually exist. If you add a module or a test file and the suite complains about the README, that is the guard doing its job.
+- Two tests in tests/test_network.py hit the real tempmail.lol and mail.tm APIs behind a marker that the default run deselects, so they only execute with `python -X utf8 -m pytest tests/ -m network` on an internet connection, and each run consumes a couple of inbox creations out of the tempmail.lol free tier quota of 15 per 30 minutes per IP, so run it after touching identity_generator/email_api.py or while chasing a provider bug, not for the fun of it.
 
 ## The git flow
 

@@ -3,7 +3,7 @@
 [![CI](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-434%20passed-brightgreen.svg)](tests)
+[![Tests](https://img.shields.io/badge/tests-426%20passed-brightgreen.svg)](tests)
 
 A command-line tool that produces complete, self-consistent synthetic identities. Every field in a generated profile (name, address, phone, postcode) belongs to the same country and language, so the data reads as coherent rather than a random mix of regional formats. Profiles are saved to a local history file and can be exported as JSON or CSV, or copied to the clipboard.
 
@@ -299,7 +299,7 @@ Writes take an exclusive lock file created with O_EXCL, which the operating syst
 
 ## Testing
 
-The project ships a fully automated test suite written with pytest, covering 434 test cases across 11 modules:
+The project ships a fully automated test suite written with pytest, whose default run collects 426 tests across 12 modules plus a separate network suite of 2 tests that only runs when you ask for it, and every number below is exactly what pytest reports when it collects the file:
 
     tests/test_generator.py   92 tests   identity fields, names, passwords, locale capabilities
     tests/test_datasets.py    66 tests   address dataset schema and quality
@@ -311,17 +311,20 @@ The project ships a fully automated test suite written with pytest, covering 434
     tests/test_exporter.py    17 tests   JSON, CSV, JSONL, schema and clipboard exports
     tests/test_properties.py  20 tests   property-based invariants (Hypothesis)
     tests/test_schema.py      41 tests   the JSON Schema contract and its drift guards
-    tests/test_repo_integrity.py 48 tests   the repo itself: compilation, dependencies, packaging metadata, README claims
+    tests/test_repo_integrity.py 40 tests   the repo itself: compilation, dependencies, packaging metadata, README claims
+    tests/test_network.py      2 tests   real provider contracts against tempmail.lol and mail.tm, excluded from the default runs (see The network suite)
 
 Run the whole suite with:
 
     python -X utf8 -m pytest tests/ -q
 
-The tests are integration-first: they exercise the real filesystem, the real Faker providers and the real address datasets in data/addresses/. The only external interaction that is stubbed is the temporary-email API,so the suite runs offline and never hits the network. Every feature is covered by at least one test that follows its happy path end to end.
+The tests are integration-first: they exercise the real filesystem, the real Faker providers and the real address datasets in data/addresses/. The only external interaction that is stubbed is the temporary-email API, so the default runs are fully offline, and the two tests that exercise the real providers live in their own network-marked suite described below. Every feature is covered by at least one test that follows its happy path end to end.
 
 Several tests exist to catch drift rather than to cover a line of code, and they are the ones that keep future changes honest. The schema and the generator are held to each other (every field generate_identity returns must be declared in the JSON Schema and every declared field must come back), the display label of an official document must exist for every locale that has a provider, and the CSV and the JSONL export must carry the same field set, so adding a locale or a field without finishing the surrounding wiring fails the suite with a message naming the offender instead of shipping quietly. Malformed values are fed to the schema on purpose too, which is what proves the constraints actually bite.
 
 Property-based tests (test_properties.py, using Hypothesis) generate random unicode names and sample exotic Faker locales to verify the invariants that directed tests cannot enumerate by hand: every generated identity has non-empty ASCII-safe usernames and emails, valid passport shapes, dataset addresses that always stay inside their locale's data, seeded runs repeat exactly for any seed while their ids stay unique, and identities from randomly sampled locales satisfy the published schema. The properties whose subject is determinism run with derandomize enabled so their examples are stable, and any other failure replays with pytest --hypothesis-seed=<seed> using the seed Hypothesis prints. A real two-process concurrency test verifies that parallel CLI runs never lose history entries (see History).
+
+The network suite lives in tests/test_network.py behind a marker that the default pytest command deselects, so it only runs when someone asks for it with `python -X utf8 -m pytest tests/ -m network` and a real internet connection. It creates a real inbox at tempmail.lol and another at mail.tm and reads both, verifying the status codes, the payload keys and the message shapes that the mocked tests imitate, because a provider contract that changes silently is invisible everywhere else. Each manual run consumes a couple of inbox creations of the tempmail.lol free tier quota of 15 per 30 minutes per IP, so run it sparingly, ideally after touching `identity_generator/email_api.py` or when a user reports a provider error.
 
 Every push and pull request runs the full suite on GitHub Actions (ubuntu-latest and windows-latest, Python 3.10 and 3.12), so a broken commit cannot land unnoticed, and a build job additionally creates the sdist and the wheel, runs `twine check`, and installs the wheel into a clean venv, where it must generate a real address from the packaged dataset.
 

@@ -2,6 +2,7 @@
 
 import ast
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -58,11 +59,11 @@ LOCAL_MODULES = {
 
 
 def _all_python_files() -> list[Path]:
-    # I gather every Python file the repository ships, skipping caches.
+    # I gather every Python file the repository ships outside tests, skipping caches, because pytest already imports each test file it collects and catches a syntax error there on its own.
     return [
         path
         for path in REPO_ROOT.rglob("*.py")
-        if "__pycache__" not in path.parts and ".git" not in path.parts
+        if "__pycache__" not in path.parts and ".git" not in path.parts and "tests" not in path.parts
     ]
 
 
@@ -227,6 +228,15 @@ def test_pyproject_ships_the_address_datasets():
     assert list((PACKAGE_ROOT / "data" / "addresses").glob("*.json"))
 
 
+def test_the_dataset_directory_carries_its_attribution():
+    # I check the attribution file travels with the JSON files inside the wheel, because GeoNames and OpenStreetMap ask the credit to accompany the derived database and a README-only credit never reaches a pip install.
+    attribution = (PACKAGE_ROOT / "data" / "addresses" / "ATTRIBUTION.md")
+    assert attribution.is_file()
+    text = attribution.read_text(encoding="utf-8")
+    assert "GeoNames" in text and "CC-BY" in text
+    assert "OpenStreetMap" in text and "ODbL" in text
+
+
 def test_requirements_txt_matches_the_pyproject_dependencies():
     # I check requirements.txt and pyproject declare the same runtime dependencies, since contributors install from one and users from the other.
     declared = _declared("requirements.txt")
@@ -277,3 +287,44 @@ def test_the_release_instructions_name_the_workflow_that_exists():
     contributing = (REPO_ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
     assert (REPO_ROOT / ".github" / "workflows" / "publish.yml").is_file()
     assert "gh workflow run publish.yml" in contributing
+
+
+# --- documentation claims: the guards that keep the README testing numbers pinned to reality ----------
+
+
+def _collected_tests(extra_args: list[str]) -> tuple[dict[str, int], int]:
+    # I run pytest once in its own process in collect-only mode and count the collected items per file, reading the selected total from the summary line it prints.
+    result = subprocess.run(
+        [sys.executable, "-X", "utf8", "-m", "pytest", "tests/", "-q", *extra_args, "--collect-only"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    rows = {}
+    for line in result.stdout.splitlines():
+        if "::" in line and line.startswith("tests/"):
+            name = Path(line.split("::")[0]).name
+            rows[name] = rows.get(name, 0) + 1
+    match = re.search(r"(\d+)/(\d+) tests collected", result.stdout)
+    assert match, "pytest did not print the collection summary, so the README counts cannot be checked"
+    return rows, int(match.group(1))
+
+
+def test_the_readme_testing_counts_match_the_suite():
+    # I check every count the README testing section claims against a fresh pytest collection, because a table that drifts from the suite is propaganda and not documentation.
+    default_rows, default_selected = _collected_tests([])
+    network_rows, _network_selected = _collected_tests(["-m", "network"])
+    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    for path in sorted((REPO_ROOT / "tests").glob("test_*.py")):
+        claimed = re.search(re.escape(path.name) + r"\s+(\d+)\s+tests", readme)
+        assert claimed, f"{path.name} is not listed with a count in the README testing table"
+        actual = default_rows.get(path.name, 0) + network_rows.get(path.name, 0)
+        assert actual == int(claimed.group(1)), (
+            f"the README says {path.name} has {claimed.group(1)} tests but pytest collects {actual}"
+        )
+    badge = re.search(r"tests-(\d+)%20passed", readme)
+    assert badge, "the README no longer carries a tests badge whose number can be checked"
+    assert int(badge.group(1)) == default_selected, (
+        f"the badge says {badge.group(1)} passed but a default run selects {default_selected}"
+    )
