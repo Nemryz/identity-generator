@@ -1,0 +1,9 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Question or usage help
+    url: https://github.com/Nemryz/identity-generator/discussions
+    about: If the question is how to use a flag or choose a provider rather than something broken, prefer the discussions page so the issue tracker stays for defects and proposals.
+  - name: Security vulnerability
+    url: https://github.com/Nemryz/identity-generator/security/advisories/new
+    about: Report security problems privately through GitHub vulnerability reporting, never as a public issue.

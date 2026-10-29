@@ -1,0 +1,47 @@
+name: Bug report
+description: Something failed or produced a wrong result, and you have the command that shows it.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: A clear description of the failure, including what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command you ran
+      description: The full command line, flags included, from a shell where you can copy the output.
+      placeholder: python -X utf8 main.py --locale es_ES --json
+      render: bash
+    validations:
+      required: true
+  - type: input
+    id: locale
+    attributes:
+      label: Locale
+      description: The --locale value of the failing run, if the bug is locale-dependent.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system and Python version, plus whether you ran the launcher or the installed identity-generator command.
+      placeholder: Windows 11, Python 3.12.7, installed command
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs or profile
+      description: If the output was wrong, attach the profile text and, when present, the --verbose log file. Personal details you can mark and hide separately from the stack itself are fine.
+  - type: checkboxes
+    id: offline
+    attributes:
+      label: Behaviour with a real inbox
+      description: Only if the bug involves the temporary inbox providers, could you reproduce it while offline? This says whether the failure comes from the provider chain or from the local code.
+      options:
+        - label: The bug is independent of the network
+        - label: The bug only appears online
+        - label: Not applicable

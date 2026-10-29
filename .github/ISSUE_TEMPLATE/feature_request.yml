@@ -1,0 +1,24 @@
+name: Feature request
+description: A capability you miss, described by the job you are trying to do.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: job
+    attributes:
+      label: What are you trying to do
+      description: Describe the job, not just the flag you would like. A concrete workflow makes the tradeoffs visible and lets the reviewer propose an existing command that might already cover it.
+      placeholder: I feed the CSV into a table importing pipeline and I need X
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: What you do today
+      description: The command or steps that get you closest today, and what breaks or needs manual effort in them.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: The command shape or behavior you would expect, with an example of the output.
