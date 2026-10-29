@@ -323,7 +323,7 @@ Several tests exist to catch drift rather than to cover a line of code, and they
 
 Property-based tests (test_properties.py, using Hypothesis) generate random unicode names and sample exotic Faker locales to verify the invariants that directed tests cannot enumerate by hand: every generated identity has non-empty ASCII-safe usernames and emails, valid passport shapes, dataset addresses that always stay inside their locale's data, seeded runs repeat exactly for any seed while their ids stay unique, and identities from randomly sampled locales satisfy the published schema. The properties whose subject is determinism run with derandomize enabled so their examples are stable, and any other failure replays with pytest --hypothesis-seed=<seed> using the seed Hypothesis prints. A real two-process concurrency test verifies that parallel CLI runs never lose history entries (see History).
 
-Every push and pull request runs the full suite on GitHub Actions (ubuntu-latest and windows-latest, Python 3.10 and 3.12), so a broken commit cannot land unnoticed.
+Every push and pull request runs the full suite on GitHub Actions (ubuntu-latest and windows-latest, Python 3.10 and 3.12), so a broken commit cannot land unnoticed, and a build job additionally creates the sdist and the wheel, runs `twine check`, and installs the wheel into a clean venv, where it must generate a real address from the packaged dataset.
 
 ## Docker
 
