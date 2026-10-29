@@ -1,9 +1,4 @@
-"""
-history.py
-
-I keep a persistent local record of every identity I generate, storing each one as a JSON object inside history.json, which lives in the per-user data directory (see paths.py), gets created on first use and is never capped, so the file simply grows with each run.
-Concurrency and corruption safety come down to three things: I take an exclusive lock file on every write so two simultaneous runs cannot lose entries to a read-modify-write race, I save atomically by writing a temporary file and renaming it into place so an interrupted run never leaves truncated JSON behind, and when the file is missing or unreadable I return an empty list, moving a corrupted file aside to history.corrupt.<timestamp>.bak instead of letting the next write destroy it.
-"""
+# history.py I keep a persistent local record of every identity I generate, storing each one as a JSON object inside history.json, which lives in the per-user data directory (see paths.py), gets created on first use and is never capped, so the file simply grows with each run. Concurrency and corruption safety come down to three things: I take an exclusive lock file on every write so two simultaneous runs cannot lose entries to a read-modify-write race, I save atomically by writing a temporary file and renaming it into place so an interrupted run never leaves truncated JSON behind, and when the file is missing or unreadable I return an empty list, moving a corrupted file aside to history.corrupt.<timestamp>.bak instead of letting the next write destroy it.
 
 import json
 import os
@@ -23,7 +18,7 @@ _LOCK_STALE_SECONDS = 10
 
 
 def append(identity: dict) -> None:
-    """I push a single identity onto the end of the history file, holding the lock across the whole read-append-write cycle."""
+    # I push a single identity onto the end of the history file, holding the lock across the whole read-append-write cycle.
     _acquire_lock()
     try:
         entries = _load()
@@ -34,7 +29,7 @@ def append(identity: dict) -> None:
 
 
 def append_many(identities: list[dict]) -> None:
-    """I add several identities in one locked write, which is how batch generation (--count N) avoids taking and dropping the lock N times."""
+    # I add several identities in one locked write, which is how batch generation (--count N) avoids taking and dropping the lock N times.
     if not identities:
         return
     _acquire_lock()
@@ -47,7 +42,7 @@ def append_many(identities: list[dict]) -> None:
 
 
 def get_all(limit: int | None = None) -> list[dict]:
-    """I return the stored identities, optionally trimmed to the most recent N entries when a positive limit is given, or the full list when it is None."""
+    # I return the stored identities, optionally trimmed to the most recent N entries when a positive limit is given, or the full list when it is None.
     entries = _load()
     if limit and limit > 0:
         return entries[-limit:]
@@ -55,12 +50,12 @@ def get_all(limit: int | None = None) -> list[dict]:
 
 
 def count() -> int:
-    """I report how many identities the file holds right now."""
+    # I report how many identities the file holds right now.
     return len(_load())
 
 
 def get_by_uuid(identity_id: str) -> dict | None:
-    """I look up the stored identity carrying that UUID and give it back, or None when nothing matches."""
+    # I look up the stored identity carrying that UUID and give it back, or None when nothing matches.
     for entry in _load():
         if entry.get("id") == identity_id:
             return entry
@@ -68,7 +63,7 @@ def get_by_uuid(identity_id: str) -> dict | None:
 
 
 def find_usable_email() -> dict | None:
-    """I walk the history backwards and return the {"email", "token", "provider"} triple of the newest identity that still has a real inbox, which is what --reuse builds on, or None when no entry carries a token."""
+    # I walk the history backwards and return the {"email", "token", "provider"} triple of the newest identity that still has a real inbox, which is what --reuse builds on, or None when no entry carries a token.
     for entry in reversed(_load()):
         token = entry.get("email_token")
         if token:
@@ -81,7 +76,7 @@ def find_usable_email() -> dict | None:
 
 
 def _load() -> list[dict]:
-    """I deserialize the history file and give back an empty list whenever it is absent, unreadable or not a JSON array, backing a corrupted file up so the data is never lost without a trace."""
+    # I deserialize the history file and give back an empty list whenever it is absent, unreadable or not a JSON array, backing a corrupted file up so the data is never lost without a trace.
     if not HISTORY_FILE.exists():
         return []
     try:
@@ -108,7 +103,7 @@ def _backup_corrupt() -> None:
 
 
 def _save(entries: list[dict]) -> None:
-    """I serialize the whole list to a temporary file and rename it over the real one, so readers only ever see the previous or the new content."""
+    # I serialize the whole list to a temporary file and rename it over the real one, so readers only ever see the previous or the new content.
     ensure_user_data_dir()
     tmp = HISTORY_FILE.with_name(HISTORY_FILE.name + ".tmp")
     tmp.write_text(
@@ -119,7 +114,7 @@ def _save(entries: list[dict]) -> None:
 
 
 def _acquire_lock() -> None:
-    """I create the lock file with O_CREAT and O_EXCL, which the kernel guarantees is atomic even between processes, retrying briefly while another run holds it and clearing a lock older than _LOCK_STALE_SECONDS; when I still cannot get it I raise RuntimeError rather than risk losing entries."""
+    # I create the lock file with O_CREAT and O_EXCL, which the kernel guarantees is atomic even between processes, retrying briefly while another run holds it and clearing a lock older than _LOCK_STALE_SECONDS; when I still cannot get it I raise RuntimeError rather than risk losing entries.
     ensure_user_data_dir()
     lock = _lock_file()
     for _ in range(_LOCK_RETRIES):

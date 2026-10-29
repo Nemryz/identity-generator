@@ -1,6 +1,4 @@
-"""
-Tests for the real-address datasets (Paso 4): for the 11 locales that ship a dataset in identity_generator/data/addresses/ the generated address has to come entirely from that dataset (a city weighted by population, the postal code stored for that exact city, and a real street name formatted following the locale's convention), while the locales without a dataset keep the Faker fallback.
-"""
+# Tests for the real-address datasets (Paso 4): for the 11 locales that ship a dataset in identity_generator/data/addresses/ the generated address has to come entirely from that dataset (a city weighted by population, the postal code stored for that exact city, and a real street name formatted following the locale's convention), while the locales without a dataset keep the Faker fallback.
 
 import json
 import re
@@ -30,10 +28,7 @@ def _load(locale: str) -> dict:
 
 
 def _street_from_address(locale: str, address: str) -> str | None:
-    """
-    Return the street part of an address, or None when the address does
-    not follow the locale's format (number-first, comma, or street-first).
-    """
+    # Return the street part of an address, or None when the address does not follow the locale's format (number-first, comma, or street-first).
     if locale in ADDRESS_NUMBER_FIRST:
         match = re.match(r"^(\d+) (.+)$", address)
         return match.group(2) if match else None

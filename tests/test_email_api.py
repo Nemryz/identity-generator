@@ -1,6 +1,4 @@
-"""
-Tests for email_api.py: I cover the provider chain, the rate-limit counters, the tokens and the API key store.
-"""
+# Tests for email_api.py: I cover the provider chain, the rate-limit counters, the tokens and the API key store.
 
 import json
 

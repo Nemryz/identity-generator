@@ -1,6 +1,4 @@
-"""
-Tests for the official document fields (Paso 5): every locale with a Faker provider gets an official national_id that has to pass the country's own validation rules (control letters, check digits, official regexes), the locales without a provider (es_AR, ja_JP) omit the field, and passport_number is always present and must match the locale's plausible serial shape.
-"""
+# Tests for the official document fields (Paso 5): every locale with a Faker provider gets an official national_id that has to pass the country's own validation rules (control letters, check digits, official regexes), the locales without a provider (es_AR, ja_JP) omit the field, and passport_number is always present and must match the locale's plausible serial shape.
 
 import re
 from datetime import date

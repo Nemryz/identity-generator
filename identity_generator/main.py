@@ -1,10 +1,4 @@
-"""
-main.py
-
-I am the entry point for the identity-generator command-line tool: I parse the arguments, hand the real work over to the generator, history and exporter modules, and print a colour-coded profile to the terminal, where the colours come from colorama so they work on Windows without extra configuration.
-
-Run with: python -X utf8 main.py [options]
-"""
+# main.py I am the entry point for the identity-generator command-line tool: I parse the arguments, hand the real work over to the generator, history and exporter modules, and print a colour-coded profile to the terminal, where the colours come from colorama so they work on Windows without extra configuration. Run with: python -X utf8 main.py [options]
 
 import argparse
 import sys
@@ -130,7 +124,7 @@ def _print_inbox(selector: str) -> None:
 
 
 def _print_locale_table() -> None:
-    """I print one aligned row per supported locale showing what the generator really produces for it (country, official document, passport shape, address convention and dataset sizes), marking with a dash the locales that have no official document or no real-address dataset."""
+    # I print one aligned row per supported locale showing what the generator really produces for it (country, official document, passport shape, address convention and dataset sizes), marking with a dash the locales that have no official document or no real-address dataset.
     widths = (8, 16, 15, 22, 16, 16)
     header = (
         "  "
@@ -319,7 +313,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
-    """I parse the arguments and execute the action they ask for."""
+    # I parse the arguments and execute the action they ask for.
     parser = _build_parser()
     args = parser.parse_args()
 

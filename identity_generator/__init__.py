@@ -1,10 +1,4 @@
-"""
-identity_generator
-
-I am the package behind the identity-generator command-line tool, and importing me is enough to generate identities without touching the terminal at all.
-
-The public surface is small on purpose: generate_identity() returns one coherent profile, set_seed() makes a run reproducible, locale_capabilities() describes what a locale yields, and IDENTITY_SCHEMA is the machine-readable contract of the output. Everything else in the package (history, exporters, email providers, logging and paths) is an implementation detail of the CLI and can change without a deprecation period.
-"""
+# identity_generator I am the package behind the identity-generator command-line tool, and importing me is enough to generate identities without touching the terminal at all. The public surface is small on purpose: generate_identity() returns one coherent profile, set_seed() makes a run reproducible, locale_capabilities() describes what a locale yields, and IDENTITY_SCHEMA is the machine-readable contract of the output. Everything else in the package (history, exporters, email providers, logging and paths) is an implementation detail of the CLI and can change without a deprecation period.
 
 from identity_generator.generator import (
     generate_identity,

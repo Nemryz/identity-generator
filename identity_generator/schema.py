@@ -1,9 +1,4 @@
-"""
-schema.py
-
-I keep the JSON Schema of the identity object that generator.generate_identity() returns, which is what makes the output a real contract rather than a convention: --schema prints it, --json alongside that flag writes it to identity.schema.json, and the test suite validates generated identities against it so the description can never drift away from the code.
-I derive the field list, the types and the nullability straight from the dict generate_identity() builds, where national_id comes back null for locales with no official document provider (es_AR, ja_JP) and email_token is null whenever the address has no real inbox behind it, and I keep this in its own module instead of inside the CLI so anyone importing the package can use it too.
-"""
+# schema.py I keep the JSON Schema of the identity object that generator.generate_identity() returns, which is what makes the output a real contract rather than a convention: --schema prints it, --json alongside that flag writes it to identity.schema.json, and the test suite validates generated identities against it so the description can never drift away from the code. I derive the field list, the types and the nullability straight from the dict generate_identity() builds, where national_id comes back null for locales with no official document provider (es_AR, ja_JP) and email_token is null whenever the address has no real inbox behind it, and I keep this in its own module instead of inside the CLI so anyone importing the package can use it too.
 
 from typing import Any
 
@@ -227,7 +222,7 @@ IDENTITY_SCHEMA: dict[str, Any] = {
 
 
 def schema_json(indent: int = 2) -> str:
-    """I render the schema as a pretty-printed JSON string, ready to be piped into a validator or saved to disk."""
+    # I render the schema as a pretty-printed JSON string, ready to be piped into a validator or saved to disk.
     import json
 
     return json.dumps(IDENTITY_SCHEMA, indent=indent, ensure_ascii=False)

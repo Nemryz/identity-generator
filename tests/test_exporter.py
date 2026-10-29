@@ -1,6 +1,4 @@
-"""
-Tests for exporter.py, focusing on the JSON export collision handling and the CSV and JSONL batch exports.
-"""
+# Tests for exporter.py, focusing on the JSON export collision handling and the CSV and JSONL batch exports.
 
 import csv
 import json
@@ -79,7 +77,7 @@ def test_csv_export_overwrites_previous_file(out_dir):
 
 
 def _full_identity(**overrides) -> dict:
-    """I build a complete identity so the export tests see the same field set the generator produces."""
+    # I build a complete identity so the export tests see the same field set the generator produces.
     identity = {
         "id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
         "created_at": "2026-08-19T10:15:30.123456+00:00",
@@ -110,7 +108,7 @@ def _full_identity(**overrides) -> dict:
 
 
 def test_jsonl_writes_one_line_per_identity(out_dir):
-    """I check the line count matches the batch size, which is what makes the file streamable."""
+    # I check the line count matches the batch size, which is what makes the file streamable.
     identities = [_full_identity(username=f"user{n}") for n in range(4)]
     path = exporter.to_jsonl_file(identities)
     lines = path.read_text(encoding="utf-8").splitlines()
@@ -118,21 +116,21 @@ def test_jsonl_writes_one_line_per_identity(out_dir):
 
 
 def test_jsonl_lines_are_individually_valid_json(out_dir):
-    """I parse every line on its own, since a malformed line would break any consumer reading incrementally."""
+    # I parse every line on its own, since a malformed line would break any consumer reading incrementally.
     path = exporter.to_jsonl_file([_full_identity()])
     for line in path.read_text(encoding="utf-8").splitlines():
         assert isinstance(json.loads(line), dict)
 
 
 def test_jsonl_never_includes_the_email_token(out_dir):
-    """I assert the inbox token never reaches the export, the same decision the CSV makes, because the token reads someone else's mailbox."""
+    # I assert the inbox token never reaches the export, the same decision the CSV makes, because the token reads someone else's mailbox.
     path = exporter.to_jsonl_file([_full_identity()])
     assert "secret-token" not in path.read_text(encoding="utf-8")
     assert "email_token" not in json.loads(path.read_text(encoding="utf-8"))
 
 
 def test_jsonl_record_equals_the_identity_minus_the_token(out_dir):
-    """I check the round trip loses exactly the token and nothing else, which catches a silently dropped field."""
+    # I check the round trip loses exactly the token and nothing else, which catches a silently dropped field.
     identity = _full_identity()
     path = exporter.to_jsonl_file([identity])
     expected = {k: v for k, v in identity.items() if k != "email_token"}
@@ -140,7 +138,7 @@ def test_jsonl_record_equals_the_identity_minus_the_token(out_dir):
 
 
 def test_jsonl_keeps_the_field_order_stable_across_lines(out_dir):
-    """I check the key order is identical on every line, so diffs between two runs stay readable and a fixed-schema consumer can rely on it."""
+    # I check the key order is identical on every line, so diffs between two runs stay readable and a fixed-schema consumer can rely on it.
     identities = [_full_identity(username=f"user{n}") for n in range(3)]
     path = exporter.to_jsonl_file(identities)
     orders = [list(json.loads(line)) for line in path.read_text(encoding="utf-8").splitlines()]
@@ -148,7 +146,7 @@ def test_jsonl_keeps_the_field_order_stable_across_lines(out_dir):
 
 
 def test_jsonl_is_overwritten_on_every_run(out_dir):
-    """I check a second smaller batch replaces the file instead of appending, so a pipeline never reads stale identities."""
+    # I check a second smaller batch replaces the file instead of appending, so a pipeline never reads stale identities.
     exporter.to_jsonl_file([_full_identity(username=f"user{n}") for n in range(5)])
     exporter.to_jsonl_file([_full_identity(username="only")])
     lines = out_dir.joinpath("identities.jsonl").read_text(encoding="utf-8").splitlines()
@@ -156,7 +154,7 @@ def test_jsonl_is_overwritten_on_every_run(out_dir):
 
 
 def test_jsonl_is_written_as_utf8_without_escapes(out_dir):
-    """I check accented names stay readable in the file, because escaped unicode is technically valid but useless to a human opening it."""
+    # I check accented names stay readable in the file, because escaped unicode is technically valid but useless to a human opening it.
     identity = _full_identity(first_name="Mónica", full_name="Mónica Núñez")
     path = exporter.to_jsonl_file([identity])
     raw = path.read_text(encoding="utf-8")
@@ -165,13 +163,13 @@ def test_jsonl_is_written_as_utf8_without_escapes(out_dir):
 
 
 def test_jsonl_filename_is_the_documented_one(out_dir):
-    """I pin the filename so a pipeline can rely on it, matching identities.csv."""
+    # I pin the filename so a pipeline can rely on it, matching identities.csv.
     path = exporter.to_jsonl_file([_full_identity()])
     assert path.name == "identities.jsonl"
 
 
 def test_csv_and_jsonl_export_the_same_fields(out_dir):
-    """I guard the drift that a new identity field reaches one export but not the other, since both drop email_token for the same reason."""
+    # I guard the drift that a new identity field reaches one export but not the other, since both drop email_token for the same reason.
     identity = _full_identity()
     csv_path = exporter.to_csv_file([identity])
     jsonl_path = exporter.to_jsonl_file([identity])
@@ -183,7 +181,7 @@ def test_csv_and_jsonl_export_the_same_fields(out_dir):
 
 
 def test_csv_and_jsonl_order_differently_on_purpose(out_dir):
-    """I pin that the CSV leads with full_name for a spreadsheet reader while the JSONL keeps the generator order, so nobody "fixes" one of them into the other by accident."""
+    # I pin that the CSV leads with full_name for a spreadsheet reader while the JSONL keeps the generator order, so nobody "fixes" one of them into the other by accident.
     identity = _full_identity()
     with exporter.to_csv_file([identity]).open(encoding="utf-8", newline="") as fh:
         csv_fields = next(csv.reader(fh))
@@ -195,13 +193,13 @@ def test_csv_and_jsonl_order_differently_on_purpose(out_dir):
 
 
 def test_jsonl_handles_an_empty_batch(out_dir):
-    """I check an empty list produces an empty file and not a stray newline, which keeps line counts honest."""
+    # I check an empty list produces an empty file and not a stray newline, which keeps line counts honest.
     path = exporter.to_jsonl_file([])
     assert path.read_text(encoding="utf-8") == ""
 
 
 def test_to_schema_file_writes_the_schema(out_dir):
-    """I check the schema file lands where --schema and --json promise, and that it parses back to the same object."""
+    # I check the schema file lands where --schema and --json promise, and that it parses back to the same object.
     from identity_generator import schema as schema_module
 
     path = exporter.to_schema_file()

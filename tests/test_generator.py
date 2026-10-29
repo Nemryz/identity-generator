@@ -1,6 +1,4 @@
-"""
-Tests for the age calculation in generator.py, covering the exact-age fix where the age must not be overstated when the birthday of the current year has not happened yet.
-"""
+# Tests for the age calculation in generator.py, covering the exact-age fix where the age must not be overstated when the birthday of the current year has not happened yet.
 
 from datetime import date
 
@@ -228,7 +226,7 @@ def test_generated_identity_age_within_bounds(locale, monkeypatch):
 
 
 def test_locale_capabilities_returns_the_documented_keys():
-    """I check the capability dict carries exactly the keys the CLI table reads, so renaming one breaks here instead of rendering a blank column."""
+    # I check the capability dict carries exactly the keys the CLI table reads, so renaming one breaks here instead of rendering a blank column.
     caps = locale_capabilities("es_ES")
     assert set(caps) == {
         "locale",
@@ -243,7 +241,7 @@ def test_locale_capabilities_returns_the_documented_keys():
 
 @pytest.mark.parametrize("locale", get_supported_locales())
 def test_locale_capabilities_is_complete_for_every_locale(locale):
-    """I walk all supported locales and require a country, a passport shape and a dataset verdict, because a table with an empty cell is a table nobody trusts."""
+    # I walk all supported locales and require a country, a passport shape and a dataset verdict, because a table with an empty cell is a table nobody trusts.
     caps = locale_capabilities(locale)
     assert caps["locale"] == locale
     assert caps["country"]
@@ -253,7 +251,7 @@ def test_locale_capabilities_is_complete_for_every_locale(locale):
 
 
 def test_locale_capabilities_country_matches_the_country_map():
-    """I tie the displayed country back to LOCALE_COUNTRY_MAP, since that map is what actually reaches the identity."""
+    # I tie the displayed country back to LOCALE_COUNTRY_MAP, since that map is what actually reaches the identity.
     for locale in get_supported_locales():
         from identity_generator.generator import LOCALE_COUNTRY_MAP
 
@@ -261,7 +259,7 @@ def test_locale_capabilities_country_matches_the_country_map():
 
 
 def test_every_locale_with_a_provider_shows_a_document():
-    """I guard the drift that a new national_id provider arrives without a display label, which would render a dash for a locale that does have a document."""
+    # I guard the drift that a new national_id provider arrives without a display label, which would render a dash for a locale that does have a document.
     for locale in _NATIONAL_ID_PROVIDERS:
         caps = locale_capabilities(locale)
         assert caps["national_id"], f"{locale} has a provider but no label"
@@ -269,19 +267,19 @@ def test_every_locale_with_a_provider_shows_a_document():
 
 
 def test_no_label_without_a_provider():
-    """I reject orphan labels, so a stale entry cannot advertise a document for a locale that no longer generates one."""
+    # I reject orphan labels, so a stale entry cannot advertise a document for a locale that no longer generates one.
     assert set(_NATIONAL_ID_LABELS) == set(_NATIONAL_ID_PROVIDERS)
 
 
 def test_locales_without_a_provider_report_no_document():
-    """I check the locales Faker has no official provider for report None, which is what --list-locales renders as a dash and what the schema allows as null."""
+    # I check the locales Faker has no official provider for report None, which is what --list-locales renders as a dash and what the schema allows as null.
     for locale in ("es_AR", "ja_JP"):
         assert locale not in _NATIONAL_ID_PROVIDERS
         assert locale_capabilities(locale)["national_id"] is None
 
 
 def test_ssn_providers_show_their_own_document_names():
-    """I pin the trap that three locales share Faker's ssn provider while shipping three different documents, so nobody collapses them back into one label."""
+    # I pin the trap that three locales share Faker's ssn provider while shipping three different documents, so nobody collapses them back into one label.
     labels = {
         locale: locale_capabilities(locale)["national_id"]
         for locale in ("en_GB", "fr_FR", "it_IT")
@@ -304,12 +302,12 @@ def test_ssn_providers_show_their_own_document_names():
     ],
 )
 def test_passport_shape_renders_the_configured_format(locale, expected):
-    """I check the shape string is derived from _PASSPORT_FORMATS instead of being written by hand, so editing the format map updates the table."""
+    # I check the shape string is derived from _PASSPORT_FORMATS instead of being written by hand, so editing the format map updates the table.
     assert locale_capabilities(locale)["passport"] == expected
 
 
 def test_passport_shape_falls_back_to_nine_digits():
-    """I check an unknown locale gets the generator default, which is the same (0, 9) _passport_number itself uses."""
+    # I check an unknown locale gets the generator default, which is the same (0, 9) _passport_number itself uses.
     letters, digits = _PASSPORT_FORMATS.get("xx_XX", (0, 9))
     assert (letters, digits) == (0, 9)
     assert locale_capabilities("xx_XX")["passport"] == "9 digits"
@@ -327,14 +325,14 @@ def test_passport_shape_falls_back_to_nine_digits():
     ],
 )
 def test_address_style_names_the_convention_of_dataset_locales(locale, expected):
-    """I check the convention reported matches the one _format_address actually applies, which only matters for the locales that carry a dataset."""
+    # I check the convention reported matches the one _format_address actually applies, which only matters for the locales that carry a dataset.
     caps = locale_capabilities(locale)
     assert caps["cities"] is not None
     assert caps["address_style"] == expected
 
 
 def test_locales_without_a_dataset_report_the_faker_fallback():
-    """I check the table says Faker fallback where the address really comes from Faker, instead of claiming a convention the code never applies."""
+    # I check the table says Faker fallback where the address really comes from Faker, instead of claiming a convention the code never applies.
     for locale in ("ja_JP", "bg_BG", "zh_CN"):
         caps = locale_capabilities(locale)
         assert caps["cities"] is None
@@ -343,7 +341,7 @@ def test_locales_without_a_dataset_report_the_faker_fallback():
 
 
 def test_dataset_sizes_are_positive_when_present():
-    """I check the reported city and street counts are real numbers, since the table prints them and a zero would read as a broken dataset."""
+    # I check the reported city and street counts are real numbers, since the table prints them and a zero would read as a broken dataset.
     for locale in get_supported_locales():
         caps = locale_capabilities(locale)
         if caps["cities"] is not None:

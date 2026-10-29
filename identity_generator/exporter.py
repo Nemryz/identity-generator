@@ -1,9 +1,4 @@
-"""
-exporter.py
-
-I handle the four output formats an identity can take, writing the full dict as a JSON file named after the username, spilling a batch into identities.csv as one row per identity (used by --count --csv for database seeding), streaming a batch into identities.jsonl as one compact object per line for data pipelines, and finally copying a plain-text rendering of the profile to the system clipboard through pyperclip.
-The clipboard route depends on the host offering a clipboard mechanism at all (xclip or xsel on Linux, pbcopy on macOS, clip.exe on Windows), so it stays unavailable inside a Docker container unless a display is forwarded.
-"""
+# exporter.py I handle the four output formats an identity can take, writing the full dict as a JSON file named after the username, spilling a batch into identities.csv as one row per identity (used by --count --csv for database seeding), streaming a batch into identities.jsonl as one compact object per line for data pipelines, and finally copying a plain-text rendering of the profile to the system clipboard through pyperclip. The clipboard route depends on the host offering a clipboard mechanism at all (xclip or xsel on Linux, pbcopy on macOS, clip.exe on Windows), so it stays unavailable inside a Docker container unless a display is forwarded.
 
 import csv
 import json
@@ -47,7 +42,7 @@ _CSV_FIELDS = [
 
 
 def to_json_file(identity: dict) -> Path:
-    """I write the identity dict to <username>_identity.json in the current directory and, when that name is already taken, append a short id suffix so an earlier export is never silently overwritten."""
+    # I write the identity dict to <username>_identity.json in the current directory and, when that name is already taken, append a short id suffix so an earlier export is never silently overwritten.
     path = _output_dir() / f"{identity['username']}_identity.json"
     if path.exists():
         path = (
@@ -62,12 +57,12 @@ def to_json_file(identity: dict) -> Path:
 
 
 def to_clipboard(identity: dict) -> None:
-    """I copy the identity to the system clipboard, formatted as the plain-text block below."""
+    # I copy the identity to the system clipboard, formatted as the plain-text block below.
     pyperclip.copy(_format_profile(identity))
 
 
 def to_csv_file(identities: list[dict]) -> Path:
-    """I write one row per identity into identities.csv in the current directory, overwriting it on every run so a pipeline always knows the filename, and leaving out email_token because inbox tokens mean nothing to a database seed."""
+    # I write one row per identity into identities.csv in the current directory, overwriting it on every run so a pipeline always knows the filename, and leaving out email_token because inbox tokens mean nothing to a database seed.
     path = _output_dir() / "identities.csv"
     with path.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=_CSV_FIELDS)
@@ -80,7 +75,7 @@ def to_csv_file(identities: list[dict]) -> Path:
 
 
 def to_schema_file() -> Path:
-    """I dump the identity JSON Schema to identity.schema.json in the current directory, overwriting it each run so the published schema always matches the code that produced the data."""
+    # I dump the identity JSON Schema to identity.schema.json in the current directory, overwriting it each run so the published schema always matches the code that produced the data.
     path = _output_dir() / "identity.schema.json"
     path.write_text(
         json.dumps(IDENTITY_SCHEMA, indent=2, ensure_ascii=False) + "\n",
@@ -90,7 +85,7 @@ def to_schema_file() -> Path:
 
 
 def to_jsonl_file(identities: list[dict]) -> Path:
-    """I write the identities to identities.jsonl in the current directory, one compact JSON object per line in generation order, overwriting the file each run so streaming consumers (jq, log shippers, data loaders) can read it incrementally even while a longer batch is still going, and I drop email_token for the same reason the CSV does."""
+    # I write the identities to identities.jsonl in the current directory, one compact JSON object per line in generation order, overwriting the file each run so streaming consumers (jq, log shippers, data loaders) can read it incrementally even while a longer batch is still going, and I drop email_token for the same reason the CSV does.
     path = _output_dir() / "identities.jsonl"
     with path.open("w", encoding="utf-8") as fh:
         for identity in identities:
@@ -104,7 +99,7 @@ def to_jsonl_file(identities: list[dict]) -> Path:
 
 
 def _format_profile(identity: dict) -> str:
-    """I render the identity as a fixed-width plain-text block, using separator lines and aligned labels so it reads well both in the terminal and pasted into a plain-text field."""
+    # I render the identity as a fixed-width plain-text block, using separator lines and aligned labels so it reads well both in the terminal and pasted into a plain-text field.
     lines = [
         "=" * 48,
         f"  GENERATED IDENTITY  —  {identity.get('country', '')}",

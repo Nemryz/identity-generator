@@ -75,9 +75,11 @@ The tables and the display labels have to move together, and there are guards th
 
 A test validates generated identities against the published JSON Schema, and another refuses a provider without a label, so a half-finished addition fails with a message naming the offender instead of rendering a blank cell in the table.
 
-## Comments and docstrings
+## Comments
 
-Keep them in first person and one line per block, the way the rest of the code does. Public functions keep a docstring because they are the documented surface, internal helpers with a short note get a `#` comment above them, and anything longer than a couple of sentences stays a docstring so it does not get lost.
+Every comment in the codebase is a single `#` line written in first person, and the project keeps no docstrings at all, so a one-line helper and a whole module follow exactly the same habit and nothing hides inside `"""` blocks.
+
+The dataset builder keeps its `argparse` help text as a literal description string, because a module docstring that no longer exists could not feed it.
 
 No bold and no semicolons in the README, one paragraph per line, and no hard wrapping mid-sentence. There is a test for each of those.
 

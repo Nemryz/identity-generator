@@ -1,8 +1,4 @@
-"""
-Tests for schema.py: I check that the published JSON Schema is valid Draft 2020-12, that real identities generated for every supported locale satisfy it, and above all that the schema and the generator cannot drift apart, because these are the drift guards that keep future fields and future locales honest.
-
-I validate with an explicit FormatChecker because JSON Schema treats "format" as a pure annotation unless a checker is passed, so without it the email, uuid and date-time assertions would pass on any string and the whole file would be decoration.
-"""
+# Tests for schema.py: I check that the published JSON Schema is valid Draft 2020-12, that real identities generated for every supported locale satisfy it, and above all that the schema and the generator cannot drift apart, because these are the drift guards that keep future fields and future locales honest. I validate with an explicit FormatChecker because JSON Schema treats "format" as a pure annotation unless a checker is passed, so without it the email, uuid and date-time assertions would pass on any string and the whole file would be decoration.
 
 import copy
 import json
@@ -19,13 +15,13 @@ VALIDATOR = Draft202012Validator(IDENTITY_SCHEMA, format_checker=FormatChecker()
 
 
 def _identity(locale: str = "es_ES") -> dict:
-    """I generate one offline identity so the checks never touch the network."""
+    # I generate one offline identity so the checks never touch the network.
     return generator.generate_identity(locale=locale, email_usable=False)
 
 
 @pytest.fixture
 def out_dir(tmp_path, monkeypatch):
-    """I point the exporters at a throwaway directory so the tests never write into the project."""
+    # I point the exporters at a throwaway directory so the tests never write into the project.
     from identity_generator import exporter
 
     monkeypatch.setattr(exporter, "output_dir", lambda: tmp_path)
@@ -33,23 +29,23 @@ def out_dir(tmp_path, monkeypatch):
 
 
 def _errors(instance: dict) -> list[str]:
-    """I return the validation messages for an instance so a failure is readable."""
+    # I return the validation messages for an instance so a failure is readable.
     return [error.message for error in VALIDATOR.iter_errors(instance)]
 
 
 def test_schema_is_valid_draft_2020_12():
-    """I assert the schema itself is well formed, so a typo in it fails here and not in every downstream test."""
+    # I assert the schema itself is well formed, so a typo in it fails here and not in every downstream test.
     Draft202012Validator.check_schema(IDENTITY_SCHEMA)
     assert IDENTITY_SCHEMA["$schema"] == SCHEMA_DIALECT
 
 
 def test_schema_json_round_trips():
-    """I check the printed schema is real JSON carrying the same content, since --schema pipes it into validators."""
+    # I check the printed schema is real JSON carrying the same content, since --schema pipes it into validators.
     assert json.loads(schema_json()) == IDENTITY_SCHEMA
 
 
 def test_required_fields_match_generated_identity_keys():
-    """I guard the drift that matters most: a new field in generate_identity that nobody added to the schema, or a required field the generator never returns, has to break this test instead of silently shipping a wrong contract. email_token is the single documented exception, since the CSV and JSONL exports leave it out."""
+    # I guard the drift that matters most: a new field in generate_identity that nobody added to the schema, or a required field the generator never returns, has to break this test instead of silently shipping a wrong contract. email_token is the single documented exception, since the CSV and JSONL exports leave it out.
     generated = set(_identity())
     required = set(IDENTITY_SCHEMA["required"])
     optional = set(IDENTITY_SCHEMA["properties"]) - required
@@ -65,18 +61,18 @@ def test_required_fields_match_generated_identity_keys():
 
 
 def test_properties_cover_exactly_the_known_fields():
-    """I check every described property is a real field of the identity and every field is described, because a schema that mentions a name nobody returns is a lie a consumer would trip over."""
+    # I check every described property is a real field of the identity and every field is described, because a schema that mentions a name nobody returns is a lie a consumer would trip over.
     assert set(IDENTITY_SCHEMA["properties"]) == set(_identity())
 
 
 def test_generated_identity_validates_in_every_supported_locale():
-    """I validate one identity per supported locale, all 29 of them and offline, because a schema that only holds for the locales someone remembered to try is not a contract."""
+    # I validate one identity per supported locale, all 29 of them and offline, because a schema that only holds for the locales someone remembered to try is not a contract.
     for locale in generator.get_supported_locales():
         assert _errors(_identity(locale)) == [], f"{locale} does not match the schema"
 
 
 def test_nullable_fields_accept_none():
-    """I check the three nullable fields really accept null, since es_AR and ja_JP ship national_id as None and es_CL under --email-offline ships a null token."""
+    # I check the three nullable fields really accept null, since es_AR and ja_JP ship national_id as None and es_CL under --email-offline ships a null token.
     identity = _identity("es_AR")
     assert identity["national_id"] is None
     identity["email_token"] = None
@@ -86,21 +82,21 @@ def test_nullable_fields_accept_none():
 
 @pytest.mark.parametrize("locale", ["es_AR", "ja_JP"])
 def test_locales_without_document_validate_with_null(locale):
-    """I assert the locales with no official document still satisfy the schema through the nullable national_id."""
+    # I assert the locales with no official document still satisfy the schema through the nullable national_id.
     identity = _identity(locale)
     assert identity["national_id"] is None
     assert _errors(identity) == []
 
 
 def test_schema_rejects_a_missing_required_field():
-    """I delete a required field and expect a failure, which proves the required list is enforced instead of decorative."""
+    # I delete a required field and expect a failure, which proves the required list is enforced instead of decorative.
     identity = _identity()
     del identity["username"]
     assert _errors(identity)
 
 
 def test_schema_rejects_an_unknown_field():
-    """I add a field nobody declared and expect a failure, which proves additionalProperties false does its job when a new field is added without touching the schema."""
+    # I add a field nobody declared and expect a failure, which proves additionalProperties false does its job when a new field is added without touching the schema.
     identity = _identity()
     identity["unexpected"] = "value"
     assert _errors(identity)
@@ -127,14 +123,14 @@ def test_schema_rejects_an_unknown_field():
     ],
 )
 def test_schema_rejects_malformed_values(field, value):
-    """I feed one malformed value at a time and expect a rejection, which is how I prove the constraints bite rather than pass silently."""
+    # I feed one malformed value at a time and expect a rejection, which is how I prove the constraints bite rather than pass silently.
     identity = _identity()
     identity[field] = value
     assert _errors(identity), f"{field}={value!r} should not validate"
 
 
 def test_schema_accepts_the_providers_the_generator_declares():
-    """I check every official document the generator promises produces a value the schema accepts, by walking the provider map instead of a hand-written locale list that would rot."""
+    # I check every official document the generator promises produces a value the schema accepts, by walking the provider map instead of a hand-written locale list that would rot.
     for locale in generator._NATIONAL_ID_PROVIDERS:
         identity = _identity(locale)
         assert identity["national_id"] is not None, locale
@@ -142,7 +138,7 @@ def test_schema_accepts_the_providers_the_generator_declares():
 
 
 def test_schema_password_pattern_accepts_what_the_generator_can_produce():
-    """I build many passwords straight from the generator pools and confirm the schema pattern accepts all of them, so a future charset change cannot contradict the published pattern."""
+    # I build many passwords straight from the generator pools and confirm the schema pattern accepts all of them, so a future charset change cannot contradict the published pattern.
     pattern = re.compile(IDENTITY_SCHEMA["properties"]["password"]["pattern"])
     pools = [
         generator._PASSWORD_LOWER,
@@ -173,13 +169,13 @@ def test_schema_password_pattern_accepts_what_the_generator_can_produce():
     ],
 )
 def test_schema_password_pattern_rejects_bad_passwords(candidate, reason):
-    """I reject the ambiguous glyphs, the missing classes and the wrong lengths, which proves the four lookaheads and the length bound in the pattern really bite."""
+    # I reject the ambiguous glyphs, the missing classes and the wrong lengths, which proves the four lookaheads and the length bound in the pattern really bite.
     pattern = re.compile(IDENTITY_SCHEMA["properties"]["password"]["pattern"])
     assert not pattern.fullmatch(candidate), reason
 
 
 def test_schema_password_pattern_accepts_the_sixteen_character_boundary():
-    """I pin the exact boundary case that a careless implementation would get wrong: 16 valid characters must pass, so the {16} bound is a length check and not an off-by-one."""
+    # I pin the exact boundary case that a careless implementation would get wrong: 16 valid characters must pass, so the {16} bound is a length check and not an off-by-one.
     pattern = re.compile(IDENTITY_SCHEMA["properties"]["password"]["pattern"])
     assert pattern.fullmatch("aaaaAAA2222!!!!x")
     assert not pattern.fullmatch("aaaaAAA2222!!!!xx")
@@ -187,20 +183,20 @@ def test_schema_password_pattern_accepts_the_sixteen_character_boundary():
 
 
 def test_schema_enum_values_match_the_generator_providers():
-    """I keep the email_provider enum honest against the provider names the code actually stores, so adding a provider without touching the enum is caught here."""
+    # I keep the email_provider enum honest against the provider names the code actually stores, so adding a provider without touching the enum is caught here.
     providers = {"tempmail", "mailtm", "offline", None}
     assert set(IDENTITY_SCHEMA["properties"]["email_provider"]["enum"]) == providers
 
 
 def test_validating_identities_does_not_mutate_the_schema():
-    """I assert repeated validation leaves the schema untouched, since I hand out the module-level object and a consumer mutating it would corrupt every later check."""
+    # I assert repeated validation leaves the schema untouched, since I hand out the module-level object and a consumer mutating it would corrupt every later check.
     before = copy.deepcopy(IDENTITY_SCHEMA)
     for locale in ("es_ES", "es_AR", "pt_BR"):
         assert _errors(_identity(locale)) == []
     assert IDENTITY_SCHEMA == before
 
 def test_every_export_format_validates_against_the_same_schema(out_dir):
-    """I prove the three output formats share one contract: the JSON export and the JSONL record validate against IDENTITY_SCHEMA as they are, and the CSV row validates once its one number is coerced, since CSV has no types and every value arrives as text."""
+    # I prove the three output formats share one contract: the JSON export and the JSONL record validate against IDENTITY_SCHEMA as they are, and the CSV row validates once its one number is coerced, since CSV has no types and every value arrives as text.
     import csv as csv_module
 
     from identity_generator import exporter
@@ -225,7 +221,7 @@ def test_every_export_format_validates_against_the_same_schema(out_dir):
 
 
 def test_the_csv_projection_carries_no_types(out_dir):
-    """I pin the one difference between the CSV and the typed formats, so nobody mistakes the CSV for a schema-valid document: age is the only integer in the identity and it arrives as text."""
+    # I pin the one difference between the CSV and the typed formats, so nobody mistakes the CSV for a schema-valid document: age is the only integer in the identity and it arrives as text.
     import csv as csv_module
 
     from identity_generator import exporter
@@ -238,7 +234,7 @@ def test_the_csv_projection_carries_no_types(out_dir):
 
 
 def test_only_the_csv_and_jsonl_drop_the_optional_field(out_dir):
-    """I check the optional field is exactly the one the two pipeline formats leave out, so making it optional did not quietly weaken the full JSON export."""
+    # I check the optional field is exactly the one the two pipeline formats leave out, so making it optional did not quietly weaken the full JSON export.
     from identity_generator import exporter
 
     identity = _identity("es_ES")

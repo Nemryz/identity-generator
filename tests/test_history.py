@@ -1,6 +1,4 @@
-"""
-Tests for history.py: I cover persistence, locking, atomic writes and corruption handling.
-"""
+# Tests for history.py: I cover persistence, locking, atomic writes and corruption handling.
 
 import json
 import os
@@ -119,11 +117,7 @@ def test_missing_file_returns_empty(history_file):
 
 
 def test_concurrent_processes_do_not_lose_entries(history_file):
-    """
-    Two independent CLI processes appending at the same time must both
-    succeed, because the lock is exclusive at the filesystem level
-    (O_EXCL), not an in-process flag.
-    """
+    # Two independent CLI processes appending at the same time must both succeed, because the lock is exclusive at the filesystem level (O_EXCL), not an in-process flag.
     env = {**os.environ, "IDENTITY_HISTORY_FILE": str(history_file)}
     code = (
         "from identity_generator import history\n"
@@ -147,7 +141,7 @@ def test_concurrent_processes_do_not_lose_entries(history_file):
 
 
 def test_user_data_dir_follows_identity_home(tmp_path, monkeypatch):
-    """I check IDENTITY_HOME wins over the platform default, which is what containers and tests rely on."""
+    # I check IDENTITY_HOME wins over the platform default, which is what containers and tests rely on.
     from identity_generator import paths
 
     monkeypatch.setenv(paths.HOME_ENV, str(tmp_path / "elsewhere"))
@@ -155,7 +149,7 @@ def test_user_data_dir_follows_identity_home(tmp_path, monkeypatch):
 
 
 def test_user_data_dir_is_created_on_demand(tmp_path, monkeypatch):
-    """I check the directory appears only when something is written, so importing the package never creates folders as a side effect."""
+    # I check the directory appears only when something is written, so importing the package never creates folders as a side effect.
     from identity_generator import paths
 
     monkeypatch.setenv(paths.HOME_ENV, str(tmp_path / "fresh"))
@@ -165,7 +159,7 @@ def test_user_data_dir_is_created_on_demand(tmp_path, monkeypatch):
 
 
 def test_environment_override_wins_over_the_data_dir(tmp_path, monkeypatch):
-    """I check an explicit IDENTITY_HISTORY_FILE beats both the data directory and the legacy path, because that is the escape hatch every test and script uses."""
+    # I check an explicit IDENTITY_HISTORY_FILE beats both the data directory and the legacy path, because that is the escape hatch every test and script uses.
     from identity_generator import paths
 
     monkeypatch.setenv(paths.HOME_ENV, str(tmp_path / "home"))
@@ -175,7 +169,7 @@ def test_environment_override_wins_over_the_data_dir(tmp_path, monkeypatch):
 
 
 def test_a_legacy_file_is_migrated_once(tmp_path, monkeypatch):
-    """I check a file left in the old location is moved across and not left behind, so nobody ends up with two diverging histories."""
+    # I check a file left in the old location is moved across and not left behind, so nobody ends up with two diverging histories.
     from identity_generator import paths
 
     legacy = tmp_path / "legacy"
@@ -196,7 +190,7 @@ def test_a_legacy_file_is_migrated_once(tmp_path, monkeypatch):
 
 
 def test_first_use_on_a_fresh_directory_creates_it(tmp_path, monkeypatch):
-    """I check the first write on a directory that does not exist yet succeeds, because creating the lock before the folder is what would otherwise crash a library user on their very first call."""
+    # I check the first write on a directory that does not exist yet succeeds, because creating the lock before the folder is what would otherwise crash a library user on their very first call.
     from identity_generator import email_api, history
 
     fresh = tmp_path / "brand-new"
@@ -212,7 +206,7 @@ def test_first_use_on_a_fresh_directory_creates_it(tmp_path, monkeypatch):
 
 
 def test_output_dir_is_the_working_directory(tmp_path, monkeypatch):
-    """I check exports follow where the user is standing, since they are requested output rather than state."""
+    # I check exports follow where the user is standing, since they are requested output rather than state.
     from identity_generator import paths
 
     monkeypatch.chdir(tmp_path)
