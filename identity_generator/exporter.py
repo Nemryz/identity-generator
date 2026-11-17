@@ -46,7 +46,7 @@ def to_json_file(identity: dict) -> Path:
     # I write the identity dict to <username>_identity.json in the current directory and, when that name is already taken, append a short id suffix so an earlier export is never silently overwritten. I sanitise the username so a crafted value cannot escape the output directory.
     safe_username = "".join(
         c for c in str(identity.get("username", "identity"))
-        if c.isalnum() or c in "._-"
+        if c.isalnum() or c in "_-"
     ) or "identity"
     path = _output_dir() / f"{safe_username}_identity.json"
     if path.exists():

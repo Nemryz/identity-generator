@@ -29,6 +29,13 @@ def test_export_uses_username_filename(out_dir):
     assert path.exists()
 
 
+def test_export_sanitizes_username_path_traversal(out_dir):
+    path = exporter.to_json_file(_identity("../../etc/passwd", "abc123456789"))
+    assert path.parent == out_dir
+    assert ".." not in path.name
+    assert path.exists()
+
+
 def test_export_does_not_overwrite_existing_file(out_dir):
     first = _identity("carlos85042", "aaaaaaaaaaaaaaaa")
     second = _identity("carlos85042", "bbbbbbbbbbbbbbbb")

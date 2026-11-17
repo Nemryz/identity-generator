@@ -28,7 +28,7 @@ jobs:
           flake8 identity_generator tests tools --max-line-length=200 --extend-ignore=E501
           mypy identity_generator --ignore-missing-imports
       - name: Run test suite
-        run: python -m pytest tests/ -q
+        run: python -m pytest tests/ -q --cov=identity_generator --cov-report=term-missing --cov-fail-under=70
 
   build:
     needs: test

@@ -3,7 +3,7 @@
 [![CI](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-426%20passed-brightgreen.svg)](tests)
+[![Tests](https://img.shields.io/badge/tests-448%20passed-brightgreen.svg)](tests)
 
 A command-line tool that produces complete, self-consistent synthetic identities. Every field in a generated profile (name, address, phone, postcode) belongs to the same country and language, so the data reads as coherent rather than a random mix of regional formats. Profiles are saved to a local history file and can be exported as JSON or CSV, or copied to the clipboard.
 
@@ -306,11 +306,14 @@ The project ships a fully automated test suite written with pytest, whose defaul
     tests/test_addresses.py   25 tests   real addresses and postcodes
     tests/test_documents.py   26 tests   official national IDs and passports
     tests/test_email_api.py   51 tests   provider chain, rate limits, tokens and API keys
+    tests/test_email_resilience.py  8 tests   provider failures, rate limits and corrupted state
     tests/test_history.py     21 tests   persistence, locking, concurrency
     tests/test_main.py        27 tests   command-line flags, seeded reproducibility, table output
-    tests/test_exporter.py    17 tests   JSON, CSV, JSONL, schema and clipboard exports
-    tests/test_properties.py  20 tests   property-based invariants (Hypothesis)
+    tests/test_exporter.py    18 tests   JSON, CSV, JSONL, schema and clipboard exports
+    tests/test_properties.py  24 tests   property-based invariants (Hypothesis)
     tests/test_schema.py      41 tests   the JSON Schema contract and its drift guards
+    tests/test_paths.py        6 tests   user data dir resolution, env overrides, legacy migration
+    tests/test_applog.py       3 tests   shared logger wiring and idempotency
     tests/test_repo_integrity.py 40 tests   the repo itself: compilation, dependencies, packaging metadata, README claims
     tests/test_network.py      2 tests   real provider contracts against tempmail.lol and mail.tm, excluded from the default runs (see The network suite)
 

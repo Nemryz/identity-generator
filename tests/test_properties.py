@@ -12,11 +12,14 @@ from identity_generator.email_api import _local_part
 from identity_generator.generator import (
     _PASSPORT_FORMATS,
     _build_nickname,
+    _build_password,
     _build_username,
+    _calculate_age,
     _format_address,
     _load_address_dataset,
     _pick_dataset_city,
     _street_number,
+    _to_ascii,
     generate_identity,
     set_seed,
 )
@@ -264,3 +267,42 @@ def test_capabilities_match_what_the_generator_actually_uses():
         assert caps["cities"] is not None or caps["address_style"] == "Faker fallback"
 
     _check()
+
+
+@given(st.text(min_size=1, max_size=40))
+@settings(max_examples=50, deadline=None)
+def test_password_never_contains_ambiguous_glyphs_or_wrong_length(name):
+    pw = _build_password()
+    assert len(pw) == 16
+    assert not any(c in pw for c in "Il1O0")
+    assert any(c.islower() for c in pw)
+    assert any(c.isupper() for c in pw)
+    assert any(c.isdigit() for c in pw)
+    assert any(c in "!@#$%^&*+=?" for c in pw)
+
+
+@given(st.text(min_size=1, max_size=40))
+@settings(max_examples=50, deadline=None)
+def test_to_ascii_is_ascii(name):
+    out = _to_ascii(name)
+    assert all(ord(c) < 128 for c in out)
+
+
+@given(st.text(min_size=1, max_size=40))
+@settings(max_examples=50, deadline=None)
+def test_local_part_has_at_least_three_chars(name):
+    local = _local_part(name, name)
+    assert len(local) >= 3
+    assert local == local.lower()
+
+
+@given(st.integers(min_value=0, max_value=100))
+@settings(max_examples=50, deadline=None)
+def test_calculate_age_non_negative(n):
+    from datetime import date, timedelta
+
+    today = date(2025, 6, 15)
+    dob = today - timedelta(days=n * 365 + 10)
+    age = _calculate_age(dob, today=today)
+    assert age >= 0
+    assert age <= 200
