@@ -29,15 +29,15 @@ env/
 
 # Test cache
 .pytest_cache/
+.coverage
+htmlcov/
 
 # IDE
 .vscode/
 .idea/
 *.iml
 
-# Local AI tooling state
-.opencode/
-.serena/
+# Local AI tooling state (ignored via .git/info/exclude, not committed)
 
 # OS
 .DS_Store
