@@ -45,7 +45,10 @@ def _rut_check_digit(body: str) -> str:
 
 
 def _nir_key(nir: str) -> str:
-    return f"{97 - (int(nir[:13]) % 97):02d}"
+    # The department code can be 2A or 2B for Corsica, which the key
+    # computation replaces with 19 and 18 respectively before taking mod 97.
+    numeric = nir[:13].replace("2A", "19").replace("2B", "18")
+    return f"{97 - (int(numeric) % 97):02d}"
 
 
 _CF_ODD = {
@@ -144,7 +147,7 @@ def test_nin_en_GB(monkeypatch):
 def test_nir_fr_FR(monkeypatch):
     for _ in range(3):
         nir = _identity("fr_FR", monkeypatch)["national_id"]
-        assert re.fullmatch(r"\d{15}", nir)
+        assert re.fullmatch(r"\d{5}[0-9AB]{2}\d{8}", nir)
         assert nir[-2:] == _nir_key(nir)
 
 
