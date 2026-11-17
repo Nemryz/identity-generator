@@ -91,6 +91,7 @@ def print_history(entries: list[dict]) -> None:
 
 def _print_inbox(selector: str) -> None:
     # I fetch and render the received emails of one identity's inbox.
+    identity: dict | None = None
     if selector == "_latest":
         entries = hist.get_all(limit=1)
         if not entries:
@@ -102,6 +103,7 @@ def _print_inbox(selector: str) -> None:
         if identity is None:
             print(Fore.RED + f"  No identity found with UUID {selector}.")
             return
+    assert identity is not None
 
     print(_DIM + "\n  Checking inbox for " + Fore.YELLOW + identity.get("email", ""))
     print(_DIM + "  (emails are consumed when read from tempmail.lol)\n")

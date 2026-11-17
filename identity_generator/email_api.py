@@ -9,7 +9,7 @@ import time
 import unicodedata
 from pathlib import Path
 
-import requests
+import requests  # type: ignore[import-untyped]
 
 from identity_generator.applog import get_logger
 from identity_generator.paths import ensure_user_data_dir, resolve_state_file
@@ -289,7 +289,29 @@ def _backup_corrupt_keys() -> None:
 
 
 def _restrict_permissions(path: Path) -> None:
-    # I make a best-effort 0600 so the keys are not readable by other users.
+    # I make a best-effort restriction so the keys are not readable by other users: chmod 0600 on POSIX, and on Windows I remove inherited ACLs and grant full control only to the current user via icacls.
+    if os.name == "nt":
+        user = os.environ.get("USERNAME")
+        if user:
+            domain = os.environ.get("USERDOMAIN")
+            principal = f"{domain}\\{user}" if domain else user
+            try:
+                import subprocess
+
+                subprocess.run(
+                    [
+                        "icacls",
+                        str(path),
+                        "/inheritance:r",
+                        "/grant:r",
+                        f"{principal}:F",
+                    ],
+                    check=False,
+                    capture_output=True,
+                )
+            except OSError:
+                pass
+        return
     try:
         os.chmod(path, 0o600)
     except OSError:

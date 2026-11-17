@@ -21,11 +21,12 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt -r requirements-dev.txt
-          pip install ruff flake8
+          pip install ruff flake8 mypy
       - name: Lint
         run: |
           ruff check identity_generator tests tools
           flake8 identity_generator tests tools --max-line-length=200 --extend-ignore=E501
+          mypy identity_generator --ignore-missing-imports
       - name: Run test suite
         run: python -m pytest tests/ -q
 

@@ -9,6 +9,7 @@ import uuid
 from datetime import date, datetime, timezone
 from functools import cache
 from pathlib import Path
+from typing import Any
 
 from faker import Faker
 from faker.config import AVAILABLE_LOCALES
@@ -355,9 +356,11 @@ def _build_password() -> str:
     # I generate a 16-character password that satisfies common validators by guaranteeing at least one lowercase, one uppercase, one digit and one symbol while steering clear of ambiguous characters (I, l, 1, O, 0), and every character comes from the operating system's secure random source unless a seed was set with set_seed(), in which case I use the seeded random module so the password is reproducible too.
     pools = [_PASSWORD_LOWER, _PASSWORD_UPPER,
              _PASSWORD_DIGITS, _PASSWORD_SYMBOLS]
+    choice: Any
+    randbelow: Any
     if _SEEDED:
         choice = random.choice
-        randbelow = random.randrange
+        randbelow = random.randrange  # type: ignore[assignment]
     else:
         choice = secrets.choice
         randbelow = secrets.randbelow

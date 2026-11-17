@@ -111,6 +111,7 @@ def _save(entries: list[dict]) -> None:
         encoding="utf-8",
     )
     os.replace(tmp, HISTORY_FILE)
+    _restrict_permissions(HISTORY_FILE)
 
 
 def _acquire_lock() -> None:
@@ -153,3 +154,33 @@ def _is_stale_lock(lock: Path) -> bool:
 
 def _lock_file() -> Path:
     return HISTORY_FILE.with_name(HISTORY_FILE.name + ".lock")
+
+
+def _restrict_permissions(path: Path) -> None:
+    # I make a best-effort restriction so the history (which holds inbox tokens) is not readable by other users.
+    if os.name == "nt":
+        user = os.environ.get("USERNAME")
+        if user:
+            domain = os.environ.get("USERDOMAIN")
+            principal = f"{domain}\\{user}" if domain else user
+            try:
+                import subprocess
+
+                subprocess.run(
+                    [
+                        "icacls",
+                        str(path),
+                        "/inheritance:r",
+                        "/grant:r",
+                        f"{principal}:F",
+                    ],
+                    check=False,
+                    capture_output=True,
+                )
+            except OSError:
+                pass
+        return
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
