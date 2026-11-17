@@ -98,9 +98,4 @@ def output_dir() -> Path:
     return Path.cwd()
 
 
-def describe() -> str:
-    # I render where this run keeps its files, for the --verbose log.
-    return (
-        f"state and secrets: {user_data_dir()}\n"
-        f"exports: {output_dir()}"
-    )
+# describe() removed: unused helper (dead code). Use user_data_dir()/output_dir() directly.

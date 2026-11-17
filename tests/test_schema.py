@@ -195,6 +195,7 @@ def test_validating_identities_does_not_mutate_the_schema():
         assert _errors(_identity(locale)) == []
     assert IDENTITY_SCHEMA == before
 
+
 def test_every_export_format_validates_against_the_same_schema(out_dir):
     # I prove the three output formats share one contract: the JSON export and the JSONL record validate against IDENTITY_SCHEMA as they are, and the CSV row validates once its one number is coerced, since CSV has no types and every value arrives as text.
     import csv as csv_module

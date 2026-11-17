@@ -361,7 +361,7 @@ def _query_cell(
     else:
         south, west, north, east = bbox
         where = (
-            f'(way["highway"~"' + STREET_HIGHWAYS
+            '(way["highway"~"' + STREET_HIGHWAYS
             + f'"]["name"]({south:.4f},{west:.4f},{north:.4f},{east:.4f}););'
         )
     query = (

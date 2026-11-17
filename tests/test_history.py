@@ -1,6 +1,5 @@
 # Tests for history.py: I cover persistence, locking, atomic writes and corruption handling.
 
-import json
 import os
 import subprocess
 import sys

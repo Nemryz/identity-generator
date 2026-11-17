@@ -53,9 +53,9 @@ def test_age_leap_day_birthday():
 
 
 def test_age_accepts_datetime():
-    from datetime import datetime
+    from datetime import datetime, timezone
 
-    assert _calculate_age(datetime(2000, 12, 31, 23, 59), today=TODAY) == 25
+    assert _calculate_age(datetime(2000, 12, 31, 23, 59, tzinfo=timezone.utc), today=TODAY) == 25
 
 
 @pytest.mark.parametrize(

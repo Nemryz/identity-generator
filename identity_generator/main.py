@@ -6,9 +6,8 @@ import time
 
 from colorama import Fore, Style, init
 
-from identity_generator import exporter
+from identity_generator import email_api, exporter
 from identity_generator import history as hist
-from identity_generator import email_api
 from identity_generator.applog import setup_logging
 from identity_generator.generator import (
     generate_identity,
@@ -427,7 +426,7 @@ def main() -> None:
         try:
             exporter.to_clipboard(identities[-1])
             print(Fore.GREEN + "\n  Profile copied to clipboard.")
-        except Exception as exc:  # pyperclip raises various types depending on OS
+        except Exception as exc:  # noqa: BLE001 - pyperclip raises various types depending on OS
             print(Fore.RED + f"\n  Clipboard unavailable: {exc}")
 
     if count == 1 and args.delay:

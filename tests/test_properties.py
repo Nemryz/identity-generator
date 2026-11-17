@@ -4,10 +4,9 @@ import random
 import re
 
 import pytest
+from faker.config import AVAILABLE_LOCALES
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
-
-from faker.config import AVAILABLE_LOCALES
 
 from identity_generator.email_api import _local_part
 from identity_generator.generator import (

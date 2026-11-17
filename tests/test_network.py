@@ -6,7 +6,7 @@ import secrets
 import pytest
 import requests
 
-import identity_generator.email_api as email_api
+from identity_generator import email_api
 
 pytestmark = pytest.mark.network
 

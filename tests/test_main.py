@@ -25,6 +25,7 @@ def _run(history_file: Path, *args: str) -> subprocess.CompletedProcess:
         encoding="utf-8",
         timeout=60,
         env=env,
+        check=False,
     )
 
 
@@ -207,11 +208,13 @@ def test_log_file_created_on_generation(tmp_path):
         text=True,
         timeout=60,
         env=env,
+        check=False,
     )
     assert result.returncode == 0
     assert log_file.exists()
 
 # --- --seed: reproducibility (A1) ----------------------------------------------------
+
 
 _PROFILE_FIELDS = (
     "Full name",

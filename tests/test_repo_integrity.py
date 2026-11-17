@@ -173,9 +173,9 @@ def test_readme_paragraphs_are_not_wrapped():
         line, previous = lines[index], lines[index - 1]
         if not line or not previous:
             continue
-        if line.startswith("#") or line.startswith("    "):
+        if line.startswith(("#", "    ")):
             continue
-        if previous.startswith("#") or previous.startswith("    "):
+        if previous.startswith(("#", "    ")):
             continue
         if re.match(r"^[a-z(]", line) and not re.match(r"^\s*[-*]\s", line):
             offenders.append((index + 1, line[:60]))
@@ -300,6 +300,7 @@ def _collected_tests(extra_args: list[str]) -> tuple[dict[str, int], int]:
         capture_output=True,
         text=True,
         encoding="utf-8",
+        check=False,
     )
     rows = {}
     for line in result.stdout.splitlines():

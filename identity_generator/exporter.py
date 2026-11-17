@@ -6,14 +6,15 @@ from pathlib import Path
 
 import pyperclip
 
-from identity_generator.schema import IDENTITY_SCHEMA
 from identity_generator.paths import output_dir
+from identity_generator.schema import IDENTITY_SCHEMA
 
 
 def _output_dir() -> Path:
     # I resolve the target on every call instead of at import time, so a
     # change of working directory between two exports is respected.
     return output_dir()
+
 
 _CSV_FIELDS = [
     "full_name",
@@ -42,12 +43,16 @@ _CSV_FIELDS = [
 
 
 def to_json_file(identity: dict) -> Path:
-    # I write the identity dict to <username>_identity.json in the current directory and, when that name is already taken, append a short id suffix so an earlier export is never silently overwritten.
-    path = _output_dir() / f"{identity['username']}_identity.json"
+    # I write the identity dict to <username>_identity.json in the current directory and, when that name is already taken, append a short id suffix so an earlier export is never silently overwritten. I sanitise the username so a crafted value cannot escape the output directory.
+    safe_username = "".join(
+        c for c in str(identity.get("username", "identity"))
+        if c.isalnum() or c in "._-"
+    ) or "identity"
+    path = _output_dir() / f"{safe_username}_identity.json"
     if path.exists():
         path = (
             _output_dir()
-            / f"{identity['username']}_{identity['id'][:8]}_identity.json"
+            / f"{safe_username}_{identity['id'][:8]}_identity.json"
         )
     path.write_text(
         json.dumps(identity, ensure_ascii=False, indent=2),

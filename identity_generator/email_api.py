@@ -318,7 +318,8 @@ def _mailtm_email(local: str) -> tuple[str, str] | None:
             if resp.status_code != 422:
                 break
         return None
-    except Exception:
+    except Exception as exc:  # noqa: BLE001  # mail.tm can reject or time out; fall through to the next provider.
+        logger.debug("mail.tm account creation failed: %s", exc)
         return None
 
 
@@ -334,7 +335,8 @@ def _mailtm_token(address: str, password: str) -> str | None:
             if response.status_code == 200:
                 return response.json().get("token")
             time.sleep(1)
-        except Exception:
+        except Exception as exc:  # noqa: BLE001  # token endpoint can lag; retry a few times.
+            logger.debug("mail.tm token request failed: %s", exc)
             time.sleep(1)
     return None
 
@@ -354,7 +356,8 @@ def _tempmail_email(prefix: str) -> tuple[str, str] | None:
         if address:
             return address, data.get("token") or ""
         return None
-    except Exception:
+    except Exception as exc:  # noqa: BLE001  # tempmail.lol can reject or time out; fall through to the next provider.
+        logger.debug("tempmail.lol inbox creation failed: %s", exc)
         return None
 
 
@@ -379,7 +382,7 @@ def _tempmail_read(token: str, limit: int) -> list[dict]:
             }
             for msg in messages
         ]
-    except Exception:
+    except Exception:  # noqa: BLE001
         logger.warning("no se pudo consultar el inbox de tempmail.lol")
         return []
 
@@ -417,7 +420,7 @@ def _mailtm_read(token: str, limit: int) -> list[dict]:
             )
         _record_usage("read_mailtm")
         return result
-    except Exception:
+    except Exception:  # noqa: BLE001
         logger.warning("no se pudo consultar el inbox de mail.tm")
         return []
 

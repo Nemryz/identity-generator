@@ -5,8 +5,8 @@ from datetime import date
 
 import pytest
 
-from identity_generator.generator import _PASSPORT_FORMATS, generate_identity
 from identity_generator import exporter
+from identity_generator.generator import _PASSPORT_FORMATS, generate_identity
 
 PROVIDER_LOCALES = [
     "es_ES",
