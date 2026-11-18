@@ -1,4 +1,4 @@
-# email_api.py I handle temporary email address generation for a synthetic identity, and the preferred path always creates a REAL usable inbox whose address is built from the identity's first and last names (carlos.garcia@<provider>, for example) through this chain: 0. Custom - the user's own catch-all domain (domains.json, Cloudflare Email Routing, and the like), where addresses are deliverable to the user's real inbox, never rate-limited and never blocked as disposable. 1. tempmail.lol - REST API. The free tier needs no key (per-IP limits); a stored API key switches it to per-account limits, longer inbox lifespan and access to custom domains. The creation response includes the inbox token in the same request. 2. mail.tm - REST API, no key. Custom address + best-effort session token (its /token endpoint can lag behind account creation). 3. Offline - plausible address with a known disposable domain, no inbox. I track rate limits per provider in email_usage.json (tempmail.lol free tier: 15 inboxes per 30 minutes per IP, mail.tm: 8 requests/second) so the chain skips a provider before it rejects us, warning the user when a limit approaches. The tempmail.lol figures are the free tier ones, since a stored API key moves the provider to per-account limits and a Plus or Ultra plan is unaffected by that change. The returned token lets --check-inbox read the mailbox for verification codes, and I count read operations too so their usage stays visible. API references: - https://docs.mail.tm/ - https://tempmail.lol/en/api
+# email_api.py I handle temporary email address generation for a synthetic identity, and the preferred path always creates a REAL usable inbox whose address is built from the identity's first and last names (carlos.garcia@<provider>, for example) through this chain: 0. Custom - the user's own catch-all domain (domains.json, Cloudflare Email Routing, and the like), where addresses are deliverable to the user's real inbox, never rate-limited and never blocked as disposable. 1. tempmail.lol - REST API. The free tier needs no key (per-IP limits); a stored API key switches it to per-account limits, longer inbox lifespan and access to custom domains. The creation response includes the inbox token in the same request. 2. mail.tm - REST API, no key. Custom address + best-effort session token (its /token endpoint can lag behind account creation). 3. guerrillamail - session AJAX API, no key. One request pins the identity's local part onto a fresh session (set_email_user starts the session for that user directly) and the sid_token it hands back reads the mailbox later. 4. Offline - plausible address with a known disposable domain, no inbox. The --email-provider flag short-circuits the chain: auto walks it in order, while an explicit provider is tried alone and falls back to offline when it fails, so the flag never returns a different real provider than the one asked for. I track rate limits per provider in email_usage.json (tempmail.lol free tier: 15 inboxes per 30 minutes per IP, mail.tm: 8 requests/second) so the chain skips a provider before it rejects us, warning the user when a limit approaches. The tempmail.lol figures are the free tier ones, since a stored API key moves the provider to per-account limits and a Plus or Ultra plan is unaffected by that change. The returned token lets --check-inbox read the mailbox for verification codes, and I count read operations too so their usage stays visible. API references: - https://docs.mail.tm/ - https://tempmail.lol/en/api - https://www.guerrillamail.com/GuerrillaMailAPI.html
 
 import json
 import os
@@ -7,6 +7,7 @@ import secrets
 import string
 import time
 import unicodedata
+from collections.abc import Callable
 from pathlib import Path
 
 import requests
@@ -18,6 +19,7 @@ logger = get_logger("email")
 
 MAILTM_BASE = "https://api.mail.tm"
 TEMPMAIL_BASE = "https://api.tempmail.lol"
+GUERRILLA_BASE = "https://api.guerrillamail.com/ajax.php"
 FALLBACK_DOMAINS = [
     "mailinator.com",
     "guerrillamail.com",
@@ -42,6 +44,7 @@ PROVIDER_LIMITS = {
     "custom": {"window": 0, "max": 0},
     "tempmail": {"window": 1800, "max": 15},
     "mailtm": {"window": 1, "max": 8},
+    "guerrilla": {"window": 0, "max": 0},
     "offline": {"window": 0, "max": 0},
 }
 _WARNING_THRESHOLD = 0.8
@@ -51,13 +54,21 @@ _LOCK_STALE_SECONDS = 10
 
 
 def get_temp_email(
-    first_name: str, last_name: str, usable: bool = True
+    first_name: str,
+    last_name: str,
+    usable: bool = True,
+    provider: str = "auto",
 ) -> dict:
-    # I create an email address for the identity and return it as {"email": str, "token": str | None, "provider": str}: when a custom catch-all domain is configured in domains.json I use it first so addresses are deliverable to the user's real inbox with no API, no rate limit and no blocking risk, otherwise with usable=True I try the real-inbox providers in order (tempmail.lol then mail.tm) and fall back to a plausible address without an inbox when both are unreachable or rate-limited, and with usable=False I produce only the plausible offline address. The token, when present, can later be used to read the inbox.
+    # I create an email address for the identity and return it as {"email": str, "token": str | None, "provider": str}: with provider="auto" I walk the chain (custom catch-all domain first, then tempmail.lol, mail.tm and guerrillamail as real-inbox providers, then offline) and fall back to a plausible address without an inbox when everything is unreachable or rate-limited, while an explicit provider is tried on its own and falls back to offline when it fails so the flag never hands back a different real provider than the one asked for; usable=False keeps only the plausible offline address in auto mode, and an explicit provider takes precedence over it because it is the more specific instruction.
     local = _local_part(first_name, last_name)
 
     custom = _custom_domains()
-    if custom:
+    if provider == "custom":
+        if not custom:
+            raise ValueError(
+                "--email-provider custom necesita dominios catch-all en "
+                "domains.json y no hay ninguno configurado."
+            )
         _record_usage("custom")
         return {
             "email": _custom_email(local, custom),
@@ -65,7 +76,39 @@ def get_temp_email(
             "provider": "custom",
         }
 
-    if not usable:
+    if provider == "auto" and custom:
+        _record_usage("custom")
+        return {
+            "email": _custom_email(local, custom),
+            "token": None,
+            "provider": "custom",
+        }
+
+    if provider == "offline" or (not usable and provider == "auto"):
+        _record_usage("offline")
+        return {
+            "email": _offline_email(local),
+            "token": None,
+            "provider": "offline",
+        }
+
+    if provider != "auto":
+        creator = _FORCED_CREATORS.get(provider)
+        if creator is None:
+            raise ValueError(f"Proveedor de email desconocido: {provider!r}")
+        if _can_use(provider):
+            result = creator(local)
+            if result is not None:
+                _record_usage(provider)
+                address, token = result
+                return {
+                    "email": address,
+                    "token": token or None,
+                    "provider": provider,
+                }
+            logger.warning(f"{provider} no disponible - usando correo offline")
+        else:
+            logger.warning(f"{provider} en el limite - usando correo offline")
         _record_usage("offline")
         return {
             "email": _offline_email(local),
@@ -95,7 +138,19 @@ def get_temp_email(
                 "token": token or None,
                 "provider": "mailtm",
             }
-    _warn_provider("mailtm", "offline")
+    _warn_provider("mailtm", "guerrillamail")
+
+    if _can_use("guerrilla"):
+        result = _guerrilla_email(local)
+        if result is not None:
+            _record_usage("guerrilla")
+            address, token = result
+            return {
+                "email": address,
+                "token": token or None,
+                "provider": "guerrilla",
+            }
+    _warn_provider("guerrilla", "offline")
 
     _record_usage("offline")
     return {
@@ -120,6 +175,8 @@ def check_inbox(identity: dict, limit: int = 10) -> list[dict]:
         return _tempmail_read(token, limit)
     if provider == "mailtm":
         return _mailtm_read(token, limit)
+    if provider == "guerrilla":
+        return _guerrilla_read(token, limit)
     raise ValueError(
         "Proveedor de email desconocido o identidad antigua sin email_provider; "
         "regenera la identidad."
@@ -130,7 +187,7 @@ def usage_summary() -> str:
     # Render the per-provider usage counters for --email-usage.
     lines = []
     usage = _load_usage()
-    providers = ["tempmail", "mailtm", "offline"]
+    providers = ["tempmail", "mailtm", "guerrilla", "offline"]
     if _custom_domains():
         providers.insert(0, "custom")
     for provider in providers:
@@ -318,6 +375,52 @@ def _restrict_permissions(path: Path) -> None:
         pass
 
 
+def _guerrilla_email(local: str) -> tuple[str, str] | None:
+    # I create a real inbox at guerrillamail in a single request, because set_email_user without a session starts one for that exact user and hands back both the address and the sid_token that reads the mailbox later.
+    try:
+        response = requests.get(
+            GUERRILLA_BASE,
+            params={"f": "set_email_user", "email_user": local, "lang": "en"},
+            timeout=REQUEST_TIMEOUT,
+        )
+        response.raise_for_status()
+        data = response.json()
+        address = data.get("email_addr")
+        token = data.get("sid_token")
+        if address and token:
+            return address, token
+        return None
+    except Exception as exc:  # noqa: BLE001  # guerrillamail can reject or time out; fall through to the next provider.
+        logger.debug("guerrillamail inbox creation failed: %s", exc)
+        return None
+
+
+def _guerrilla_read(token: str, limit: int) -> list[dict]:
+    # I read received emails from a guerrillamail inbox with the session token, mapping its mail_* fields into the common from/subject/text shape, and give back an empty list when the API is unreachable or the session expired.
+    try:
+        response = requests.get(
+            GUERRILLA_BASE,
+            params={"f": "check_email", "seq": 0, "sid_token": token},
+            timeout=REQUEST_TIMEOUT,
+        )
+        response.raise_for_status()
+        data = response.json()
+        messages = data.get("list", []) if isinstance(data, dict) else []
+        result = [
+            {
+                "from": msg.get("mail_from", ""),
+                "subject": msg.get("mail_subject", ""),
+                "text": msg.get("mail_body", "") or msg.get("mail_excerpt", ""),
+            }
+            for msg in messages[:limit]
+        ]
+        _record_usage("read_guerrilla")
+        return result
+    except Exception:  # noqa: BLE001
+        logger.warning("no se pudo consultar el inbox de guerrillamail")
+        return []
+
+
 def _mailtm_email(local: str) -> tuple[str, str] | None:
     # I create a real inbox at mail.tm with a custom address, giving back (address, token) on success or None, and retrying with a numeric suffix when the address is already taken.
     try:
@@ -448,6 +551,15 @@ def _mailtm_read(token: str, limit: int) -> list[dict]:
     except Exception:  # noqa: BLE001
         logger.warning("no se pudo consultar el inbox de mail.tm")
         return []
+
+
+# I map an explicit --email-provider choice onto its creation function, so the
+# flag tries that provider alone instead of walking the whole chain.
+_FORCED_CREATORS: dict[str, Callable[[str], tuple[str, str] | None]] = {
+    "tempmail": lambda local: _tempmail_email(local.replace(".", "_")),
+    "mailtm": _mailtm_email,
+    "guerrilla": _guerrilla_email,
+}
 
 
 def _usage_count(provider: str) -> int:

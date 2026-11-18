@@ -166,7 +166,7 @@ IDENTITY_SCHEMA: dict[str, Any] = {
         "email_provider": {
             "type": ["string", "null"],
             "description": "Provider owning the inbox. Tells --check-inbox which API to query.",
-            "enum": ["tempmail", "mailtm", "offline", None],
+            "enum": ["custom", "tempmail", "mailtm", "guerrilla", "offline", None],
         },
         "username": {
             "type": "string",

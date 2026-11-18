@@ -245,9 +245,12 @@ def _passport_number(locale: str) -> str:
 
 
 def generate_identity(
-    locale: str | None = None, email_usable: bool = True, reuse: bool = False
+    locale: str | None = None,
+    email_usable: bool = True,
+    reuse: bool = False,
+    email_provider: str = "auto",
 ) -> dict:
-    # I generate one synthetic identity and return a dict with all the profile fields plus metadata (id, created_at, locale): when locale is None I pick a random entry from DEFAULT_LOCALES, email_usable=False asks for a plausible email without a real inbox (no network calls), and reuse=True copies the most recent usable inbox from history instead of creating a new one (no network calls, no provider usage recorded).
+    # I generate one synthetic identity and return a dict with all the profile fields plus metadata (id, created_at, locale): when locale is None I pick a random entry from DEFAULT_LOCALES, email_usable=False asks for a plausible email without a real inbox (no network calls), reuse=True copies the most recent usable inbox from history instead of creating one (no network calls, no provider usage recorded), and email_provider either walks the automatic chain ("auto") or pins the inbox creation to a single provider.
     if locale is None:
         locale = random.choice(DEFAULT_LOCALES)
 
@@ -275,7 +278,9 @@ def generate_identity(
         if email_info is None:
             logger.info("no hay inbox previo reutilizable - creando uno nuevo")
     if email_info is None:
-        email_info = get_temp_email(first, last, usable=email_usable)
+        email_info = get_temp_email(
+            first, last, usable=email_usable, provider=email_provider
+        )
     return {
         "id": str(uuid.uuid4()),
         "created_at": datetime.now(timezone.utc).isoformat(),

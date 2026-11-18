@@ -232,6 +232,19 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--email-provider",
+        choices=["auto", "custom", "tempmail", "mailtm", "guerrilla", "offline"],
+        default="auto",
+        dest="email_provider",
+        help=(
+            "Pin the inbox provider instead of walking the automatic chain "
+            "(custom catch-all, tempmail.lol, mail.tm, guerrillamail, "
+            "offline). An explicit provider wins over --email-offline and "
+            "falls back to an offline address when it fails; 'auto' is the "
+            "default chain."
+        ),
+    )
+    parser.add_argument(
         "--email-usage",
         action="store_true",
         dest="email_usage",
@@ -390,11 +403,16 @@ def main() -> None:
     count = max(1, args.count)
     identities = []
     for i in range(count):
-        identity = generate_identity(
-            locale=args.locale,
-            email_usable=not args.email_offline,
-            reuse=args.reuse,
-        )
+        try:
+            identity = generate_identity(
+                locale=args.locale,
+                email_usable=not args.email_offline,
+                reuse=args.reuse,
+                email_provider=args.email_provider,
+            )
+        except ValueError as exc:
+            print(Fore.RED + f"  {exc}")
+            sys.exit(1)
         identities.append(identity)
         if count == 1:
             print_identity(identity)
