@@ -355,7 +355,10 @@ def _mailtm_token(address: str, password: str) -> str | None:
                 timeout=REQUEST_TIMEOUT,
             )
             if response.status_code == 200:
-                return response.json().get("token")
+                token: str | None = response.json().get("token")
+                if isinstance(token, str):
+                    return token
+                return None
             time.sleep(1)
         except Exception as exc:  # noqa: BLE001  # token endpoint can lag; retry a few times.
             logger.debug("mail.tm token request failed: %s", exc)

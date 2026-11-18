@@ -6,6 +6,7 @@ import secrets
 import string
 import unicodedata
 import uuid
+from collections.abc import Callable
 from datetime import date, datetime, timezone
 from functools import cache
 from pathlib import Path
@@ -173,7 +174,7 @@ def is_supported_locale(locale: str) -> bool:
     return locale in AVAILABLE_LOCALES
 
 
-def _calculate_age(dob, today: date | None = None) -> int:
+def _calculate_age(dob: date | datetime, today: date | None = None) -> int:
     # I work out the exact age in whole years for a birth date, counting a year only once the birthday has actually happened this year so that subtracting years alone never overstates it (born December 1965, seen in August 2026 is 60, not 61), and I take either a date or a datetime while letting ``today`` be injected for deterministic tests and defaulting to the current date otherwise.
     dob_date = dob.date() if hasattr(dob, "date") else dob
     if today is None:
@@ -201,8 +202,9 @@ def _load_address_dataset(locale: str) -> dict | None:
 
 def _pick_dataset_city(dataset: dict) -> dict:
     # I pick a city out of a dataset weighted by population, letting only the cities that carry a real postal code take part so the one I hand back always has a usable postcode.
-    pool = [city for city in dataset["cities"] if city.get("postcode")]
-    return random.choices(pool, weights=[c["population"] for c in pool])[0]
+    pool: list[dict] = [city for city in dataset["cities"] if city.get("postcode")]
+    chosen: dict = random.choices(pool, weights=[c["population"] for c in pool])[0]
+    return chosen
 
 
 def _street_number() -> int:
@@ -227,7 +229,8 @@ def _national_id(locale: str, fake: Faker, dob: date) -> str | None:
     try:
         if method == "rvnr":
             return fake.rvnr(birthdate=dob)
-        return getattr(fake, method)()
+        value: str | None = getattr(fake, method)()
+        return value
     except Exception as exc:  # noqa: BLE001 - Faker providers vary by locale; a missing document must not break the profile.
         logger.debug("national_id provider %s failed: %s", method, exc)
         return None
@@ -308,7 +311,7 @@ def _get_first_name(fake: Faker, gender: str) -> str:
         return fake.first_name()
 
 
-def _safe(primary_fn, fallback_fn=None) -> str:
+def _safe(primary_fn: Callable[[], str], fallback_fn: Callable[[], str] | None = None) -> str:
     # I call primary_fn and hand back its result, falling through to fallback_fn whenever primary_fn raises, and giving up with "N/A" when there is no fallback or it fails too, keeping the broad exception catch on purpose because Faker's locale coverage varies and some providers blow up in unexpected ways on unsupported locales.
     try:
         return primary_fn()
@@ -360,7 +363,7 @@ def _build_password() -> str:
     randbelow: Any
     if _SEEDED:
         choice = random.choice
-        randbelow = random.randrange  # type: ignore[assignment]
+        randbelow = random.randrange
     else:
         choice = secrets.choice
         randbelow = secrets.randbelow
