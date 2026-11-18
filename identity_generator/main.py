@@ -260,6 +260,16 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--parquet",
+        action="store_true",
+        help=(
+            "Export the generated identities to identities.parquet with an "
+            "explicit string schema (requires the optional pyarrow "
+            "dependency, install with pip install "
+            "identity-generator[parquet])."
+        ),
+    )
+    parser.add_argument(
         "--count",
         type=int,
         metavar="N",
@@ -532,6 +542,10 @@ def main() -> None:
     if args.sqlite:
         path = exporter.to_sqlite_file(identities)
         print(Fore.GREEN + f"\n  SQLite database written to: {path}")
+
+    if args.parquet:
+        path = exporter.to_parquet_file(identities)
+        print(Fore.GREEN + f"\n  Parquet file written to: {path}")
 
     if args.clipboard:
         try:

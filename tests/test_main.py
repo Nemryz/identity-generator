@@ -474,3 +474,26 @@ def test_sqlite_export_writes_a_queryable_database_in_the_working_directory(
     assert row["email_provider"] == "offline"
     assert "email_token" not in columns
     assert row["country"] == "Espana"
+
+
+def test_parquet_export_writes_a_readable_file_in_the_working_directory(
+    tmp_path, monkeypatch
+):
+    # I run the flag through the real entry point with the working directory pointed at a temporary folder, because the exports land in the current directory and the file must read back with the declared schema afterwards.
+    import pyarrow.parquet as pq
+
+    monkeypatch.chdir(tmp_path)
+    result = _run(
+        tmp_path / "h.json",
+        "--email-offline",
+        "--locale",
+        "es_ES",
+        "--parquet",
+    )
+    assert result.returncode == 0
+    assert "identities.parquet" in result.stdout
+    table = pq.read_table(tmp_path / "identities.parquet")
+    row = table.to_pylist()[0]
+    assert row["email_provider"] == "offline"
+    assert "email_token" not in table.column_names
+    assert row["country"] == "Espana"

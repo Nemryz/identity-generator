@@ -4,4 +4,5 @@ pytest
 hypothesis
 jsonschema
 pytest-cov
+pyarrow
 tomli>=2.5.0; python_version < "3.11"

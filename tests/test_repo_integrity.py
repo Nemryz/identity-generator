@@ -58,6 +58,12 @@ LOCAL_MODULES = {
     "schema",
 }
 
+# Modules imported lazily inside a function because they are optional at
+# runtime and declared as extras, so they belong neither in requirements.txt
+# nor in the runtime dependency failure list, and a dedicated test keeps the
+# extra that declares them honest.
+OPTIONAL_RUNTIME_IMPORTS = {"pyarrow"}
+
 
 def _all_python_files() -> list[Path]:
     # I gather every Python file the repository ships outside tests, skipping caches, because pytest already imports each test file it collects and catches a syntax error there on its own.
@@ -83,6 +89,7 @@ def _top_level_imports(path: Path) -> set[str]:
         if name not in sys.stdlib_module_names
         and name not in LOCAL_MODULES
         and name not in NEWER_THAN_MINIMUM_STDLIB
+        and name not in OPTIONAL_RUNTIME_IMPORTS
     }
 
 
@@ -252,6 +259,13 @@ def test_requirements_dev_matches_the_pyproject_dev_extra():
     declared = _declared("requirements-dev.txt")
     extra = _pyproject()["project"]["optional-dependencies"]["dev"]
     assert declared == {_requirement_name(item) for item in extra}
+
+
+def test_parquet_extra_declares_pyarrow():
+    # I keep the optional extra honest, so the install hint the exporter prints when pyarrow is missing points at an extra that actually exists, and the development environment really runs the parquet tests.
+    extras = _pyproject()["project"]["optional-dependencies"]
+    assert "pyarrow" in extras["parquet"]
+    assert "pyarrow" in _declared("requirements-dev.txt")
 
 
 def test_pyproject_requires_the_python_the_ci_tests():

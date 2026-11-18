@@ -5,6 +5,7 @@ import json
 import os
 import sqlite3
 from pathlib import Path
+from typing import Any
 
 import pyperclip
 
@@ -147,6 +148,32 @@ def to_sqlite_file(identities: list[dict]) -> Path:
     conn.close()
     os.replace(tmp, target)
     return target
+
+
+def _load_pyarrow() -> tuple[Any, Any]:
+    # I import the optional parquet engine lazily so a base install works without it, and I turn its absence into a controlled error that names the exact extra to install instead of a traceback from deep inside the import machinery.
+    try:
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+    except ImportError as exc:
+        raise SystemExit(
+            "Parquet export requires the optional dependency pyarrow. "
+            "Install it with: pip install identity-generator[parquet]"
+        ) from exc
+    return pa, pq
+
+
+def to_parquet_file(identities: list[dict]) -> Path:
+    # I write identities.parquet with one explicit string column per exportable field, so the on-disk schema is stable instead of inferred from whatever the first record happens to carry, and the same shared field list the CSV and the SQLite table use decides what the file holds.
+    pa, pq = _load_pyarrow()
+    schema = pa.schema([(field, pa.string()) for field in EXPORT_FIELDS])
+    columns = {
+        field: [_sql_value(identity.get(field)) for identity in identities]
+        for field in EXPORT_FIELDS
+    }
+    path = _output_dir() / "identities.parquet"
+    pq.write_table(pa.table(columns, schema=schema), path)
+    return path
 
 
 def _format_profile(identity: dict) -> str:
