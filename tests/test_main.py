@@ -1,4 +1,4 @@
-# CLI tests for main.py: I run the real entry point in a subprocess to verify argument handling, especially the friendly error for unsupported --locale values, and every subprocess points IDENTITY_HISTORY_FILE at a temporary path so the generated identities never pollute the real history.json of the project.
+# CLI tests for main.py: I run the real entry point in a subprocess to verify argument handling, especially the friendly error for unsupported --locale values, and every subprocess points IDENTITY_HISTORY_FILE at a temporary path so the generated identities never pollute the real history.json of the project. The early-exit commands that must never generate anything are also exercised in process with a poisoned generate_identity.
 
 import csv
 import json
@@ -6,6 +6,8 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
@@ -395,3 +397,52 @@ def test_email_provider_flag_mentions_choices_in_help(tmp_path):
     assert "--email-provider" in result.stdout
     for choice in ("auto", "custom", "tempmail", "mailtm", "guerrilla", "offline"):
         assert choice in result.stdout
+
+
+def test_check_datasets_passes_on_the_packaged_datasets(monkeypatch, capsys):
+    # I run the command in process against the real packaged datasets, with generate_identity poisoned so reaching it would fail the test instead of the exit code hiding it.
+    from identity_generator import main as main_module
+
+    def _poison(**_kwargs):
+        raise AssertionError("generate_identity must not run during --check-datasets")
+
+    monkeypatch.setattr(main_module, "generate_identity", _poison)
+    monkeypatch.setattr(sys, "argv", ["identity-generator", "--check-datasets"])
+    with pytest.raises(SystemExit) as excinfo:
+        main_module.main()
+    assert excinfo.value.code == 0
+    output = capsys.readouterr().out
+    assert "Dataset validation" in output
+    for locale in ("de_DE", "en_US", "es_CO", "pt_BR"):
+        assert locale in output
+    assert "all valid" in output
+
+
+def test_check_datasets_exits_one_on_a_broken_dataset(tmp_path, monkeypatch, capsys):
+    # I point the command at a directory holding an unreadable dataset and expect the identifiable load failure plus exit code 1, never a traceback.
+    from identity_generator import main as main_module
+
+    (tmp_path / "es_ES.json").write_text("{not json", encoding="utf-8")
+    monkeypatch.setattr(main_module, "DATASETS_DIR", tmp_path)
+    monkeypatch.setattr(sys, "argv", ["identity-generator", "--check-datasets"])
+    with pytest.raises(SystemExit) as excinfo:
+        main_module.main()
+    assert excinfo.value.code == 1
+    output = capsys.readouterr().out
+    assert "unreadable dataset" in output
+
+
+def test_check_datasets_lists_locales_without_a_dataset(
+    tmp_path, monkeypatch, capsys
+):
+    # I keep the locales that fall back to Faker visible but clearly informational, so a missing dataset is never mistaken for a broken one.
+    from identity_generator import main as main_module
+
+    (tmp_path / "es_ES.json").write_text("{not json", encoding="utf-8")
+    monkeypatch.setattr(main_module, "DATASETS_DIR", tmp_path)
+    monkeypatch.setattr(sys, "argv", ["identity-generator", "--check-datasets"])
+    with pytest.raises(SystemExit):
+        main_module.main()
+    output = capsys.readouterr().out
+    assert "Faker fallback" in output
+    assert "de_DE" in output

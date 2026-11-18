@@ -8,6 +8,8 @@ The version lives in `pyproject.toml`. This project does not use git tags, so a 
 
 ### Added
 
+- The address datasets are validated by identity_generator/dataset_check.py, whose six validators (structure and attribution, city and street volumes, population order, postcode coverage and format, street uniqueness after NFKC plus case-folding normalization) are shared by the test suite and the new `--check-datasets` command, which prints one table row per dataset, lists the locales that fall back to Faker, and exits 1 on any failure.
+- A street-uniqueness audit over the eleven packaged datasets found one case-variant duplicate (san luis and San Luis in es_CO), and the lowercase entry was removed so every dataset passes the stricter rule.
 - Guerrillamail as the third real-inbox provider: one request pins the identity's local part onto a fresh session (set_email_user starts the session for that user) and the sid_token it returns reads the mailbox later, with no key and no published per-IP limit.
 - The `--email-provider` flag (auto, custom, tempmail, mailtm, guerrilla, offline), which pins one provider for a run instead of walking the chain, falls back to an offline address with a warning when the chosen provider fails, wins over `--email-offline` as the more specific instruction, and reports a friendly error when `custom` has no catch-all domain configured.
 - Gradual mypy strictness (`disallow_untyped_defs`, `warn_return_any`, `strict_equality` and friends) configured in pyproject.toml, with the whole package now annotated.

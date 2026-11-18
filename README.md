@@ -3,7 +3,7 @@
 [![CI](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-490%20passed-brightgreen.svg)](tests)
+[![Tests](https://img.shields.io/badge/tests-493%20passed-brightgreen.svg)](tests)
 
 A command-line tool that produces complete, self-consistent synthetic identities. Every field in a generated profile (name, address, phone, postcode) belongs to the same country and language, so the data reads as coherent rather than a random mix of regional formats. Profiles are saved to a local history file and can be exported as JSON or CSV, or copied to the clipboard.
 
@@ -103,6 +103,10 @@ List every supported locale with what the generator actually produces for it:
     python -X utf8 main.py --list-locales
 
 The output is a table with one row per locale showing the country, the official document (or a dash when the locale has none, which is why those identities carry a null national_id), the passport serial shape, the address convention and the dataset sizes. Locales without a real-address dataset show "Faker fallback" because they take the address from Faker instead.
+
+Validate every address dataset against the quality rules the generator depends on (see Validating the address datasets):
+
+    python -X utf8 main.py --check-datasets
 
 Generate a plausible email without a real inbox (no network calls):
 
@@ -304,7 +308,7 @@ Writes take an exclusive lock file created with O_EXCL, which the operating syst
 
 ## Testing
 
-The project ships a fully automated test suite written with pytest, whose default run collects 490 tests across 15 modules plus a separate network suite of 3 tests that only runs when you ask for it, and every number below is exactly what pytest reports when it collects the file:
+The project ships a fully automated test suite written with pytest, whose default run collects 493 tests across 15 modules plus a separate network suite of 3 tests that only runs when you ask for it, and every number below is exactly what pytest reports when it collects the file:
 
     tests/test_generator.py   92 tests   identity fields, names, passwords, locale capabilities
     tests/test_datasets.py    66 tests   address dataset schema and quality
@@ -314,7 +318,7 @@ The project ships a fully automated test suite written with pytest, whose defaul
     tests/test_email_api.py   65 tests   provider chain, rate limits, tokens and API keys
     tests/test_email_resilience.py  8 tests   provider failures, rate limits and corrupted state
     tests/test_history.py     21 tests   persistence, locking, concurrency
-    tests/test_main.py        31 tests   command-line flags, seeded reproducibility, table output
+    tests/test_main.py        34 tests   command-line flags, seeded reproducibility, table output
     tests/test_exporter.py    18 tests   JSON, CSV, JSONL, schema and clipboard exports
     tests/test_properties.py  24 tests   property-based invariants (Hypothesis)
     tests/test_schema.py      41 tests   the JSON Schema contract and its drift guards
@@ -449,6 +453,18 @@ Each locale file contains up to 300 cities sorted by population, their postal co
 Overpass is rate-limited and occasionally drops queries, so the script caches all downloads in the system temp directory and retries across several public mirrors. Use --skip-osm to refresh only the GeoNames part reusing the streets already on disk, and --sleep to tune the delay between queries.
 
 Dataset gaps: the GeoNames Colombia postal file has no entry for Bogota, and the Mexico file has no standalone "Ciudad de Mexico" entry, so those cities keep a null postal code or a code from a matching region variant. Street names are filtered by language (non-Latin scripts and foreign first words are dropped), but the country grid cells overlap neighbouring countries, so a few cross-border names may remain in the France, Germany, Italy and Brazil datasets. The UK dataset may include some Irish names, since the two are not distinguishable by word lists. The datasets can be refreshed or replaced with a country-polygon (area) Overpass query by editing tools/build_datasets.py.
+
+## Validating the address datasets
+
+The datasets are checked with the same six validators the test suite runs, exposed as a command so they can be verified at any moment without running pytest:
+
+    python -X utf8 main.py --check-datasets
+
+The command prints one row per dataset with the result of each validator (structure and attribution, city volume and shape, population order, postcode coverage, postcode format, street volume and uniqueness), lists the locales that have no dataset and fall back to Faker, and exits with code 1 when any check fails, so it can run in CI or a maintenance script without parsing text. Locales without a dataset are informational, never a failure, and the command exits before any identity generation happens.
+
+The documented minima are at least 100 cities and at least 100 streets per dataset, population strictly positive and sorted descending, postcode coverage of at least 50% of the cities, and every postcode matching the country's declared shape. Street uniqueness compares names after NFKC normalization, outer whitespace stripping and case folding, so two spellings differing only in those details count as one street, while accents, punctuation and abbreviations stay significant because they distinguish real streets. A postcode matching its country's shape is not guaranteed to exist or to belong to its city, which the check treats as format validity, never postal validity.
+
+The validators live in identity_generator/dataset_check.py, free of any test framework, and tests/test_datasets.py calls the same code, so the command and pytest can never disagree about what a valid dataset is.
 
 ## Known limitations
 

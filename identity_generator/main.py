@@ -6,10 +6,11 @@ import time
 
 from colorama import Fore, Style, init
 
-from identity_generator import email_api, exporter
+from identity_generator import dataset_check, email_api, exporter
 from identity_generator import history as hist
 from identity_generator.applog import setup_logging
 from identity_generator.generator import (
+    DATASETS_DIR,
     generate_identity,
     get_supported_locales,
     is_supported_locale,
@@ -148,6 +149,70 @@ def _print_locale_table() -> None:
         )
 
 
+_CHECK_COLUMNS = (
+    "schema",
+    "cities",
+    "population_order",
+    "postcode_coverage",
+    "postcode_format",
+    "streets",
+)
+_CHECK_HEADERS = ("Schema", "Cities", "Order", "Cover", "Format", "Streets")
+
+
+def _print_dataset_report(reports: dict) -> int:
+    # I render the structured dataset results as one aligned table row per locale plus the failure details underneath, and return the number of failing validators so main() can choose the exit code.
+    print(_LABEL + "\n  Dataset validation\n")
+    header = "  " + f"{'Locale':<10}" + "".join(
+        f"{name:<10}" for name in _CHECK_HEADERS
+    )
+    print(_DIM + header)
+    print(_DIM + "-" * (len(header) - 2))
+    failures = 0
+    for locale in sorted(reports):
+        by_validator = {result.validator: result for result in reports[locale]}
+        cells = []
+        for column in _CHECK_COLUMNS:
+            result = by_validator.get(column)
+            if result is None:
+                cells.append("?")
+            elif result.passed:
+                cells.append("✓")
+            else:
+                cells.append("✗")
+        failures += sum(1 for result in reports[locale] if not result.passed)
+        print(
+            f"  {locale:<10}"
+            + "".join(f"{cell:<10}" for cell in cells)
+        )
+    print()
+    for locale in sorted(reports):
+        for result in reports[locale]:
+            if not result.passed:
+                print(Fore.RED + f"  {result.message}")
+    return failures
+
+
+def _check_datasets_action() -> int:
+    # I validate every dataset file the package ships, report the locales without a dataset as information instead of failure, and map the report onto the exit code so scripts and CI can trust it.
+    reports = dataset_check.check_directory(DATASETS_DIR)
+    if not reports:
+        print(Fore.YELLOW + f"  No datasets found in {DATASETS_DIR}")
+        return 1
+    failures = _print_dataset_report(reports)
+    without = sorted(set(get_supported_locales()) - set(reports))
+    if without:
+        print(
+            _DIM
+            + f"\n  Locales without a dataset (Faker fallback): {', '.join(without)}"
+        )
+    if failures:
+        print(Fore.RED + f"\n  {failures} validation failure(s)")
+        return 1
+    print(Fore.GREEN + f"\n  {len(reports)} datasets checked, all valid")
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     # I define and return the CLI argument parser.
     parser = argparse.ArgumentParser(
@@ -220,6 +285,16 @@ def _build_parser() -> argparse.ArgumentParser:
             "Print every supported locale with its country, official "
             "document, passport shape, address convention and dataset "
             "sizes, then exit."
+        ),
+    )
+    parser.add_argument(
+        "--check-datasets",
+        action="store_true",
+        dest="check_datasets",
+        help=(
+            "Validate every address dataset (structure, attribution, "
+            "volumes, population order, postcode coverage and format, "
+            "street uniqueness) and exit with code 1 on any failure."
         ),
     )
     parser.add_argument(
@@ -346,6 +421,9 @@ def main() -> None:
         _print_locale_table()
         print()
         sys.exit(0)
+
+    if args.check_datasets:
+        sys.exit(_check_datasets_action())
 
     if args.schema:
         print(schema_json())
