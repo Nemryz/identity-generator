@@ -9,7 +9,7 @@ import time
 import unicodedata
 from pathlib import Path
 
-import requests  # type: ignore[import-untyped]
+import requests
 
 from identity_generator.applog import get_logger
 from identity_generator.paths import ensure_user_data_dir, resolve_state_file

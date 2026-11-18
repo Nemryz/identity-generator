@@ -100,8 +100,12 @@ markers = [
 # developer uses fails here first, and I keep ignore_missing_imports because
 # faker and pyperclip ship no type stubs, while the def level flags make
 # every function in the package declare its argument and return types.
+# requests 2.32.4+ ships its own inline types and older installs carry none,
+# so I disable the import-untyped code instead of keeping an inline ignore
+# that warn_unused_ignores would flag on one side of that boundary.
 python_version = "3.10"
 ignore_missing_imports = true
+disable_error_code = ["import-untyped"]
 check_untyped_defs = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
