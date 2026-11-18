@@ -26,9 +26,22 @@ jobs:
         run: |
           ruff check identity_generator tests tools
           flake8 identity_generator tests tools --max-line-length=200 --extend-ignore=E501
-          mypy identity_generator --ignore-missing-imports
+          mypy identity_generator
       - name: Run test suite
         run: python -m pytest tests/ -q --cov=identity_generator --cov-report=term-missing --cov-fail-under=70
+
+  secrets:
+    # I scan the whole git history plus every push for leaked API keys, because
+    # the real email_keys.json and domains.json live only on user machines and
+    # one accidental commit would expose the tokens they hold.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build:
     needs: test

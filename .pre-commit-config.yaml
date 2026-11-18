@@ -1,0 +1,31 @@
+# I mirror the CI lint steps here so a commit that passes locally cannot fail
+# on ruff, flake8 or mypy when it reaches GitHub Actions, and I pin every
+# hook to the same tool generation the CI installs.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.5
+    hooks:
+      - id: ruff-check
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.5.0
+    hooks:
+      - id: flake8
+        args: ["--max-line-length=200", "--extend-ignore=E501"]
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: mypy identity_generator
+        language: system
+        pass_filenames: false

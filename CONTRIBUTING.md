@@ -22,6 +22,25 @@ Python 3.10 or newer. Windows needs the `-X utf8` flag everywhere, otherwise acc
 python -m pytest tests/ -q
 ```
 
+## Lint, typing and hooks
+
+The same checks CI runs locally:
+
+```bash
+ruff check identity_generator tests tools
+flake8 identity_generator tests tools --max-line-length=200 --extend-ignore=E501
+mypy identity_generator
+```
+
+The mypy settings live in the `[tool.mypy]` section of pyproject.toml, so plain `mypy identity_generator` is enough everywhere. Install the pre-commit hooks once per clone and every commit re-runs them for you:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+The hook set (`.pre-commit-config.yaml`) mirrors CI exactly: file hygiene, `ruff-check`, flake8 with the same argument list, and mypy through a local hook. CI also runs gitleaks over the full git history on every push and pull request, so if you ever commit a real `email_keys.json` it will fail the build instead of publishing the tokens; move the key out, force where needed only if the secret was never valid, and rotate it regardless.
+
 The whole suite runs offline in well under a minute: the only external interaction is the temporary email API and it is stubbed. A couple of things worth knowing:
 
 - Tests never touch your real data. `tests/conftest.py` points every state, secret and config file at a throwaway directory, so a forgotten fixture cannot write into your history.
