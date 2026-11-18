@@ -44,6 +44,7 @@ def test_get_temp_email_falls_back_to_offline(monkeypatch):
     monkeypatch.setattr(email_api, "_can_use", lambda p: True)
     monkeypatch.setattr(email_api, "_tempmail_email", lambda p: None)
     monkeypatch.setattr(email_api, "_mailtm_email", lambda p: None)
+    monkeypatch.setattr(email_api, "_guerrilla_email", lambda p: None)
     monkeypatch.setattr(email_api, "_record_usage", lambda p: None)
     result = email_api.get_temp_email("Carlos", "Garcia", usable=True)
     assert result["provider"] == "offline"

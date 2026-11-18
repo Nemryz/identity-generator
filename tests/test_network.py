@@ -61,3 +61,28 @@ def test_mail_tm_creates_a_readable_inbox(tmp_path, monkeypatch):
     assert isinstance(messages, list), "the message list stopped being a list"
     for message in messages:
         assert set(message) == {"from", "subject", "text"}, f"unexpected message keys {sorted(message)}"
+
+
+def test_guerrillamail_creates_a_readable_inbox(tmp_path, monkeypatch):
+    # I create a session with the identity's own local part and read the welcome mail it delivers instantly, because that two-step contract (set_email_user then check_email with the sid_token) is exactly what the mocked tests imitate.
+    monkeypatch.setattr(email_api, "USAGE_FILE", tmp_path / "email_usage.json")
+
+    local = f"idgen-{secrets.randbelow(10**6)}"
+    created = email_api._guerrilla_email(local)
+    assert created is not None, (
+        "guerrillamail did not return an (address, sid_token) pair for a fresh session; "
+        "if the API is down the provider chain skips it, so only a contract change should fail here"
+    )
+    address, token = created
+    assert address.startswith(f"{local}@"), (
+        f"guerrillamail ignored the requested prefix, got {address!r}"
+    )
+
+    messages = email_api._guerrilla_read(token, 10)
+    assert isinstance(messages, list), "the inbox read stopped returning a list"
+    assert messages, (
+        "a fresh guerrillamail inbox always carries the welcome mail; "
+        "an empty read means the check_email contract changed"
+    )
+    for message in messages:
+        assert set(message) == {"from", "subject", "text"}, f"unexpected message keys {sorted(message)}"

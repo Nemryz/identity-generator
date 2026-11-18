@@ -3,7 +3,7 @@
 [![CI](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-448%20passed-brightgreen.svg)](tests)
+[![Tests](https://img.shields.io/badge/tests-466%20passed-brightgreen.svg)](tests)
 
 A command-line tool that produces complete, self-consistent synthetic identities. Every field in a generated profile (name, address, phone, postcode) belongs to the same country and language, so the data reads as coherent rather than a random mix of regional formats. Profiles are saved to a local history file and can be exported as JSON or CSV, or copied to the clipboard.
 
@@ -207,13 +207,15 @@ Run --list-locales to see the full list with the document, passport shape, addre
     phone           Phone number in the locale format.
     occupation      Random job title.
     email           Real temporary inbox with an address built from the
-                    identity's names (tempmail.lol, then mail.tm), or a
-                    plausible address on a disposable domain when offline.
+                    identity's names (tempmail.lol, then mail.tm, then
+                    guerrillamail), or a plausible address on a disposable
+                    domain when offline.
     email_token     Inbox token enabling the --check-inbox command.
                     Null when the email has no real inbox. Excluded from
                     the CSV and JSONL exports.
-    email_provider  Provider that owns the inbox ("tempmail", "mailtm" or
-                    "offline"). Tells --check-inbox which API to query.
+    email_provider  Provider that owns the inbox ("custom", "tempmail",
+                    "mailtm", "guerrilla" or "offline"). Tells
+                    --check-inbox which API to query.
     username        ASCII-safe string built from the first name and birth year.
     nickname        Short informal handle derived from the first syllable
                     of the first name plus a random suffix.
@@ -228,17 +230,20 @@ Run --list-locales to see the full list with the document, passport shape, addre
 
 ## Temporary email providers
 
-Emails are created against two free public APIs (no account or API key required), in order:
+Emails are created against three free public APIs (no account or API key required), in order:
 
 0. Custom catch-all domain (see below), when configured.
 1. tempmail.lol: the inbox token is returned in the same response as the address. Free tier: inbox expires after 1 hour, 15 inboxes per 30 minutes per IP. With a stored API key the limits become per-account, the inbox lasts longer and custom domains are available.
 2. mail.tm: custom address, its /token endpoint can lag behind account creation, so the token is best-effort. 8 requests per second per IP.
+3. guerrillamail: one request pins the identity's local part onto a fresh session (set_email_user starts the session for that user) and the sid_token it hands back reads the mailbox later. No published per-IP limit, but its domains (`guerrillamailblock.com` among them) are the most widely blocklisted by signup forms, so it sits last in the chain.
 
-When both providers are unreachable or rate-limited, a plausible address on a known disposable domain is produced without an inbox (email_token is null). Use --email-offline to force this mode.
+When all providers are unreachable or rate-limited, a plausible address on a known disposable domain is produced without an inbox (email_token is null). Use --email-offline to force this mode.
 
-Read operations (--check-inbox) query the inbox with the stored token: tempmail.lol consumes the emails it returns (limit 10 by default), mail.tm keeps them. Identities created before the email_provider field existed cannot be read, so regenerate them.
+The `--email-provider` flag short-circuits the chain: `--email-provider guerrilla` (or tempmail, mailtm, custom, offline) tries that provider alone, and when it fails the run falls back to an offline address with a warning instead of handing back a different real provider. An explicit provider also wins over `--email-offline`, since the flag is the more specific instruction. `--email-provider custom` raises a friendly error when no catch-all domain is configured in domains.json.
 
-Usage counters per provider are persisted in email_usage.json (ignored by git) so the chain skips a provider before it rejects the request. A warning is printed to stderr at 80% of a provider's limit. Reads are counted too (read_tempmail / read_mailtm, informational, no hard limit).
+Read operations (--check-inbox) query the inbox with the stored token: tempmail.lol consumes the emails it returns (limit 10 by default), mail.tm and guerrillamail keep them. Identities created before the email_provider field existed cannot be read, so regenerate them.
+
+Usage counters per provider are persisted in email_usage.json (ignored by git) so the chain skips a provider before it rejects the request. A warning is printed to stderr at 80% of a provider's limit. Reads are counted too (read_tempmail / read_mailtm / read_guerrilla, informational, no hard limit).
 
 All API calls use a 5-second timeout, so a provider that stops responding (connection hangs rather than failing) still falls through to the next step of the chain instead of blocking the CLI indefinitely. If email_usage.json is ever corrupted it is backed up to email_usage.corrupt.<timestamp>.bak and the counters restart from zero with a logged warning, mirroring the history.json protection.
 
@@ -270,7 +275,7 @@ Many services block disposable domains outright. If you own a domain you can mak
 
 3. Done. Generated addresses look like `carlos.garcia.4821@mail.midominio.com` and arrive in your inbox. --check-inbox reports that the address is forwarded, since there is no API to read (the messages land in your real mail client).
 
-Without domains.json the tool behaves exactly as before (tempmail.lol then mail.tm, then offline fallback).
+Without domains.json the tool behaves exactly as before (tempmail.lol, then mail.tm, then guerrillamail, then the offline fallback).
 
 ## Where the files live
 
@@ -305,17 +310,17 @@ The project ships a fully automated test suite written with pytest, whose defaul
     tests/test_datasets.py    66 tests   address dataset schema and quality
     tests/test_addresses.py   25 tests   real addresses and postcodes
     tests/test_documents.py   26 tests   official national IDs and passports
-    tests/test_email_api.py   51 tests   provider chain, rate limits, tokens and API keys
+    tests/test_email_api.py   65 tests   provider chain, rate limits, tokens and API keys
     tests/test_email_resilience.py  8 tests   provider failures, rate limits and corrupted state
     tests/test_history.py     21 tests   persistence, locking, concurrency
-    tests/test_main.py        27 tests   command-line flags, seeded reproducibility, table output
+    tests/test_main.py        31 tests   command-line flags, seeded reproducibility, table output
     tests/test_exporter.py    18 tests   JSON, CSV, JSONL, schema and clipboard exports
     tests/test_properties.py  24 tests   property-based invariants (Hypothesis)
     tests/test_schema.py      41 tests   the JSON Schema contract and its drift guards
     tests/test_paths.py        6 tests   user data dir resolution, env overrides, legacy migration
     tests/test_applog.py       3 tests   shared logger wiring and idempotency
     tests/test_repo_integrity.py 40 tests   the repo itself: compilation, dependencies, packaging metadata, README claims
-    tests/test_network.py      2 tests   real provider contracts against tempmail.lol and mail.tm, excluded from the default runs (see The network suite)
+    tests/test_network.py      3 tests   real provider contracts against tempmail.lol, mail.tm and guerrillamail, excluded from the default runs (see The network suite)
 
 Run the whole suite with:
 
@@ -379,7 +384,7 @@ identity_generator/generator.py
 
 identity_generator/email_api.py
 
-    Creates a real temporary inbox whose address is built from the identity's names, using the tempmail.lol API first and the mail.tm API as fallback. When a custom catch-all domain is configured in domains.json it is used first: addresses are deliverable to the user's real inbox with no API and no rate limits. The returned token is stored with the identity so the inbox can be read later with check_inbox(), which fetches received emails for --check-inbox. When all real-inbox providers are unreachable or rate-limited, a plausible address is constructed locally using a hardcoded list of known disposable mail domains. It also owns the API key store (email_keys.json, written atomically with restricted permissions, backed up when corrupted) and injects the stored tempmail.lol key as an Authorization bearer header, while keys are only ever displayed masked. Per-provider usage counters are persisted in email_usage.json to respect rate limits. No API key or account is required.
+    Creates a real temporary inbox whose address is built from the identity's names, using the tempmail.lol API first, the mail.tm API as second choice and guerrillamail as third. When a custom catch-all domain is configured in domains.json it is used first: addresses are deliverable to the user's real inbox with no API and no rate limits. The --email-provider choice pins a single provider for one run instead of walking the chain, and falls back to offline when that provider fails. The returned token is stored with the identity so the inbox can be read later with check_inbox(), which fetches received emails for --check-inbox. When all real-inbox providers are unreachable or rate-limited, a plausible address is constructed locally using a hardcoded list of known disposable mail domains. It also owns the API key store (email_keys.json, written atomically with restricted permissions, backed up when corrupted) and injects the stored tempmail.lol key as an Authorization bearer header, while keys are only ever displayed masked. Per-provider usage counters are persisted in email_usage.json to respect rate limits. No API key or account is required.
 
 identity_generator/history.py
 

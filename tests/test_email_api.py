@@ -555,3 +555,151 @@ def test_tempmail_request_has_no_authorization_without_key(keys_file):
         assert "Authorization" not in seen
     finally:
         email_api.requests.post = monkey
+
+
+def _guerrilla_success(monkeypatch, address="carlos.garcia@guerrillamailblock.com", token="sid1"):
+    # I pin a guerrillamail session response while leaving every other host unreachable, so the chain or a forced call has one working provider to land on.
+    def fake_get(url, **kwargs):
+        if "guerrillamail" in url:
+            return _Resp(200, {"email_addr": address, "sid_token": token})
+        raise RuntimeError("down")
+
+    def fake_post(url, **kwargs):
+        raise RuntimeError("down")
+
+    monkeypatch.setattr(email_api.requests, "get", fake_get)
+    monkeypatch.setattr(email_api.requests, "post", fake_post)
+
+
+def test_chain_falls_back_to_guerrilla(usage_file, monkeypatch):
+    _guerrilla_success(monkeypatch)
+    result = get_temp_email("Carlos", "Garcia")
+    assert result["email"] == "carlos.garcia@guerrillamailblock.com"
+    assert result["token"] == "sid1"
+    assert result["provider"] == "guerrilla"
+    assert _usage_count("guerrilla") == 1
+
+
+def test_guerrilla_creation_failure_returns_none(usage_file, monkeypatch):
+    _no_network(monkeypatch)
+    assert email_api._guerrilla_email("carlos.garcia") is None
+
+
+def test_guerrilla_creation_missing_fields_returns_none(usage_file, monkeypatch):
+    def fake_get(url, **kwargs):
+        return _Resp(200, {"email_addr": "x@guerrillamailblock.com"})
+
+    monkeypatch.setattr(email_api.requests, "get", fake_get)
+    assert email_api._guerrilla_email("carlos.garcia") is None
+
+
+def test_guerrilla_read_maps_fields(usage_file, monkeypatch):
+    def fake_get(url, **kwargs):
+        assert kwargs.get("params", {}).get("f") == "check_email"
+        assert kwargs.get("params", {}).get("sid_token") == "sid1"
+        return _Resp(
+            200,
+            {
+                "list": [
+                    {
+                        "mail_from": "no-reply@shop.com",
+                        "mail_subject": "Verify",
+                        "mail_body": "code 123",
+                    }
+                ]
+            },
+        )
+
+    monkeypatch.setattr(email_api.requests, "get", fake_get)
+    messages = check_inbox(
+        {"email_provider": "guerrilla", "email_token": "sid1"}
+    )
+    assert messages == [
+        {"from": "no-reply@shop.com", "subject": "Verify", "text": "code 123"}
+    ]
+
+
+def test_guerrilla_read_empty_on_http_error(usage_file, monkeypatch):
+    _no_network(monkeypatch)
+    assert email_api._guerrilla_read("sid1", 10) == []
+
+
+def test_check_inbox_guerrilla_uses_session_token(usage_file, monkeypatch):
+    # I route check_inbox through the provider field, so a guerrilla identity reads with its sid_token and no other API is touched.
+    def fake_get(url, **kwargs):
+        assert "sid_token=sid9" in url or kwargs.get("params", {}).get(
+            "sid_token"
+        ) == "sid9"
+        return _Resp(200, {"list": []})
+
+    monkeypatch.setattr(email_api.requests, "get", fake_get)
+    assert (
+        check_inbox({"email_provider": "guerrilla", "email_token": "sid9"})
+        == []
+    )
+
+
+def test_forced_provider_pins_guerrilla(usage_file, monkeypatch):
+    # I give tempmail a working API and still assert the forced choice wins, because the flag exists precisely to skip the chain.
+    _tempmail_success(monkeypatch)
+    _guerrilla_success(monkeypatch)
+    result = get_temp_email("Carlos", "Garcia", provider="guerrilla")
+    assert result["provider"] == "guerrilla"
+    assert result["token"] == "sid1"
+    assert _usage_count("tempmail") == 0
+
+
+def test_forced_provider_falls_back_to_offline_on_failure(
+    usage_file, monkeypatch
+):
+    _no_network(monkeypatch)
+    result = get_temp_email("Carlos", "Garcia", provider="mailtm")
+    assert result["provider"] == "offline"
+    assert result["token"] is None
+    assert result["email"].startswith("carlos.garcia@")
+    assert _usage_count("mailtm") == 0
+    assert _usage_count("offline") == 1
+
+
+def test_forced_provider_wins_over_offline_mode(usage_file, monkeypatch):
+    # I let an explicit provider beat usable=False, since the flag is the more specific instruction and the help text documents it.
+    _tempmail_success(monkeypatch)
+    result = get_temp_email(
+        "Carlos", "Garcia", usable=False, provider="tempmail"
+    )
+    assert result["provider"] == "tempmail"
+    assert result["token"] == "tok2"
+
+
+def test_forced_offline_provider_needs_no_network(usage_file, monkeypatch):
+    _no_network(monkeypatch)
+    result = get_temp_email("Carlos", "Garcia", provider="offline")
+    assert result["provider"] == "offline"
+    assert _usage_count("offline") == 1
+
+
+def test_forced_custom_without_domains_raises(usage_file, monkeypatch):
+    monkeypatch.setattr(
+        email_api,
+        "CUSTOM_DOMAINS_FILE",
+        usage_file.parent / "missing_domains.json",
+    )
+    with pytest.raises(ValueError):
+        get_temp_email("Carlos", "Garcia", provider="custom")
+
+
+def test_unknown_provider_choice_raises(usage_file):
+    with pytest.raises(ValueError):
+        get_temp_email("Carlos", "Garcia", provider="nope")
+
+
+def test_usage_summary_lists_guerrilla(usage_file):
+    summary = usage_summary()
+    assert "guerrilla" in summary
+
+
+def test_guerrilla_limit_never_blocks(usage_file):
+    # I keep the counter honest but the provider unlimited, because guerrillamail publishes no per-IP cap and the chain must not skip it early.
+    for _ in range(30):
+        _record_usage("guerrilla")
+    assert _can_use("guerrilla")

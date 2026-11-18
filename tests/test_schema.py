@@ -184,7 +184,7 @@ def test_schema_password_pattern_accepts_the_sixteen_character_boundary():
 
 def test_schema_enum_values_match_the_generator_providers():
     # I keep the email_provider enum honest against the provider names the code actually stores, so adding a provider without touching the enum is caught here.
-    providers = {"tempmail", "mailtm", "offline", None}
+    providers = {"custom", "tempmail", "mailtm", "guerrilla", "offline", None}
     assert set(IDENTITY_SCHEMA["properties"]["email_provider"]["enum"]) == providers
 
 

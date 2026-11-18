@@ -4,6 +4,23 @@ All notable changes to this project are documented here. The format follows [Kee
 
 The version lives in `pyproject.toml`. This project does not use git tags, so a release is the state of `main` at the moment of publication plus the version number declared there.
 
+## [Unreleased]
+
+### Added
+
+- Guerrillamail as the third real-inbox provider: one request pins the identity's local part onto a fresh session (set_email_user starts the session for that user) and the sid_token it returns reads the mailbox later, with no key and no published per-IP limit.
+- The `--email-provider` flag (auto, custom, tempmail, mailtm, guerrilla, offline), which pins one provider for a run instead of walking the chain, falls back to an offline address with a warning when the chosen provider fails, wins over `--email-offline` as the more specific instruction, and reports a friendly error when `custom` has no catch-all domain configured.
+- Gradual mypy strictness (`disallow_untyped_defs`, `warn_return_any`, `strict_equality` and friends) configured in pyproject.toml, with the whole package now annotated.
+- Pre-commit hooks that mirror the CI lint exactly (file hygiene, ruff-check, flake8 with the same arguments, mypy through a local hook).
+- Gitleaks secret scanning over the full git history on every push and pull request.
+- Coverage reporting in CI with a 70% floor, and property-based tests for the password, ASCII-transliteration, email local-part and age invariants.
+
+### Changed
+
+- The `email_provider` schema enum now lists every provider the chain can store (custom, tempmail, mailtm, guerrilla, offline); custom was previously storable but missing from the enum.
+- The mail.tm token path validates the token shape before returning it instead of handing back whatever the endpoint sent.
+- The mypy lint step reads its settings from pyproject.toml, so plain `mypy identity_generator` is enough everywhere.
+
 ## [1.0.0] - 2026-10-10
 
 The first versioned release. Everything below landed on `main` between the initial commit and this one.

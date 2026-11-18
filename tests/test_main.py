@@ -360,3 +360,38 @@ def test_list_locales_shows_documents_and_fallbacks(tmp_path):
     assert "NIF/DNI" in result.stdout
     assert "Codice fiscale" in result.stdout
     assert "Faker fallback" in result.stdout
+
+
+def test_email_provider_invalid_choice_fails(tmp_path):
+    result = _run(tmp_path / "h1.json", "--email-provider", "nope")
+    assert result.returncode == 2
+    assert "invalid choice" in result.stderr
+
+
+def test_email_provider_offline_writes_the_provider_to_history(tmp_path):
+    # I run the forced offline provider through the real entry point and read the history file back, because the provider field is what --check-inbox trusts later.
+    history_file = tmp_path / "h1.json"
+    result = _run(history_file, "--email-provider", "offline", "--locale", "es_ES")
+    assert result.returncode == 0
+    assert "Generating identity" in result.stdout
+    identities = json.loads(history_file.read_text(encoding="utf-8"))
+    assert identities[-1]["email_provider"] == "offline"
+    assert identities[-1]["email_token"] is None
+
+
+def test_email_provider_custom_without_domains_fails_friendly(tmp_path):
+    # I force the custom provider with no catch-all domains configured and expect a readable message, never a traceback.
+    result = _run(
+        tmp_path / "h1.json", "--email-provider", "custom", "--locale", "es_ES"
+    )
+    assert result.returncode == 1
+    assert "domains.json" in result.stdout
+    assert "Traceback" not in result.stderr
+
+
+def test_email_provider_flag_mentions_choices_in_help(tmp_path):
+    result = _run(tmp_path / "h1.json", "--help")
+    assert result.returncode == 0
+    assert "--email-provider" in result.stdout
+    for choice in ("auto", "custom", "tempmail", "mailtm", "guerrilla", "offline"):
+        assert choice in result.stdout
