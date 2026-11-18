@@ -1,28 +1,13 @@
-# Tests for the committed address datasets in identity_generator/data/addresses/: I run them offline against the generated JSON files to check the schema shape, the coverage thresholds, the per-country postal code formats and the ordering, and these datasets derive from GeoNames (CC-BY 4.0) and OpenStreetMap (ODbL) as the "Data sources" section of the README explains.
+# Tests for the committed address datasets in identity_generator/data/addresses/: I run them offline against the generated JSON files by delegating every check to identity_generator.dataset_check, so the CLI and this suite validate with the exact same code and a dataset that passes here is the dataset --check-datasets accepts. The datasets derive from GeoNames (CC-BY 4.0) and OpenStreetMap (ODbL) as the "Data sources" section of the README explains.
 
 import json
-import re
 from pathlib import Path
 
 import pytest
 
-DATA_DIR = Path(__file__).resolve().parents[1] / "identity_generator" / "data" / "addresses"
+from identity_generator.dataset_check import POSTCODE_REGEX, check_dataset
 
-# Cities (population, desc) and their postcode shapes.
-# GB codes are outward-only (e.g. "EC1A"), ES codes start 01-52.
-POSTCODE_REGEX = {
-    "es_ES": r"^(0[1-9]|[1-4]\d|5[0-2])\d{3}$",
-    "es_MX": r"^\d{5}$",
-    "es_AR": r"^\d{4,5}$",
-    "es_CL": r"^\d{7}$",
-    "es_CO": r"^\d{6}$",
-    "en_US": r"^\d{5}$",
-    "en_GB": r"^[A-Z]{1,2}\d[A-Z]?\d?$",
-    "fr_FR": r"^\d{5}$",
-    "de_DE": r"^\d{5}$",
-    "it_IT": r"^\d{5}$",
-    "pt_BR": r"^\d{5}-\d{3}$",
-}
+DATA_DIR = Path(__file__).resolve().parents[1] / "identity_generator" / "data" / "addresses"
 
 LOCALES = sorted(POSTCODE_REGEX)
 
@@ -33,55 +18,41 @@ def _load(locale: str) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _results(locale: str) -> dict:
+    return {result.validator: result for result in check_dataset(_load(locale), locale)}
+
+
 @pytest.mark.parametrize("locale", LOCALES)
 def test_dataset_schema(locale):
-    dataset = _load(locale)
-    assert {"cities", "streets", "sources"} <= set(dataset)
-    assert dataset["sources"]["geonames"], "geonames attribution required"
-    assert dataset["sources"]["osm"], "osm attribution required"
+    result = _results(locale)["schema"]
+    assert result.passed, result.message
 
 
 @pytest.mark.parametrize("locale", LOCALES)
 def test_city_volume_and_shape(locale):
-    cities = _load(locale)["cities"]
-    assert len(cities) >= 100, f"{locale}: only {len(cities)} cities"
-    for city in cities:
-        assert city["name"].strip()
-        assert city["population"] > 0
-        assert city["postcode"] is None or isinstance(city["postcode"], str)
+    result = _results(locale)["cities"]
+    assert result.passed, result.message
 
 
 @pytest.mark.parametrize("locale", LOCALES)
 def test_cities_sorted_by_population_desc(locale):
-    cities = _load(locale)["cities"]
-    populations = [c["population"] for c in cities]
-    assert populations == sorted(populations, reverse=True)
+    result = _results(locale)["population_order"]
+    assert result.passed, result.message
 
 
 @pytest.mark.parametrize("locale", LOCALES)
 def test_postcode_coverage(locale):
-    cities = _load(locale)["cities"]
-    with_code = sum(1 for c in cities if c["postcode"])
-    assert with_code / len(cities) >= 0.5, (
-        f"{locale}: only {with_code}/{len(cities)} cities have a postcode"
-    )
+    result = _results(locale)["postcode_coverage"]
+    assert result.passed, result.message
 
 
 @pytest.mark.parametrize("locale", LOCALES)
 def test_postcode_format(locale):
-    cities = _load(locale)["cities"]
-    pattern = re.compile(POSTCODE_REGEX[locale])
-    bad = [
-        c["postcode"]
-        for c in cities
-        if c["postcode"] and not pattern.match(c["postcode"])
-    ]
-    assert not bad, f"{locale}: invalid postcodes {bad[:5]}"
+    result = _results(locale)["postcode_format"]
+    assert result.passed, result.message
 
 
 @pytest.mark.parametrize("locale", LOCALES)
 def test_street_volume_and_uniqueness(locale):
-    streets = _load(locale)["streets"]
-    assert len(streets) >= 100, f"{locale}: only {len(streets)} streets"
-    assert len(streets) == len(set(streets))
-    assert all(s.strip() for s in streets)
+    result = _results(locale)["streets"]
+    assert result.passed, result.message

@@ -3,7 +3,7 @@
 [![CI](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-466%20passed-brightgreen.svg)](tests)
+[![Tests](https://img.shields.io/badge/tests-490%20passed-brightgreen.svg)](tests)
 
 A command-line tool that produces complete, self-consistent synthetic identities. Every field in a generated profile (name, address, phone, postcode) belongs to the same country and language, so the data reads as coherent rather than a random mix of regional formats. Profiles are saved to a local history file and can be exported as JSON or CSV, or copied to the clipboard.
 
@@ -304,10 +304,11 @@ Writes take an exclusive lock file created with O_EXCL, which the operating syst
 
 ## Testing
 
-The project ships a fully automated test suite written with pytest, whose default run collects 426 tests across 12 modules plus a separate network suite of 2 tests that only runs when you ask for it, and every number below is exactly what pytest reports when it collects the file:
+The project ships a fully automated test suite written with pytest, whose default run collects 490 tests across 15 modules plus a separate network suite of 3 tests that only runs when you ask for it, and every number below is exactly what pytest reports when it collects the file:
 
     tests/test_generator.py   92 tests   identity fields, names, passwords, locale capabilities
     tests/test_datasets.py    66 tests   address dataset schema and quality
+    tests/test_dataset_check.py  22 tests   the dataset validators themselves, broken synthetic datasets and structured results
     tests/test_addresses.py   25 tests   real addresses and postcodes
     tests/test_documents.py   26 tests   official national IDs and passports
     tests/test_email_api.py   65 tests   provider chain, rate limits, tokens and API keys
@@ -319,7 +320,7 @@ The project ships a fully automated test suite written with pytest, whose defaul
     tests/test_schema.py      41 tests   the JSON Schema contract and its drift guards
     tests/test_paths.py        6 tests   user data dir resolution, env overrides, legacy migration
     tests/test_applog.py       3 tests   shared logger wiring and idempotency
-    tests/test_repo_integrity.py 40 tests   the repo itself: compilation, dependencies, packaging metadata, README claims
+    tests/test_repo_integrity.py 42 tests   the repo itself: compilation, dependencies, packaging metadata, README claims
     tests/test_network.py      3 tests   real provider contracts against tempmail.lol, mail.tm and guerrillamail, excluded from the default runs (see The network suite)
 
 Run the whole suite with:
@@ -385,6 +386,10 @@ identity_generator/generator.py
 identity_generator/email_api.py
 
     Creates a real temporary inbox whose address is built from the identity's names, using the tempmail.lol API first, the mail.tm API as second choice and guerrillamail as third. When a custom catch-all domain is configured in domains.json it is used first: addresses are deliverable to the user's real inbox with no API and no rate limits. The --email-provider choice pins a single provider for one run instead of walking the chain, and falls back to offline when that provider fails. The returned token is stored with the identity so the inbox can be read later with check_inbox(), which fetches received emails for --check-inbox. When all real-inbox providers are unreachable or rate-limited, a plausible address is constructed locally using a hardcoded list of known disposable mail domains. It also owns the API key store (email_keys.json, written atomically with restricted permissions, backed up when corrupted) and injects the stored tempmail.lol key as an Authorization bearer header, while keys are only ever displayed masked. Per-provider usage counters are persisted in email_usage.json to respect rate limits. No API key or account is required.
+
+identity_generator/dataset_check.py
+
+    Validates the real-address datasets the generator consumes, one structured result per check: file structure and the GeoNames and OpenStreetMap attributions, city and street volumes, population strictly positive and sorted descending, postcode coverage and per-country format, and street uniqueness compared after NFKC normalization, whitespace stripping and case folding. The validators are pure functions over the loaded dataset, free of any test framework, so --check-datasets, the test suite and a future diagnostic export run the exact same code, and an unreadable dataset file is reported as a load failure instead of an exception.
 
 identity_generator/history.py
 

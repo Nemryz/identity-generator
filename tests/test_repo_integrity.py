@@ -13,6 +13,7 @@ PACKAGE_ROOT = REPO_ROOT / "identity_generator"
 SOURCE_FILES = [
     "identity_generator/__init__.py",
     "identity_generator/applog.py",
+    "identity_generator/dataset_check.py",
     "identity_generator/email_api.py",
     "identity_generator/exporter.py",
     "identity_generator/generator.py",
