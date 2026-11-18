@@ -496,6 +496,18 @@ def main() -> None:
         _print_inbox(args.check_inbox)
         sys.exit(0)
 
+    # A requested export that cannot complete must refuse before the first identity exists, so a run can never leave a generated batch behind in the history without the file the user asked for, and the exports whose engine is always present (the stdlib SQLite module and the plain file writes) need no probe here.
+    if args.parquet and not exporter.pyarrow_available():
+        print(
+            Fore.RED
+            + "\n  Parquet export needs the optional dependency pyarrow, which is not installed."
+        )
+        print(
+            Fore.RED
+            + "  Install it with: pip install identity-generator[parquet]"
+        )
+        sys.exit(1)
+
     print(_DIM + "\n  Generating identity...\n")
     count = max(1, args.count)
     identities = []

@@ -1,6 +1,8 @@
-# Tests for the SQLite export in exporter.py: I query the written database with real SQL through the stdlib sqlite3 instead of trusting that a file exists, because the point of the format is that a consumer can run a query against it, and the overwrite and failure semantics are exercised through the same public function the CLI calls.
+# Tests for the SQLite export in exporter.py: I query the written database with real SQL through the stdlib sqlite3 instead of trusting that a file exists, because the point of the format is that a consumer can run a query against it, and the overwrite, collision and failure semantics are exercised through the same public function the CLI calls.
 
+import os
 import sqlite3
+from pathlib import Path
 
 import pytest
 
@@ -135,7 +137,39 @@ def test_sqlite_export_failure_leaves_the_previous_database_intact(
     with pytest.raises(RuntimeError):
         exporter.to_sqlite_file([_identity(2)])
     assert path.read_bytes() == before
-    assert not out_dir.joinpath("identities.db.tmp").exists()
+    assert list(out_dir.glob("identities.db.tmp*")) == []
+
+
+def test_sqlite_export_uses_a_unique_temp_file_per_run(out_dir, monkeypatch):
+    # I pin the anti-collision rule, where every run stages its database in its own uniquely named sibling of the target so two concurrent exports never fight over one fixed temporary file.
+    captured = []
+    real_replace = os.replace
+
+    def _spy(src, dst):
+        captured.append(Path(src))
+        real_replace(src, dst)
+
+    monkeypatch.setattr(os, "replace", _spy)
+    exporter.to_sqlite_file([_identity(1)])
+    exporter.to_sqlite_file([_identity(2)])
+    assert len(captured) == 2
+    assert captured[0] != captured[1]
+    assert captured[0].parent == out_dir
+    assert captured[0].name.startswith("identities.db.tmp-")
+
+
+def test_sqlite_export_survives_a_leftover_temp_database_from_a_crashed_run(
+    out_dir,
+):
+    # I recreate the wreckage of a hard-killed export, where a stale temporary database already holds an identities table, and a fresh export must still build its own staging file and replace the target cleanly.
+    stale_conn = sqlite3.connect(out_dir / "identities.db.tmp-stale")
+    stale_conn.execute("CREATE TABLE identities (id TEXT)")
+    stale_conn.commit()
+    stale_conn.close()
+    path = exporter.to_sqlite_file([_identity(1)])
+    rows = _rows(path)
+    assert len(rows) == 1
+    assert rows[0]["id"] == "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeee01"
 
 
 def test_sqlite_export_handles_an_empty_batch(out_dir):

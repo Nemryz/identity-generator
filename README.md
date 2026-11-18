@@ -3,7 +3,7 @@
 [![CI](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-512%20passed-brightgreen.svg)](tests)
+[![Tests](https://img.shields.io/badge/tests-520%20passed-brightgreen.svg)](tests)
 
 A command-line tool that produces complete, self-consistent synthetic identities. Every field in a generated profile (name, address, phone, postcode) belongs to the same country and language, so the data reads as coherent rather than a random mix of regional formats. Profiles are saved to a local history file and can be exported as JSON or CSV, or copied to the clipboard.
 
@@ -161,13 +161,13 @@ Store the same batch as a queryable SQLite database instead:
 
     python -X utf8 main.py --count 50 --sqlite
 
-The database identities.db is overwritten every run and holds one identities table with a row per identity, every column as text and the identity id as primary key, carrying the same 22 schema fields the CSV and the JSONL carry (no email_token, which is a credential). The file is built in a temporary database first and only replaces the previous one after a clean commit, so a failed run never destroys a database that was still valid. Query it directly with sqlite3 identities.db "SELECT full_name, email FROM identities".
+The database identities.db is overwritten every run and holds one identities table with a row per identity, every column as text and the identity id as primary key, carrying the same 22 schema fields the CSV and the JSONL carry (no email_token, which is a credential). The file is built in a uniquely named temporary database first and only replaces the previous one after a clean commit, so concurrent runs never share the staging file and a failed run never destroys a database that was still valid. Query it directly with sqlite3 identities.db "SELECT full_name, email FROM identities".
 
 Write the same batch as a Parquet file for analytics tooling (Pandas, Polars, DuckDB, Spark):
 
     python -X utf8 main.py --count 50 --parquet
 
-The file identities.parquet is overwritten every run and declares one explicit string column per exportable field (the same 22 fields, no email_token), so the schema is stable instead of inferred from whatever the first record carries, and optional values land as nulls. Parquet needs the optional engine pyarrow, which the package does not install by default. Install it with pip install identity-generator[parquet] and the flag prints exactly that hint when it is missing.
+The file identities.parquet is overwritten every run and declares one explicit string column per exportable field (the same 22 fields, no email_token), so the schema is stable instead of inferred from whatever the first record carries, and optional values land as nulls. Parquet needs the optional engine pyarrow, which the package does not install by default. Install it with pip install identity-generator[parquet] and the flag prints exactly that hint when it is missing. The engine is probed before the first identity is generated, so a run without it exits with code 1 and never leaves a generated batch in the history without the requested file, and the file itself is written through a uniquely named temporary sibling that replaces the previous export only after the write completes, so a failing run cannot destroy a file that was still valid.
 
 Reproduce the same identity on every run with a seed:
 
@@ -320,7 +320,7 @@ Writes take an exclusive lock file created with O_EXCL, which the operating syst
 
 ## Testing
 
-The project ships a fully automated test suite written with pytest, whose default run collects 512 tests across 17 modules plus a separate network suite of 3 tests that only runs when you ask for it, and every number below is exactly what pytest reports when it collects the file:
+The project ships a fully automated test suite written with pytest, whose default run collects 520 tests across 17 modules plus a separate network suite of 3 tests that only runs when you ask for it, and every number below is exactly what pytest reports when it collects the file:
 
     tests/test_generator.py   92 tests   identity fields, names, passwords, locale capabilities
     tests/test_datasets.py    66 tests   address dataset schema and quality
@@ -330,10 +330,10 @@ The project ships a fully automated test suite written with pytest, whose defaul
     tests/test_email_api.py   65 tests   provider chain, rate limits, tokens and API keys
     tests/test_email_resilience.py  8 tests   provider failures, rate limits and corrupted state
     tests/test_history.py     21 tests   persistence, locking, concurrency
-    tests/test_main.py        36 tests   command-line flags, seeded reproducibility, table output
+    tests/test_main.py        37 tests   command-line flags, seeded reproducibility, table output
     tests/test_exporter.py    19 tests   JSON, CSV, JSONL, SQLite, schema and clipboard exports
-    tests/test_export_sqlite.py  8 tests   the SQLite export itself, queried back with real SQL
-    tests/test_export_parquet.py  7 tests   the Parquet export itself, read back through pyarrow
+    tests/test_export_sqlite.py  10 tests   the SQLite export itself, queried back with real SQL
+    tests/test_export_parquet.py  12 tests   the Parquet export itself, read back through pyarrow
     tests/test_properties.py  24 tests   property-based invariants (Hypothesis)
     tests/test_schema.py      41 tests   the JSON Schema contract and its drift guards
     tests/test_paths.py        6 tests   user data dir resolution, env overrides, legacy migration
@@ -415,7 +415,7 @@ identity_generator/history.py
 
 identity_generator/exporter.py
 
-    Provides the output functions. to_json_file writes the identity dict to a file named after the username. to_csv_file writes every identity as a row in identities.csv (overwritten each run) for database seeding, to_jsonl_file writes one compact JSON object per line to identities.jsonl so streaming consumers can read a batch incrementally, to_sqlite_file builds identities.db in a temporary database first, inserts the batch through one executemany inside a single transaction, and only then replaces the target file, so a failed run never destroys a database that was still valid, and to_parquet_file writes identities.parquet with an explicit string schema through pyarrow, imported lazily so its absence is a controlled error naming the optional extra instead of a crash. The tabular formats share one ordered field list that leaves the inbox token out, because a token is a credential and those formats target pipelines and database seeds. to_clipboard formats the profile as a fixed-width plain-text block and copies it to the system clipboard using pyperclip. The plain-text format is intentionally simple so it can be pasted into any field without formatting artefacts.
+    Provides the output functions. to_json_file writes the identity dict to a file named after the username. to_csv_file writes every identity as a row in identities.csv (overwritten each run) for database seeding, to_jsonl_file writes one compact JSON object per line to identities.jsonl so streaming consumers can read a batch incrementally, to_sqlite_file builds identities.db in a uniquely named temporary database, inserts the batch through one executemany inside a single transaction, and only then replaces the target file, so concurrent runs never share the staging file and a failed run never destroys a database that was still valid, and to_parquet_file writes identities.parquet with an explicit string schema through pyarrow, imported lazily so its absence is a controlled error naming the optional extra instead of a crash, staged the same way so a failing write cannot destroy the previous export. pyarrow_available lets the CLI refuse a --parquet run before generating anything, so a missing dependency can never leave a batch in the history without the requested file. The tabular formats share one ordered field list that leaves the inbox token out, because a token is a credential and those formats target pipelines and database seeds. to_clipboard formats the profile as a fixed-width plain-text block and copies it to the system clipboard using pyperclip. The plain-text format is intentionally simple so it can be pasted into any field without formatting artefacts.
 
 identity_generator/schema.py
 

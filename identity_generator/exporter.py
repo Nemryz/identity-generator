@@ -1,9 +1,11 @@
-# exporter.py I handle every output format an identity can take, writing the full dict as a JSON file named after the username, spilling a batch into identities.csv as one row per identity (used by --count --csv for database seeding), streaming a batch into identities.jsonl as one compact object per line for data pipelines, landing the same batch in identities.db as a SQLite table for anything that would rather query than parse, and copying a plain-text rendering of the profile to the system clipboard through pyperclip. The tabular formats share one ordered field list that excludes the inbox token, because a token is a credential and those formats target pipelines and database seeds, so a field added to the schema reaches every export through a single definition instead of four private copies. The clipboard route depends on the host offering a clipboard mechanism at all (xclip or xsel on Linux, pbcopy on macOS, clip.exe on Windows), so it stays unavailable inside a Docker container unless a display is forwarded.
+# exporter.py I handle every output format an identity can take, writing the full dict as a JSON file named after the username, spilling a batch into identities.csv as one row per identity (used by --count --csv for database seeding), streaming a batch into identities.jsonl as one compact object per line for data pipelines, landing the same batch in identities.db as a SQLite table for anything that would rather query than parse, and copying a plain-text rendering of the profile to the system clipboard through pyperclip. The tabular formats share one ordered field list that excludes the inbox token, because a token is a credential and those formats target pipelines and database seeds, so a field added to the schema reaches every export through a single definition instead of four private copies. The database and parquet writers stage their output in a uniquely named temporary sibling of the target and replace it only after the write completes, so a failing or concurrent run can never corrupt the previous export, and pyarrow_available() lets the CLI refuse a --parquet run before a single identity is generated. The clipboard route depends on the host offering a clipboard mechanism at all (xclip or xsel on Linux, pbcopy on macOS, clip.exe on Windows), so it stays unavailable inside a Docker container unless a display is forwarded.
 
 import csv
+import importlib.util
 import json
 import os
 import sqlite3
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -121,10 +123,10 @@ def _sql_value(value: object) -> str | None:
 
 
 def to_sqlite_file(identities: list[dict]) -> Path:
-    # I build identities.db in a temporary file next to the target, create the table with the primary key on the identity id, insert every identity through one executemany inside a single transaction, and only after a clean commit and close replace the target with os.replace, so an interrupted export can never destroy a database that was still valid. The replacement discards the previous content entirely, including any extra table the user had added to that file.
+    # I build identities.db in a temporary file next to the target with a unique name per run, so two concurrent exports never share the same staging file and the wreckage of a hard-killed previous run can never turn into a CREATE TABLE failure, create the table with the primary key on the identity id, insert every identity through one executemany inside a single transaction, and only after a clean commit and close replace the target with os.replace, so an interrupted export can never destroy a database that was still valid. The replacement discards the previous content entirely, including any extra table the user had added to that file.
     directory = _output_dir()
     target = directory / "identities.db"
-    tmp = directory / "identities.db.tmp"
+    tmp = directory / f"identities.db.tmp-{uuid.uuid4().hex}"
     columns = ", ".join(
         '"id" TEXT NOT NULL PRIMARY KEY'
         if field == "id"
@@ -146,7 +148,11 @@ def to_sqlite_file(identities: list[dict]) -> Path:
         tmp.unlink(missing_ok=True)
         raise
     conn.close()
-    os.replace(tmp, target)
+    try:
+        os.replace(tmp, target)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
     return target
 
 
@@ -163,17 +169,32 @@ def _load_pyarrow() -> tuple[Any, Any]:
     return pa, pq
 
 
+def pyarrow_available() -> bool:
+    # I probe for the optional engine without importing it, so the CLI can refuse a --parquet run before generating anything while the export itself still loads the real module lazily, and a blanked module entry in sys.modules reads as unavailable exactly the way a base install does.
+    try:
+        return importlib.util.find_spec("pyarrow") is not None
+    except (ImportError, ValueError):
+        return False
+
+
 def to_parquet_file(identities: list[dict]) -> Path:
-    # I write identities.parquet with one explicit string column per exportable field, so the on-disk schema is stable instead of inferred from whatever the first record happens to carry, and the same shared field list the CSV and the SQLite table use decides what the file holds.
+    # I write identities.parquet with one explicit string column per exportable field, so the on-disk schema is stable instead of inferred from whatever the first record happens to carry, and I land the file in a uniquely named temporary sibling first and replace the target only after the write completes, so a failing engine can never destroy the previous export.
     pa, pq = _load_pyarrow()
     schema = pa.schema([(field, pa.string()) for field in EXPORT_FIELDS])
     columns = {
         field: [_sql_value(identity.get(field)) for identity in identities]
         for field in EXPORT_FIELDS
     }
-    path = _output_dir() / "identities.parquet"
-    pq.write_table(pa.table(columns, schema=schema), path)
-    return path
+    directory = _output_dir()
+    target = directory / "identities.parquet"
+    tmp = directory / f"identities.parquet.tmp-{uuid.uuid4().hex}"
+    try:
+        pq.write_table(pa.table(columns, schema=schema), tmp)
+        os.replace(tmp, target)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
+    return target
 
 
 def _format_profile(identity: dict) -> str:

@@ -497,3 +497,27 @@ def test_parquet_export_writes_a_readable_file_in_the_working_directory(
     assert row["email_provider"] == "offline"
     assert "email_token" not in table.column_names
     assert row["country"] == "Espana"
+
+
+def test_parquet_export_fails_fast_before_generating(tmp_path, monkeypatch, capsys):
+    # I hide pyarrow the way a base install looks to the import system and expect the friendly install hint before any generation runs, with generate_identity poisoned so reaching it would fail the test instead of silently leaving a batch behind in the history.
+    from identity_generator import main as main_module
+
+    def _poison(**_kwargs):
+        raise AssertionError(
+            "generation must not start when the requested export cannot complete"
+        )
+
+    monkeypatch.setattr(main_module, "generate_identity", _poison)
+    monkeypatch.setitem(sys.modules, "pyarrow", None)
+    monkeypatch.setitem(sys.modules, "pyarrow.parquet", None)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["identity-generator", "--count", "50", "--parquet", "--email-offline"],
+    )
+    with pytest.raises(SystemExit) as excinfo:
+        main_module.main()
+    assert excinfo.value.code == 1
+    output = capsys.readouterr().out
+    assert "identity-generator[parquet]" in output

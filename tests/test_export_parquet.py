@@ -1,6 +1,8 @@
 # Tests for the Parquet export in exporter.py: I read the file back through pyarrow itself and assert the explicit schema, and I simulate the missing optional dependency at the import level so the controlled error is exercised even on a machine where pyarrow is installed, which is the situation CI and every dev environment live in.
 
+import os
 import sys
+from pathlib import Path
 
 import pyarrow.parquet as pq
 import pytest
@@ -98,3 +100,58 @@ def test_missing_pyarrow_reports_the_install_hint(out_dir, monkeypatch):
     with pytest.raises(SystemExit) as excinfo:
         exporter.to_parquet_file([_identity(1)])
     assert "identity-generator[parquet]" in str(excinfo.value)
+
+
+def test_pyarrow_available_is_false_when_the_engine_is_absent(monkeypatch):
+    # I keep the CLI preflight probe and the lazy loader reading the same world, so the flag refuses exactly the environments the export would refuse.
+    monkeypatch.setitem(sys.modules, "pyarrow", None)
+    monkeypatch.setitem(sys.modules, "pyarrow.parquet", None)
+    assert exporter.pyarrow_available() is False
+
+
+def test_pyarrow_available_is_true_when_the_engine_is_installed():
+    assert exporter.pyarrow_available() is True
+
+
+def test_parquet_export_failure_leaves_the_previous_file_intact(
+    out_dir, monkeypatch
+):
+    # I break the engine's write after a first successful export, so the previous file must survive untouched and no partial staging file may be left behind.
+    path = exporter.to_parquet_file([_identity(1)])
+    before = path.read_bytes()
+
+    def _broken_write(*_args, **_kwargs):
+        raise RuntimeError("disk error")
+
+    monkeypatch.setattr(pq, "write_table", _broken_write)
+    with pytest.raises(RuntimeError):
+        exporter.to_parquet_file([_identity(2)])
+    assert path.read_bytes() == before
+    assert list(out_dir.glob("identities.parquet.tmp*")) == []
+
+
+def test_parquet_export_replaces_the_target_through_a_unique_temp_file(
+    out_dir, monkeypatch
+):
+    # I pin the same protection the SQLite export has, where every run stages the file under its own unique name in the target directory before the atomic replacement.
+    captured = []
+    real_replace = os.replace
+
+    def _spy(src, dst):
+        captured.append(Path(src))
+        real_replace(src, dst)
+
+    monkeypatch.setattr(os, "replace", _spy)
+    exporter.to_parquet_file([_identity(1)])
+    exporter.to_parquet_file([_identity(2)])
+    assert len(captured) == 2
+    assert captured[0] != captured[1]
+    assert captured[0].parent == out_dir
+    assert captured[0].name.startswith("identities.parquet.tmp-")
+
+
+def test_parquet_export_survives_a_leftover_temp_file(out_dir):
+    # I recreate the wreckage of a hard-killed export, where a stale staging file sits in the target directory, and a fresh export must still write its own staging file and replace the target.
+    (out_dir / "identities.parquet.tmp-stale").write_bytes(b"garbage")
+    path = exporter.to_parquet_file([_identity(1)])
+    assert pq.read_table(path).num_rows == 1
