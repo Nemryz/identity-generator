@@ -400,7 +400,7 @@ def _guerrilla_read(token: str, limit: int) -> list[dict]:
     try:
         response = requests.get(
             GUERRILLA_BASE,
-            params={"f": "check_email", "seq": 0, "sid_token": token},
+            params={"f": "check_email", "seq": "0", "sid_token": token},
             timeout=REQUEST_TIMEOUT,
         )
         response.raise_for_status()
