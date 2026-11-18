@@ -1,7 +1,5 @@
 # Tests for paths.py: user data dir resolution, env overrides, legacy migration and output dir.
 
-
-
 from identity_generator import paths
 
 
