@@ -446,3 +446,31 @@ def test_check_datasets_lists_locales_without_a_dataset(
     output = capsys.readouterr().out
     assert "Faker fallback" in output
     assert "de_DE" in output
+
+
+def test_sqlite_export_writes_a_queryable_database_in_the_working_directory(
+    tmp_path, monkeypatch
+):
+    # I run the flag through the real entry point with the working directory pointed at a temporary folder, because the exports land in the current directory and the database must open with plain SQL afterwards.
+    import sqlite3
+
+    monkeypatch.chdir(tmp_path)
+    result = _run(
+        tmp_path / "h.json",
+        "--email-offline",
+        "--locale",
+        "es_ES",
+        "--sqlite",
+    )
+    assert result.returncode == 0
+    assert "identities.db" in result.stdout
+    conn = sqlite3.connect(tmp_path / "identities.db")
+    try:
+        conn.row_factory = sqlite3.Row
+        row = dict(conn.execute("SELECT * FROM identities").fetchone())
+        columns = [r[1] for r in conn.execute("PRAGMA table_info(identities)")]
+    finally:
+        conn.close()
+    assert row["email_provider"] == "offline"
+    assert "email_token" not in columns
+    assert row["country"] == "Espana"

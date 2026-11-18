@@ -200,5 +200,5 @@ def test_passport_fallback_shape(monkeypatch):
 
 
 def test_document_fields_in_csv():
-    assert "national_id" in exporter._CSV_FIELDS
-    assert "passport_number" in exporter._CSV_FIELDS
+    assert "national_id" in exporter.EXPORT_FIELDS
+    assert "passport_number" in exporter.EXPORT_FIELDS

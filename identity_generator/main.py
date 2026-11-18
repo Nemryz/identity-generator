@@ -251,6 +251,15 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--sqlite",
+        action="store_true",
+        help=(
+            "Export the generated identities to identities.db, a SQLite "
+            "database with one row per identity (overwritten every run, "
+            "no email_token column)."
+        ),
+    )
+    parser.add_argument(
         "--count",
         type=int,
         metavar="N",
@@ -519,6 +528,10 @@ def main() -> None:
     if args.export_jsonl:
         path = exporter.to_jsonl_file(identities)
         print(Fore.GREEN + f"\n  JSONL written to: {path}")
+
+    if args.sqlite:
+        path = exporter.to_sqlite_file(identities)
+        print(Fore.GREEN + f"\n  SQLite database written to: {path}")
 
     if args.clipboard:
         try:

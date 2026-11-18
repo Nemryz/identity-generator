@@ -1,7 +1,9 @@
-# exporter.py I handle the four output formats an identity can take, writing the full dict as a JSON file named after the username, spilling a batch into identities.csv as one row per identity (used by --count --csv for database seeding), streaming a batch into identities.jsonl as one compact object per line for data pipelines, and finally copying a plain-text rendering of the profile to the system clipboard through pyperclip. The clipboard route depends on the host offering a clipboard mechanism at all (xclip or xsel on Linux, pbcopy on macOS, clip.exe on Windows), so it stays unavailable inside a Docker container unless a display is forwarded.
+# exporter.py I handle every output format an identity can take, writing the full dict as a JSON file named after the username, spilling a batch into identities.csv as one row per identity (used by --count --csv for database seeding), streaming a batch into identities.jsonl as one compact object per line for data pipelines, landing the same batch in identities.db as a SQLite table for anything that would rather query than parse, and copying a plain-text rendering of the profile to the system clipboard through pyperclip. The tabular formats share one ordered field list that excludes the inbox token, because a token is a credential and those formats target pipelines and database seeds, so a field added to the schema reaches every export through a single definition instead of four private copies. The clipboard route depends on the host offering a clipboard mechanism at all (xclip or xsel on Linux, pbcopy on macOS, clip.exe on Windows), so it stays unavailable inside a Docker container unless a display is forwarded.
 
 import csv
 import json
+import os
+import sqlite3
 from pathlib import Path
 
 import pyperclip
@@ -16,7 +18,14 @@ def _output_dir() -> Path:
     return output_dir()
 
 
-_CSV_FIELDS = [
+_CREDENTIAL_FIELDS = frozenset({"email_token"})
+
+# The single ordered definition of the fields every tabular export carries,
+# so the CSV header, the JSONL objects, the SQLite columns and the Parquet
+# schema can never disagree about what the pipeline receives. The order is
+# the one the CSV shipped with, and a test keeps the list in step with the
+# schema properties minus the credential fields.
+EXPORT_FIELDS = [
     "full_name",
     "first_name",
     "last_name",
@@ -67,14 +76,14 @@ def to_clipboard(identity: dict) -> None:
 
 
 def to_csv_file(identities: list[dict]) -> Path:
-    # I write one row per identity into identities.csv in the current directory, overwriting it on every run so a pipeline always knows the filename, and leaving out email_token because inbox tokens mean nothing to a database seed.
+    # I write one row per identity into identities.csv in the current directory, overwriting it on every run so a pipeline always knows the filename, carrying the shared export fields that already leave the inbox token out.
     path = _output_dir() / "identities.csv"
     with path.open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=_CSV_FIELDS)
+        writer = csv.DictWriter(fh, fieldnames=EXPORT_FIELDS)
         writer.writeheader()
         for identity in identities:
             writer.writerow(
-                {field: identity.get(field, "") for field in _CSV_FIELDS}
+                {field: identity.get(field, "") for field in EXPORT_FIELDS}
             )
     return path
 
@@ -90,17 +99,54 @@ def to_schema_file() -> Path:
 
 
 def to_jsonl_file(identities: list[dict]) -> Path:
-    # I write the identities to identities.jsonl in the current directory, one compact JSON object per line in generation order, overwriting the file each run so streaming consumers (jq, log shippers, data loaders) can read it incrementally even while a longer batch is still going, and I drop email_token for the same reason the CSV does.
+    # I write the identities to identities.jsonl in the current directory, one compact JSON object per line in generation order, overwriting the file each run so streaming consumers (jq, log shippers, data loaders) can read it incrementally even while a longer batch is still going, keeping the generator's field order on purpose and excluding the shared credential fields the other tabular exports leave out.
     path = _output_dir() / "identities.jsonl"
     with path.open("w", encoding="utf-8") as fh:
         for identity in identities:
             record = {
                 field: value
                 for field, value in identity.items()
-                if field != "email_token"
+                if field not in _CREDENTIAL_FIELDS
             }
             fh.write(json.dumps(record, ensure_ascii=False) + "\n")
     return path
+
+
+def _sql_value(value: object) -> str | None:
+    # I map None to SQL NULL and everything else to text, so every column reads uniformly no matter which locale produced it or which optional field stayed empty.
+    if value is None:
+        return None
+    return str(value)
+
+
+def to_sqlite_file(identities: list[dict]) -> Path:
+    # I build identities.db in a temporary file next to the target, create the table with the primary key on the identity id, insert every identity through one executemany inside a single transaction, and only after a clean commit and close replace the target with os.replace, so an interrupted export can never destroy a database that was still valid. The replacement discards the previous content entirely, including any extra table the user had added to that file.
+    directory = _output_dir()
+    target = directory / "identities.db"
+    tmp = directory / "identities.db.tmp"
+    columns = ", ".join(
+        '"id" TEXT NOT NULL PRIMARY KEY'
+        if field == "id"
+        else f'"{field}" TEXT'
+        for field in EXPORT_FIELDS
+    )
+    placeholders = ", ".join("?" for _ in EXPORT_FIELDS)
+    rows = [
+        tuple(_sql_value(identity.get(field)) for field in EXPORT_FIELDS)
+        for identity in identities
+    ]
+    conn = sqlite3.connect(tmp)
+    try:
+        conn.execute(f"CREATE TABLE identities ({columns})")
+        conn.executemany(f"INSERT INTO identities VALUES ({placeholders})", rows)
+        conn.commit()
+    except BaseException:
+        conn.close()
+        tmp.unlink(missing_ok=True)
+        raise
+    conn.close()
+    os.replace(tmp, target)
+    return target
 
 
 def _format_profile(identity: dict) -> str:

@@ -3,7 +3,7 @@
 [![CI](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/Nemryz/identity-generator/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-493%20passed-brightgreen.svg)](tests)
+[![Tests](https://img.shields.io/badge/tests-503%20passed-brightgreen.svg)](tests)
 
 A command-line tool that produces complete, self-consistent synthetic identities. Every field in a generated profile (name, address, phone, postcode) belongs to the same country and language, so the data reads as coherent rather than a random mix of regional formats. Profiles are saved to a local history file and can be exported as JSON or CSV, or copied to the clipboard.
 
@@ -157,6 +157,12 @@ Write the same batch as newline-delimited JSON instead, one compact object per l
 
 The JSONL file is overwritten every run and keeps every identity in a single file, so it can be read incrementally while a longer batch is still running. Like the CSV it omits email_token, which means the records carry 22 of the 23 fields described by the schema (see --schema). Use --json when you need the full identity including the inbox token.
 
+Store the same batch as a queryable SQLite database instead:
+
+    python -X utf8 main.py --count 50 --sqlite
+
+The database identities.db is overwritten every run and holds one identities table with a row per identity, every column as text and the identity id as primary key, carrying the same 22 schema fields the CSV and the JSONL carry (no email_token, which is a credential). The file is built in a temporary database first and only replaces the previous one after a clean commit, so a failed run never destroys a database that was still valid. Query it directly with sqlite3 identities.db "SELECT full_name, email FROM identities".
+
 Reproduce the same identity on every run with a seed:
 
     python -X utf8 main.py --seed 42 --email-offline
@@ -308,7 +314,7 @@ Writes take an exclusive lock file created with O_EXCL, which the operating syst
 
 ## Testing
 
-The project ships a fully automated test suite written with pytest, whose default run collects 493 tests across 15 modules plus a separate network suite of 3 tests that only runs when you ask for it, and every number below is exactly what pytest reports when it collects the file:
+The project ships a fully automated test suite written with pytest, whose default run collects 503 tests across 16 modules plus a separate network suite of 3 tests that only runs when you ask for it, and every number below is exactly what pytest reports when it collects the file:
 
     tests/test_generator.py   92 tests   identity fields, names, passwords, locale capabilities
     tests/test_datasets.py    66 tests   address dataset schema and quality
@@ -318,8 +324,9 @@ The project ships a fully automated test suite written with pytest, whose defaul
     tests/test_email_api.py   65 tests   provider chain, rate limits, tokens and API keys
     tests/test_email_resilience.py  8 tests   provider failures, rate limits and corrupted state
     tests/test_history.py     21 tests   persistence, locking, concurrency
-    tests/test_main.py        34 tests   command-line flags, seeded reproducibility, table output
-    tests/test_exporter.py    18 tests   JSON, CSV, JSONL, schema and clipboard exports
+    tests/test_main.py        35 tests   command-line flags, seeded reproducibility, table output
+    tests/test_exporter.py    19 tests   JSON, CSV, JSONL, SQLite, schema and clipboard exports
+    tests/test_export_sqlite.py  8 tests   the SQLite export itself, queried back with real SQL
     tests/test_properties.py  24 tests   property-based invariants (Hypothesis)
     tests/test_schema.py      41 tests   the JSON Schema contract and its drift guards
     tests/test_paths.py        6 tests   user data dir resolution, env overrides, legacy migration
@@ -401,7 +408,7 @@ identity_generator/history.py
 
 identity_generator/exporter.py
 
-    Provides four output functions. to_json_file writes the identity dict to a file named after the username. to_csv_file writes every identity as a row in identities.csv (overwritten each run, with the email_token column excluded) for database seeding. to_jsonl_file writes one compact JSON object per line to identities.jsonl (also without email_token) so streaming consumers can read a batch incrementally. to_clipboard formats the profile as a fixed-width plain-text block and copies it to the system clipboard using pyperclip. The plain-text format is intentionally simple so it can be pasted into any field without formatting artefacts.
+    Provides the output functions. to_json_file writes the identity dict to a file named after the username. to_csv_file writes every identity as a row in identities.csv (overwritten each run) for database seeding, to_jsonl_file writes one compact JSON object per line to identities.jsonl so streaming consumers can read a batch incrementally, and to_sqlite_file builds identities.db in a temporary database first, inserts the batch through one executemany inside a single transaction, and only then replaces the target file, so a failed run never destroys a database that was still valid. The tabular formats share one ordered field list that leaves the inbox token out, because a token is a credential and those formats target pipelines and database seeds. to_clipboard formats the profile as a fixed-width plain-text block and copies it to the system clipboard using pyperclip. The plain-text format is intentionally simple so it can be pasted into any field without formatting artefacts.
 
 identity_generator/schema.py
 

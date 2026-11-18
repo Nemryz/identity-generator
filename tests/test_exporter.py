@@ -6,6 +6,8 @@ import json
 import pytest
 
 from identity_generator import exporter
+from identity_generator.exporter import EXPORT_FIELDS
+from identity_generator.schema import IDENTITY_SCHEMA
 
 
 @pytest.fixture
@@ -212,3 +214,15 @@ def test_to_schema_file_writes_the_schema(out_dir):
     path = exporter.to_schema_file()
     assert path.name == "identity.schema.json"
     assert json.loads(path.read_text(encoding="utf-8")) == schema_module.IDENTITY_SCHEMA
+
+
+def test_export_fields_match_the_schema_minus_credentials():
+    # I keep the shared export field list in step with the schema, so a field added there reaches every tabular export without anyone remembering four private copies, and I pin that exactly one credential field stays out.
+    expected = [
+        name
+        for name in IDENTITY_SCHEMA["properties"]
+        if name not in exporter._CREDENTIAL_FIELDS
+    ]
+    assert sorted(EXPORT_FIELDS) == sorted(expected)
+    assert len(EXPORT_FIELDS) == len(set(EXPORT_FIELDS))
+    assert exporter._CREDENTIAL_FIELDS == {"email_token"}
