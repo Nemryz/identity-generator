@@ -1,9 +1,6 @@
 # Resilience tests for email_api.py: providers failing, rate limits, token lag, corrupted state.
 
-import json
-from unittest.mock import patch
 
-import pytest
 import requests
 
 from identity_generator import email_api
@@ -38,7 +35,7 @@ def test_mailtm_token_retries_and_returns_none(monkeypatch):
 
 
 def test_get_temp_email_falls_back_to_offline(monkeypatch):
-    monkeypatch.setattr(email_api, "_custom_domains", lambda: [])
+    monkeypatch.setattr(email_api, "_custom_domains", list)
     monkeypatch.setattr(email_api, "_can_use", lambda p: True)
     monkeypatch.setattr(email_api, "_tempmail_email", lambda p: None)
     monkeypatch.setattr(email_api, "_mailtm_email", lambda p: None)

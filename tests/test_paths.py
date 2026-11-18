@@ -1,9 +1,6 @@
 # Tests for paths.py: user data dir resolution, env overrides, legacy migration and output dir.
 
-import os
-from pathlib import Path
 
-import pytest
 
 from identity_generator import paths
 
